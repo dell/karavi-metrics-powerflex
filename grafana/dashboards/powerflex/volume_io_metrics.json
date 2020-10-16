@@ -1,0 +1,958 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "iteration": 1602003216887,
+  "links": [],
+  "panels": [
+    {
+      "aliasColors": {
+        "Average": "dark-red",
+        "Average ReadIOPS": "dark-red"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "links": []
+        },
+        "overrides": []
+      },
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 4,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pluginVersion": "7.1.0",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "PowerFlexVolumeReadIOPS{PlotWithMean=~\"($ShowMean)\", VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",  MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"} and topk($TopX, avg_over_time(PowerFlexVolumeReadIOPS{PlotWithMean=~ \"($ShowMean)\", VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",  MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"}[$TimeFrame]))",
+          "interval": "",
+          "legendFormat": "{{VolumeName}}",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(PowerFlexVolumeReadIOPS{PlotWithMean=~\"($ShowMean)|No\", VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",  MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"}) / count(PowerFlexVolumeReadIOPS{PlotWithMean=~\"($ShowMean)|No\",VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"})",
+          "format": "time_series",
+          "instant": false,
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "Average ReadIOPS",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Volume Read IOPS",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "Average WriteIOP": "dark-red"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "links": []
+        },
+        "overrides": []
+      },
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 6,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pluginVersion": "7.1.0",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "PowerFlexVolumeWriteIOPS{PlotWithMean=~\"($ShowMean)\", VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"} and topk($TopX, avg_over_time(PowerFlexVolumeWriteIOPS{PlotWithMean=~\"($ShowMean)\", VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"}[$TimeFrame]))",
+          "interval": "",
+          "legendFormat": "{{VolumeName}}",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(PowerFlexVolumeWriteIOPS{PlotWithMean=~\"($ShowMean)|No\", VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",  MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"}) / count(PowerFlexVolumeWriteIOPS{PlotWithMean=~\"($ShowMean)|No\",VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"})",
+          "interval": "",
+          "legendFormat": "Average WriteIOP",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Volume Write IOPS",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "Average ReadLatency": "dark-red"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "links": []
+        },
+        "overrides": []
+      },
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "hiddenSeries": false,
+      "id": 2,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pluginVersion": "7.1.0",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "PowerFlexVolumeReadLatency{PlotWithMean=~\"($ShowMean)\", VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"} and topk($TopX, avg_over_time(PowerFlexVolumeReadLatency{PlotWithMean=~\"($ShowMean)\", VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"}[$TimeFrame]))",
+          "interval": "",
+          "legendFormat": "{{VolumeName}}",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(PowerFlexVolumeReadLatency{PlotWithMean=~\"($ShowMean)|No\", VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",  MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"}) / count(PowerFlexVolumeReadLatency{PlotWithMean=~\"($ShowMean)|No\",VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"})",
+          "interval": "",
+          "legendFormat": "Average ReadLatency",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Volume Read Latency (ms)",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "Average WriteLatency": "dark-red"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "links": []
+        },
+        "overrides": []
+      },
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "hiddenSeries": false,
+      "id": 8,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pluginVersion": "7.1.0",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "PowerFlexVolumeWriteLatency{PlotWithMean=~\"($ShowMean)\", VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"} and topk($TopX, avg_over_time(PowerFlexVolumeWriteLatency{PlotWithMean=~\"($ShowMean)\", VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"}[$TimeFrame]))",
+          "interval": "",
+          "legendFormat": "{{VolumeName}}",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(PowerFlexVolumeWriteLatency{PlotWithMean=~\"($ShowMean)|No\", VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",  MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"}) / count(PowerFlexVolumeWriteLatency{PlotWithMean=~\"($ShowMean)|No\",VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"})",
+          "interval": "",
+          "legendFormat": "Average WriteLatency",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Volume Write Latency (ms)",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "Average ReadBW": "dark-red"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "links": []
+        },
+        "overrides": []
+      },
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "hiddenSeries": false,
+      "id": 10,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pluginVersion": "7.1.0",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "PowerFlexVolumeReadBW{PlotWithMean=~\"($ShowMean)\",VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"} and topk($TopX, avg_over_time(PowerFlexVolumeReadBW{PlotWithMean=~\"($ShowMean)\",VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"}[$TimeFrame]))",
+          "interval": "",
+          "legendFormat": "{{VolumeName}}",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(PowerFlexVolumeReadBW{PlotWithMean=~\"($ShowMean)|No\", VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",  MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"}) / count(PowerFlexVolumeReadBW{PlotWithMean=~\"($ShowMean)|No\",VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"})",
+          "interval": "",
+          "legendFormat": "Average ReadBW",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Volume Read Bandwidth (MB/s)",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "Average WriteBW": "dark-red"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "links": []
+        },
+        "overrides": []
+      },
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "hiddenSeries": false,
+      "id": 9,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "percentage": false,
+      "pluginVersion": "7.1.0",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "PowerFlexVolumeWriteBW{PlotWithMean=~\"($ShowMean)\", VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"} and topk($TopX, avg_over_time(PowerFlexVolumeWriteBW{PlotWithMean=~\"($ShowMean)\", VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"}[$TimeFrame]))",
+          "interval": "",
+          "legendFormat": "{{VolumeName}}",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(PowerFlexVolumeWriteBW{PlotWithMean=~\"($ShowMean)|No\", VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",  MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"}) / count(PowerFlexVolumeWriteBW{PlotWithMean=~\"($ShowMean)|No\",VolumeID=~\"$VolumeID\",VolumeName=~\"$VolumeName\", PersistentVolumeName=~\"$PVName\", MappedNodeIDs=~\"(.*__)($MappedNodeIDs)(__.*)\",MappedNodeIPs=~\"(.*__)($MappedNodeIPs)(__.*)\"})",
+          "interval": "",
+          "legendFormat": "Average WriteBW",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Volume Write Bandwidth (MB/s)",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 26,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": "Yes",
+          "value": "Yes"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Hide Details",
+        "multi": false,
+        "name": "ShowMean",
+        "options": [
+          {
+            "selected": true,
+            "text": "Yes",
+            "value": "Yes"
+          },
+          {
+            "selected": false,
+            "text": "No",
+            "value": "No"
+          }
+        ],
+        "query": "Yes, No",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": ["$__all"]
+        },
+        "datasource": "Prometheus",
+        "definition": "label_values(PowerFlexVolumeReadBW,VolumeID)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Volume ID",
+        "multi": true,
+        "name": "VolumeID",
+        "options": [],
+        "query": "label_values(PowerFlexVolumeReadBW,VolumeID)",
+        "refresh": 2,
+        "refresh_on_load": false,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 2,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": ["$__all"]
+        },
+        "datasource": "Prometheus",
+        "definition": "label_values(PowerFlexVolumeReadBW,VolumeName)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Volume Name",
+        "multi": true,
+        "name": "VolumeName",
+        "options": [],
+        "query": "label_values(PowerFlexVolumeReadBW,VolumeName)",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": ["$__all"]
+        },
+        "datasource": "Prometheus",
+        "definition": "label_values(PowerFlexVolumeReadBW,PersistentVolumeName)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "PV Name",
+        "multi": true,
+        "name": "PVName",
+        "options": [],
+        "query": "label_values(PowerFlexVolumeReadBW,PersistentVolumeName)",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": ["$__all"]
+        },
+        "datasource": "Prometheus",
+        "definition": "label_values(ID)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Node IDs",
+        "multi": true,
+        "name": "MappedNodeIDs",
+        "options": [],
+        "query": "label_values(ID)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": ["$__all"]
+        },
+        "datasource": "Prometheus",
+        "definition": "label_values(IP)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Node IPs",
+        "multi": true,
+        "name": "MappedNodeIPs",
+        "options": [],
+        "query": "label_values(IP)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "auto": false,
+        "auto_count": 30,
+        "auto_min": "10s",
+        "current": {
+          "selected": false,
+          "text": "10",
+          "value": "10"
+        },
+        "hide": 0,
+        "label": "Ranking",
+        "name": "TopX",
+        "options": [
+          {
+            "selected": false,
+            "text": "2",
+            "value": "2"
+          },
+          {
+            "selected": false,
+            "text": "5",
+            "value": "5"
+          },
+          {
+            "selected": true,
+            "text": "10",
+            "value": "10"
+          },
+          {
+            "selected": false,
+            "text": "15",
+            "value": "15"
+          },
+          {
+            "selected": false,
+            "text": "20",
+            "value": "20"
+          },
+          {
+            "selected": false,
+            "text": "100",
+            "value": "100"
+          },
+          {
+            "selected": false,
+            "text": "1000",
+            "value": "1000"
+          }
+        ],
+        "query": "2,5,10,15,20,100,1000",
+        "queryValue": "",
+        "refresh": 2,
+        "skipUrlSync": false,
+        "type": "interval"
+      },
+      {
+        "auto": false,
+        "auto_count": 30,
+        "auto_min": "10s",
+        "current": {
+          "selected": false,
+          "text": "1m",
+          "value": "1m"
+        },
+        "hide": 0,
+        "label": "Average over Time",
+        "name": "TimeFrame",
+        "options": [
+          {
+            "selected": true,
+            "text": "1m",
+            "value": "1m"
+          },
+          {
+            "selected": false,
+            "text": "5m",
+            "value": "5m"
+          },
+          {
+            "selected": false,
+            "text": "10m",
+            "value": "10m"
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "30m"
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "1h"
+          },
+          {
+            "selected": false,
+            "text": "6h",
+            "value": "6h"
+          },
+          {
+            "selected": false,
+            "text": "12h",
+            "value": "12h"
+          },
+          {
+            "selected": false,
+            "text": "1d",
+            "value": "1d"
+          },
+          {
+            "selected": false,
+            "text": "7d",
+            "value": "7d"
+          },
+          {
+            "selected": false,
+            "text": "14d",
+            "value": "14d"
+          },
+          {
+            "selected": false,
+            "text": "30d",
+            "value": "30d"
+          }
+        ],
+        "query": "1m,5m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+        "queryValue": "",
+        "refresh": 2,
+        "skipUrlSync": false,
+        "type": "interval"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "Volume IO Metrics",
+  "uid": "LYzMlnMGl",
+  "version": 12
+}
