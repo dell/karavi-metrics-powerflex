@@ -46,6 +46,15 @@ Steps to create a branch for a bug fix or feature:
 5. Open a pull request between your branch and the upstream master branch.
 6. Once your pull request has merged, your branch can be deleted.
 
+## Branch Naming Convention
+
+|  Branch Type |  Example                          |  Comment                                  |
+|--------------|-----------------------------------|-------------------------------------------|
+|  main        |  main                             |                                           |
+|  Release     |  release-1.0                      |  hotfix: release-1.1 patch: release-1.0.1 |
+|  Feature     |  feature-9-olp-support            |  "9" referring to GitHub issue ID         |
+|  Bug Fix     |  bugfix-110-remove-docker-compose |  "110" referring to GitHub issue ID       |
+
 Release branches will be created from the master branch near the time of a planned release when all features are completed. Only critical bug fixes will be merged into the feature branch at this time. All other bug fixes and features can continue to be merged into the master branch. When a feature branch is stable, the branch will be tagged for release and the release branch will be deleted.
 
 ## Code Reviews
