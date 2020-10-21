@@ -36,14 +36,14 @@ When opening a Bug please include the following information to help with debuggi
 An Issue __must__ be created before submitting any pull request. Any pull request that is created should be linked to an Issue.
 
 ## Branching Strategy
-We are following a scaled trunk branching strategy where short-lived branches are created off of the master branch. When coding is complete, the branch is merged back into master after being approved in a pull request code review.
+We are following a scaled trunk branching strategy where short-lived branches are created off of the main branch. When coding is complete, the branch is merged back into main after being approved in a pull request code review.
 
 Steps to create a branch for a bug fix or feature:
 1. Fork the repository.
-2. Create a branch off of the master branch. The branch name should be descriptive and include the bug fix or feature that it contains.
+2. Create a branch off of the main branch. The branch name should be descriptive and include the bug fix or feature that it contains.
 3. Write code, add tests, and commit to your branch. Optionally, add feature flags to disable any new features that are not yet ready for the release.
-4. If other code changes have merged into the upstream master branch, perform a rebase of those changes into your branch.
-5. Open a pull request between your branch and the upstream master branch.
+4. If other code changes have merged into the upstream main branch, perform a rebase of those changes into your branch.
+5. Open a pull request between your branch and the upstream main branch.
 6. Once your pull request has merged, your branch can be deleted.
 
 ## Branch Naming Convention
@@ -55,7 +55,7 @@ Steps to create a branch for a bug fix or feature:
 |  Feature     |  feature-9-olp-support            |  "9" referring to GitHub issue ID         |
 |  Bug Fix     |  bugfix-110-remove-docker-compose |  "110" referring to GitHub issue ID       |
 
-Release branches will be created from the master branch near the time of a planned release when all features are completed. Only critical bug fixes will be merged into the feature branch at this time. All other bug fixes and features can continue to be merged into the master branch. When a feature branch is stable, the branch will be tagged for release and the release branch will be deleted.
+Release branches will be created from the main branch near the time of a planned release when all features are completed. Only critical bug fixes will be merged into the feature branch at this time. All other bug fixes and features can continue to be merged into the main branch. When a feature branch is stable, the branch will be tagged for release and the release branch will be deleted.
 
 ## Code Reviews
 
