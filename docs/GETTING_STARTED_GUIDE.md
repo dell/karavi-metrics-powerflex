@@ -62,7 +62,7 @@ The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require the fo
 
 | Supported Version | Image                 | Helm Chart                                                |
 | ----------------- | --------------------- | --------------------------------------------------------- |
-| v.7.1.0+          | grafana/grafana:7.1.0 | https://github.com/helm/charts/tree/main/stable/grafana |
+| v.7.1.0+          | grafana/grafana:7.1.0 | https://github.com/grafana/helm-charts/tree/main/charts/grafana |
 
 - Grafana must be configured with the following data sources/plugins:
 
