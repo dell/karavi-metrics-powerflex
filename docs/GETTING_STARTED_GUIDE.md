@@ -50,7 +50,7 @@ The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Promet
 
 | Supported Version | Image                   | Helm Chart                                                   |
 | ----------------- | ----------------------- | ------------------------------------------------------------ |
-| 2.19.2            | prom/prometheus:v2.19.2 | https://github.com/helm/charts/tree/master/stable/prometheus |
+| 2.19.2            | prom/prometheus:v2.19.2 | https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus |
 
 **NOTE:** Version 2.19.2 has been qualified with Karavi PowerFlex Metrics but other versions may also work.
 
@@ -62,7 +62,7 @@ The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require the fo
 
 | Supported Version | Image                 | Helm Chart                                                |
 | ----------------- | --------------------- | --------------------------------------------------------- |
-| v.7.1.0+          | grafana/grafana:7.1.0 | https://github.com/helm/charts/tree/master/stable/grafana |
+| v.7.1.0+          | grafana/grafana:7.1.0 | https://github.com/grafana/helm-charts/tree/main/charts/grafana |
 
 - Grafana must be configured with the following data sources/plugins:
 
