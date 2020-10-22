@@ -12,8 +12,10 @@ You may obtain a copy of the License at
 Karavi PowerFlex Metrics is part of the Karavi open source suite of Kubernetes storage enablers for Dell EMC products.
 
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](CODE_OF_CONDUCT.md) 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Releases](https://img.shields.io/badge/Releases-green.svg)](https://github.com/dell/karavi-observability/releases)
+[![License](https://img.shields.io/github/license/dell/karavi-powerflex-metrics)](LICENSE)
+[![Docker Pulls](https://img.shields.io/docker/pulls/dellemc/karavi-powerflex-metrics)](https://hub.docker.com/r/dellemc/karavi-powerflex-metrics)
+[![Go version](https://img.shields.io/github/go-mod/go-version/dell/karavi-powerflex-metrics)](go.mod)
+[![Latest Release](https://img.shields.io/github/v/release/dell/karavi-powerflex-metrics?label=latest&style=flat-square)](https://github.com/dell/karavi-powerflex-metrics/releases)
 
 Karavi PowerFlex Metrics is an open source distributed solution that provides standardized approaches to gaining observability into Dell EMC products. Karavi PowerFlex Metrics provides the following metrics:
 - **[I/O Performance Metrics](./docs/IO_PERFORMANCE.md)**: Visibility into the I/O performance of a storage system (IOPS, bandwidth, latency) broken down by export node and volume 
