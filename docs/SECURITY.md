@@ -12,4 +12,4 @@ Every issue detected by `gosec` is mapped to a [CWE (Common Weakness Enumeration
 
 ## Reporting a Vulnerability
 
-Please report a vulnerability by opening an Issue in this repository.
+Please report a vulnerability by opening an [issue](https://github.com/dell/karavi-powerflex-metrics/issues) in this repository.
