@@ -6,14 +6,6 @@
 
 # How to get support for Karavi
 
-For any support on Karavi PowerFlex Metrics, please contact karavi@dell.com.
-
-## Questions
-
-You have a question about Karavi and cannot find the answer in the documenation? 
-Use the **[Ask a Question](https://github.com/dell/karavi-powerflex-metrics/issues/new?template=ask-a-question.md)** template and fill out the required fields.
-
-## Security Vulnerabilities 
-
-Have you discovered a security vulnerability in Karavi? We ask you to alert the maintainers by sending an email describing the issue, impact, and 
-fix - if applicable. You can reach the Karavi maintainers at karavi@dell.com.
+If you require help or support for Karavi PowerFlex Metrics: 
+- For example, if you want to alert a security vulnerability in karavi, send an email to the maintainers at karavi@dell.com describing issue, impact, fix, if applicable. 
+- Ask a general question to community, fill out the details @ **[Ask a Question](https://github.com/dell/karavi-powerflex-metrics/issues/new?template=ask-a-question.md)**.
