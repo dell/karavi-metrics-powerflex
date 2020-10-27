@@ -8,4 +8,4 @@
 
 If you require help or support for Karavi PowerFlex Metrics: 
 - For example, if you want to alert a security vulnerability in karavi, send an email to the maintainers at karavi@dell.com describing issue, impact, fix, if applicable. 
-- Ask a general question to community, fill out the details @ **[Ask a Question](https://github.com/dell/karavi-powerflex-metrics/issues/new?template=ask-a-question.md)**.
+- Ask a general question to the community, fill out the details @ **[Ask a Question](https://github.com/dell/karavi-powerflex-metrics/issues/new?template=ask-a-question.md)**.
