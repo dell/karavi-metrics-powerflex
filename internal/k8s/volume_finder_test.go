@@ -133,7 +133,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 					ProvisionedSize:         "16Gi",
 					StorageSystemVolumeName: "storage-system-volume-name",
 					StoragePoolName:         "storage-pool-name",
-					CreatedTime:             "2020-07-28 20:00:00 +0000 +0000",
+					CreatedTime:             t1.String(),
 				},
 			})), ctrl
 		},
@@ -223,7 +223,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 					ProvisionedSize:         "16Gi",
 					StorageSystemVolumeName: "storage-system-volume-name",
 					StoragePoolName:         "storage-pool-name",
-					CreatedTime:             "2020-07-28 20:00:00 +0000 +0000",
+					CreatedTime:             t1.String(),
 				},
 				{
 					Namespace:               "namespace-2",
@@ -236,7 +236,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 					ProvisionedSize:         "8Gi",
 					StorageSystemVolumeName: "storage-system-volume-name-2",
 					StoragePoolName:         "storage-pool-name-2",
-					CreatedTime:             "2020-07-28 20:00:00 +0000 +0000",
+					CreatedTime:             t1.String(),
 				},
 			})), ctrl
 		},
