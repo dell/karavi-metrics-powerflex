@@ -1,7 +1,3 @@
-GOSCALEIO_DIR=../goscaleio
-GOSCALEIO_BRANCH=ioad-with-fixes
-GOSCALEIO_CLONED_BRANCH := $(shell git --git-dir=$(GOSCALEIO_DIR)/.git --work-tree=$(GOSCALEIO_DIR) rev-parse --abbrev-ref HEAD)
-
 .PHONY: all
 all: help
 
@@ -19,12 +15,6 @@ help:
 
 .PHONY: build
 build: generate
-	@if [ ! -d $(GOSCALEIO_DIR) ];then \
-		git clone --branch $(GOSCALEIO_BRANCH) https://github.com/dell/goscaleio.git $(GOSCALEIO_DIR); \
-	elif [ "$(GOSCALEIO_CLONED_BRANCH)" != "$(GOSCALEIO_BRANCH)" ];then \
-		git --git-dir=$(GOSCALEIO_DIR)/.git --work-tree=$(GOSCALEIO_DIR) fetch origin; \
-		git --git-dir=$(GOSCALEIO_DIR)/.git --work-tree=$(GOSCALEIO_DIR) checkout $(GOSCALEIO_BRANCH); \
-	fi
 	@$(foreach svc,$(shell ls cmd), CGO_ENABLED=0 GOOS=linux go build -o ./cmd/${svc}/bin/service ./cmd/${svc}/;)
 
 .PHONY: clean
