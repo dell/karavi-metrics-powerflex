@@ -67,12 +67,14 @@ jobs:
         id: go
       - name: Checkout the code
         uses: actions/checkout@v2
+      - name: Install Mockgen
+        run: go get github.com/golang/mock/mockgen@v1.4.4
       - name: Get dependencies
         run:  go mod download
-      - name: Build karavi-topology Docker Image
+      - name: Build karavi-powerflex-metrics Docker Image
         run: make clean build docker  
       - name: Image scanner
         uses: Azure/container-scan@v0
         with:
-          image-name: karavi-topology
+          image-name: karavi-powerflex-metrics
           severity-threshold: MEDIUM
