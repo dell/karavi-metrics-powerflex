@@ -2,8 +2,6 @@ module github.com/dell/karavi-powerflex-metrics
 
 go 1.14
 
-replace github.com/dell/goscaleio => ../goscaleio
-
 require (
 	github.com/dell/goscaleio v1.2.0
 	github.com/golang/mock v1.4.3
