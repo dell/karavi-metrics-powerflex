@@ -107,9 +107,9 @@ Once all prerequisites are on the Linux host, follow the steps below to clone an
 __Note:__ If you are using a local insecure docker registry, ensure you configure the insecure registries on each of the Kubernetes worker nodes to allow access to the local docker repository
 
 ## Deploying Karavi PowerFlex Metrics
-Karavi PowerFlex Metrics is deployed using Helm.  Usage information and available release versions can be found here: https://github.com/dell/helm-charts/charts/karavi-powerflex-metrics.
+Karavi PowerFlex Metrics is deployed using Helm.  Usage information and available release versions can be found here: https://github.com/dell/helm-charts/tree/main/charts/karavi-powerflex-metrics.
 
-If you built the Karavi PowerFlex Metrics Docker image and pushed it to a local registry, you can deploy it using the same Helm chart above.  You simply need to override the helm chart value pointing to where the Karavi PowerFlex Metrics image lives.  See https://github.com/dell/helm-charts/charts/karavi-powerflex-metrics for more details.
+If you built the Karavi PowerFlex Metrics Docker image and pushed it to a local registry, you can deploy it using the same Helm chart above.  You simply need to override the helm chart value pointing to where the Karavi PowerFlex Metrics image lives.  See https://github.com/dell/helm-charts/tree/main/charts/karavi-powerflex-metrics for more details.
 
 ## Testing Karavi PowerFlex Metrics
 
