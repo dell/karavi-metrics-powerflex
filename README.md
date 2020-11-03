@@ -9,7 +9,7 @@ You may obtain a copy of the License at
 -->
 # Karavi PowerFlex Metrics
 
-Karavi PowerFlex Metrics is part of the Karavi open source suite of Kubernetes storage enablers for Dell EMC products. See if it finds this 10.10.10.10 Another change.
+Karavi PowerFlex Metrics is part of the Karavi open source suite of Kubernetes storage enablers for Dell EMC products. See if it finds this 10.10.10.10 
 
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](CODE_OF_CONDUCT.md) 
 [![License](https://img.shields.io/github/license/dell/karavi-powerflex-metrics)](LICENSE)
