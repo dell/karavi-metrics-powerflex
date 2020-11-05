@@ -152,22 +152,22 @@ Make sure that the title for your pull request uses the same format as the subje
 GitHub Actions are used to enforce quality gates when a pull request is created and when any commit is made to the pull request.
 
 #### Security scans
-This GitHub action checks security vulnerablity and malwares in code, modules, images, 3rd party libraries.
+This GitHub action checks [security](https://github.com/securego/gosec) vulnerablity and [malwares](https://github.com/dell/common-github-actions/tree/main/malware-scanner) in code, modules, [images](https://github.com/Azure/container-scan), 3rd party libraries.
 
 #### Code vet
-This GitHub action analyzes source code to report suspicious constructs such as Printf calls whose arguments do not aligh with format string, abnormal or not used code in pull request.
+This GitHub [action](https://github.com/dell/common-github-actions/tree/main/go-code-formatter-linter-vetter) analyzes source code to report suspicious constructs such as Printf calls whose arguments do not aligh with format string, abnormal or not used code in pull request. Refer Go [vet](https://golang.org/cmd/vet/)
 
 #### Code lint
-This Github action analyzes source code to flag programming errors, stylistics errors, and suspicious contructs. 
+This Github [action](https://github.com/dell/common-github-actions/tree/main/go-code-formatter-linter-vetter) analyzes source code to flag programming errors, stylistics errors, and suspicious contructs. Refer go [lint](https://github.com/golang/lint)
 
 #### Code format
-This GitHub action analyzes source code to flag formatting errors.
+This GitHub [action](https://github.com/dell/common-github-actions/tree/main/go-code-formatter-linter-vetter) analyzes source code to flag formatting errors. Refer go [format](https://golang.org/cmd/gofmt/)
 
 #### Code sanitization
-This GitHub action analyzes source code for forbidden words and text. Forbidden words include such as non-inclusive language.
+This GitHub [action](https://github.com/dell/common-github-actions/tree/main/code-sanitizer) analyzes source code for forbidden words and text. Forbidden words include such as non-inclusive language.
 
 #### Code build/test/coverage
-This GitHub action runs Go unit tests and check that code coverage per package meets a configured threshold. Flags error if given pull request do not meets the test coverage threshold and blocks the merge of pull request.
+This GitHub [action](https://github.com/dell/common-github-actions/tree/main/go-code-tester) runs Go unit tests and check that code coverage per package meets a configured threshold. Flags error if given pull request do not meets the test coverage threshold and blocks the merge of pull request.
 
 # Code Reviews
 
