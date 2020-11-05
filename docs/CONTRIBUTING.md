@@ -11,7 +11,6 @@ Become one of the contributors to this project! We thrive to build a welcoming a
 * [Your first contribution](#Your-first-contribution)
 * [Branching Strategy](#Branching-strategy)
 * [Signing your commits](#Signing-your-commits)
-* [Signing a commit](#Signing-a-commit)
 * [Pull requests](#Pull-requests)
 * [Code reviews](#Code-reviews)
 * [Code Style](#Code-Style)
@@ -105,7 +104,7 @@ We require that developers sign off their commits to certify that they have perm
 
 GitHub will prevent a pull request from being merged if there are any unsigned commits.
 
-# Signing a commit
+## Signing a commit
 
 GPG (GNU Privacy Guard) will be used to sign commits.  Follow the instructions [here](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/signing-commits) to create a GPG key and configure your GitHub account to use that key.
 
