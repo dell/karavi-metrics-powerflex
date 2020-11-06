@@ -101,7 +101,7 @@ We are following a scaled trunk branching strategy where short-lived branches ar
 5. Open a [pull request](#pull-requests) between your branch and the upstream main branch.
 6. Once your pull request has merged, your branch can be deleted.
 
-Release branches will be created from the main branch near the time of a planned release when all features are completed. Only critical bug fixes will be merged into the feature branch at this time. All other bug fixes and features can continue to be merged into the main branch. When a feature branch is stable, the branch will be tagged for release and the release branch will be deleted.
+Release branches will be created from the main branch near the time of a planned release when all features are completed. Only critical bug fixes will be merged into the feature branch at this time. All other bug fixes and features can continue to be merged into the main branch. When a release branch is stable, the branch will be tagged for release.
 
 # Signing your commits
 
