@@ -88,6 +88,11 @@ We are following a scaled trunk branching strategy where short-lived branches ar
 |  Feature     |  feature-9-olp-support            |  "9" referring to GitHub issue ID         |
 |  Bug Fix     |  bugfix-110-remove-docker-compose |  "110" referring to GitHub issue ID       |
 
+#### Branch Types
+- A release branch is a branch created from main that will be solely used for release a Karavi version. Only critical bug fixes will be merged into this branch.
+- Bug Fix branch is a branch which is created for the purpose of fixing the given defect/issue.
+- Feature branch is created for a feature development purpose.
+
 ## Steps to create a branch for a bug fix or feature:
 1. Fork the repository.
 2. Create a branch off of the main branch. The branch name should follow [branch naming convention](#branch-naming-convention).
@@ -149,19 +154,22 @@ We use the pull request title when we generate change logs for releases. As such
 Make sure that the title for your pull request uses the same format as the subject line in the commit message.
 
 ## Quality Gates for pull request
-GitHub Actions are used to enforce quality gates when a pull request is created and when any commit is made to the pull request.
+Following GitHub Actions are used to enforce quality gates when a pull request is created or when any commit is made to the pull request. These GitHub Actions enforced our minimum code quality requirement for any code that get check into Karavi. If any of the gate fails, it is expected that contributor will look into the check log, understand the problem and resolve the issue.
 
 #### Security scans
-This GitHub action checks [security](https://github.com/securego/gosec) vulnerablity and [malwares](https://github.com/dell/common-github-actions/tree/main/malware-scanner) in code, modules, [images](https://github.com/Azure/container-scan), 3rd party libraries.
+To check the security vulnerability, Karavi has following GitHub Actions that will be run when a pull request is open.
+- [Golang Security Checker](https://github.com/securego/gosec) inspects source code for security vulnerability by scanning the Go AST.
+- [Malwares](https://github.com/dell/common-github-actions/tree/main/malware-scanner) inspects source code for malwares.
+- Container images are scans(https://github.com/Azure/container-scan) for security vulnerability.
 
 #### Code vet
 This GitHub [action](https://github.com/dell/common-github-actions/tree/main/go-code-formatter-linter-vetter) analyzes source code to report suspicious constructs such as Printf calls whose arguments do not aligh with format string, abnormal or not used code in pull request. Refer Go [vet](https://golang.org/cmd/vet/)
 
 #### Code lint
-This Github [action](https://github.com/dell/common-github-actions/tree/main/go-code-formatter-linter-vetter) analyzes source code to flag programming errors, stylistics errors, and suspicious contructs. Refer go [lint](https://github.com/golang/lint)
+This Github [action](https://github.com/dell/common-github-actions/tree/main/go-code-formatter-linter-vetter) analyzes source code to flag programming errors, stylistics errors, and suspicious contructs. Refer Go [lint](https://github.com/golang/lint)
 
 #### Code format
-This GitHub [action](https://github.com/dell/common-github-actions/tree/main/go-code-formatter-linter-vetter) analyzes source code to flag formatting errors. Refer go [format](https://golang.org/cmd/gofmt/)
+This GitHub [action](https://github.com/dell/common-github-actions/tree/main/go-code-formatter-linter-vetter) analyzes source code to flag formatting errors. Refer Go [format](https://golang.org/cmd/gofmt/)
 
 #### Code sanitization
 This GitHub [action](https://github.com/dell/common-github-actions/tree/main/code-sanitizer) analyzes source code for forbidden words and text. Forbidden words include such as non-inclusive language.
@@ -175,7 +183,7 @@ All submissions, including submissions by project members, require review. We us
 
 A pull request must satisfy following for it to be merged:
 - All [quality check gates](#Quality-gates-for-pull-request) are passed.
-- A pull request will require 2 maintainer approvals.
+- A pull request will require at least 2 maintainer approvals.
 - Maintainer must perform a code review and ensure there is no malicious code.
 - Maintainer must run a suite of tests that verify the quality of the code being submitted, and update the contributor if there are any failures.
 - If any commits are made after the PR has been approved, the PR approval will automatically be removed and the above process must happen again
