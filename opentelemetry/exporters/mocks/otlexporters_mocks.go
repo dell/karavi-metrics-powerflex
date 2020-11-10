@@ -6,6 +6,7 @@ package exportermocks
 
 import (
 	gomock "github.com/golang/mock/gomock"
+	otlp "go.opentelemetry.io/otel/exporters/otlp"
 	reflect "reflect"
 )
 
@@ -33,17 +34,21 @@ func (m *MockOtlexporter) EXPECT() *MockOtlexporterMockRecorder {
 }
 
 // InitExporter mocks base method
-func (m *MockOtlexporter) InitExporter() error {
+func (m *MockOtlexporter) InitExporter(arg0 ...otlp.ExporterOption) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InitExporter")
+	varargs := []interface{}{}
+	for _, a := range arg0 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "InitExporter", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // InitExporter indicates an expected call of InitExporter
-func (mr *MockOtlexporterMockRecorder) InitExporter() *gomock.Call {
+func (mr *MockOtlexporterMockRecorder) InitExporter(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitExporter", reflect.TypeOf((*MockOtlexporter)(nil).InitExporter))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitExporter", reflect.TypeOf((*MockOtlexporter)(nil).InitExporter), arg0...)
 }
 
 // StopExporter mocks base method

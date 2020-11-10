@@ -19,6 +19,7 @@ import (
 	"github.com/dell/karavi-powerflex-metrics/internal/service"
 	pflexServices "github.com/dell/karavi-powerflex-metrics/internal/service"
 	otlexporters "github.com/dell/karavi-powerflex-metrics/opentelemetry/exporters"
+	"go.opentelemetry.io/otel/exporters/otlp"
 
 	sio "github.com/dell/goscaleio"
 )
@@ -43,6 +44,11 @@ var (
 	ConfigValidatorFunc func(*Config) error = ValidateConfig
 )
 
+type ExporterConfig struct {
+	PathToCollectorCert string
+	Options             []otlp.ExporterOption
+}
+
 // Config holds data that will be used by the service
 type Config struct {
 	SDCTickInterval           time.Duration
@@ -58,6 +64,7 @@ type Config struct {
 	SDCMetricsEnabled         bool
 	VolumeMetricsEnabled      bool
 	StoragePoolMetricsEnabled bool
+	ExporterConfig            ExporterConfig
 }
 
 // Run is the entry point for starting the service
@@ -81,7 +88,7 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 	}()
 
 	go func() {
-		errCh <- exporter.InitExporter()
+		errCh <- exporter.InitExporter(config.ExporterConfig.Options...)
 	}()
 
 	defer exporter.StopExporter()
