@@ -163,7 +163,7 @@
         ],
         "targets": [
           {
-            "expr": "StoragePoolTotalLogicalCapacity{Driver=~\"$Driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"}\r",
+            "expr": "storage_pooltotal_logical_capacity{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"}\r",
             "format": "table",
             "instant": true,
             "interval": "",
@@ -171,7 +171,7 @@
             "refId": "A"
           },
           {
-            "expr": "StoragePoolLogicalCapacityAvailable{Driver=~\"$Driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"}\r",
+            "expr": "storage_poollogical_capacity_available{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"}\r",
             "format": "table",
             "instant": true,
             "interval": "",
@@ -179,7 +179,7 @@
             "refId": "B"
           },
           {
-            "expr": "StoragePoolLogicalProvisioned{Driver=~\"$Driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"}",
+            "expr": "storage_poollogical_provisioned{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"}",
             "format": "table",
             "instant": true,
             "interval": "",
@@ -223,10 +223,10 @@
             "options": {
               "include": {
                 "names": [
-                  "Driver",
-                  "StorageClass",
-                  "StoragePool",
-                  "StorageSystemName",
+                  "driver",
+                  "storage_class",
+                  "storage_pool",
+                  "storage_system_name",
                   "Value #A",
                   "Value #C",
                   "Value #B"
@@ -305,7 +305,7 @@
         "targets": [
           {
             "alias": "$tag_source",
-            "expr": "avg by (StoragePool) (StoragePoolLogicalCapacityInUse{Driver=~\"$Driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"}*100 / StoragePoolTotalLogicalCapacity{Driver=~\"$Driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"})",
+            "expr": "avg by (storage_pool) (storage_poollogical_capacity_in_use{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"}*100 / storage_pooltotal_logical_capacity{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
             "format": "time_series",
             "groupBy": [
               {
@@ -324,7 +324,7 @@
             "instant": true,
             "interval": "",
             "intervalFactor": 1,
-            "legendFormat": "{{StoragePool}}",
+            "legendFormat": "{{storage_pool}}",
             "orderByTime": "ASC",
             "policy": "default",
             "rawQuery": true,
@@ -375,8 +375,8 @@
         },
         "id": 55,
         "panels": [],
-        "repeat": "StoragePool",
-        "title": "$StoragePool",
+        "repeat": "storage_pool",
+        "title": "$storage_pool",
         "type": "row"
       },
       {
@@ -445,7 +445,7 @@
         "targets": [
           {
             "alias": "Total Capacity",
-            "expr": "avg by (StoragePool) (StoragePoolTotalLogicalCapacity{Driver=~\"$Driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"})",
+            "expr": "avg by (storage_pool) (storage_pooltotal_logical_capacity{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
             "groupBy": [
               {
                 "params": [
@@ -476,7 +476,7 @@
           },
           {
             "alias": "Free Capacity",
-            "expr": "avg by (StoragePool) (StoragePoolLogicalCapacityAvailable{Driver=~\"$Driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"})",
+            "expr": "avg by (storage_pool) (storage_poollogical_capacity_available{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
             "groupBy": [
               {
                 "params": [
@@ -508,7 +508,7 @@
           },
           {
             "alias": "Provisioned",
-            "expr": "avg by (StoragePool) (StoragePoolLogicalProvisioned{Driver=~\"$Driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"})",
+            "expr": "avg by (storage_pool) (storage_poollogical_provisioned{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
             "groupBy": [
               {
                 "params": [
@@ -588,7 +588,7 @@
         "targets": [
           {
             "alias": "Used Capacity",
-            "expr": "avg by (StoragePool) (StoragePoolLogicalCapacityInUse{Driver=~\"$Driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"})",
+            "expr": "avg by (storage_pool) (storage_poollogical_capacity_in_use{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
             "groupBy": [
               {
                 "params": [
@@ -633,7 +633,7 @@
           },
           {
             "alias": "Free Capacity",
-            "expr": "avg by (StoragePool) (StoragePoolLogicalCapacityAvailable{Driver=~\"$Driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"})",
+            "expr": "avg by (storage_pool) (storage_poollogical_capacity_available{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
             "groupBy": [
               {
                 "params": [
@@ -700,14 +700,14 @@
             ]
           },
           "datasource": "Prometheus",
-          "definition": "label_values(StorageClass)",
+          "definition": "label_values(storage_class)",
           "hide": 0,
           "includeAll": true,
           "label": null,
           "multi": true,
-          "name": "StorageClass",
+          "name": "storage_class",
           "options": [],
-          "query": "label_values(StorageClass)",
+          "query": "label_values(storage_class)",
           "refresh": 1,
           "regex": "",
           "skipUrlSync": false,
@@ -729,14 +729,14 @@
             ]
           },
           "datasource": "Prometheus",
-          "definition": "label_values(StoragePool)",
+          "definition": "label_values(storage_pool)",
           "hide": 0,
           "includeAll": true,
           "label": null,
           "multi": true,
-          "name": "StoragePool",
+          "name": "storage_pool",
           "options": [],
-          "query": "label_values(StoragePool)",
+          "query": "label_values(storage_pool)",
           "refresh": 1,
           "regex": "",
           "skipUrlSync": false,
@@ -755,14 +755,14 @@
             "value": "$__all"
           },
           "datasource": "Prometheus",
-          "definition": "label_values(Driver)",
+          "definition": "label_values(driver)",
           "hide": 0,
           "includeAll": true,
           "label": null,
           "multi": true,
-          "name": "Driver",
+          "name": "driver",
           "options": [],
-          "query": "label_values(Driver)",
+          "query": "label_values(driver)",
           "refresh": 1,
           "regex": "",
           "skipUrlSync": false,
@@ -781,14 +781,14 @@
             "value": "$__all"
           },
           "datasource": "Prometheus",
-          "definition": "label_values(StorageSystemName)",
+          "definition": "label_values(storage_system_name)",
           "hide": 0,
           "includeAll": true,
           "label": null,
           "multi": true,
-          "name": "StorageSystemName",
+          "name": "storage_system_name",
           "options": [],
-          "query": "label_values(StorageSystemName)",
+          "query": "label_values(storage_system_name)",
           "refresh": 1,
           "regex": "",
           "skipUrlSync": false,

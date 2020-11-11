@@ -22,7 +22,7 @@
     {
       "aliasColors": {
         "Average": "dark-red",
-        "Average ReadIOPS": "dark-red"
+        "Average read_iops": "dark-red"
       },
       "bars": false,
       "dashLength": 10,
@@ -69,18 +69,18 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "PowerFlexExportNodeReadIOPS{PlotWithMean=~\"($ShowMean)\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"} and topk($TopX, avg_over_time(PowerFlexExportNodeReadIOPS{PlotWithMean=~ \"($ShowMean)\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"}[$TimeFrame]))",
+          "expr": "powerflex_export_node_read_iops{plot_with_mean=~\"($ShowMean)\", name=~\"$Node_name\", ip =~\"($Node_ip)\"} and topk($TopX, avg_over_time(powerflex_export_node_read_iops{plot_with_mean=~ \"($ShowMean)\", name=~\"$Node_name\", ip =~\"($Node_ip)\"}[$TimeFrame]))",
           "interval": "",
-          "legendFormat": "{{Name}}",
+          "legendFormat": "{{name}}",
           "refId": "A"
         },
         {
-          "expr": "sum(PowerFlexExportNodeReadIOPS{PlotWithMean=~\"($ShowMean)|No\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"}) / count(PowerFlexExportNodeReadIOPS{PlotWithMean=~\"($ShowMean)|No\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"})",
+          "expr": "sum(powerflex_export_node_read_iops{plot_with_mean=~\"($ShowMean)|No\", name=~\"$Node_name\", ip =~\"($Node_ip)\"}) / count(powerflex_export_node_read_iops{plot_with_mean=~\"($ShowMean)|No\", name=~\"$Node_name\", ip =~\"($Node_ip)\"})",
           "format": "time_series",
           "instant": false,
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "Average ReadIOPS",
+          "legendFormat": "Average read_iops",
           "refId": "B"
         }
       ],
@@ -174,13 +174,13 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "PowerFlexExportNodeWriteIOPS{PlotWithMean=~\"($ShowMean)\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"} and topk($TopX, avg_over_time(PowerFlexExportNodeWriteIOPS{PlotWithMean=~\"($ShowMean)\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"}[$TimeFrame]))",
+          "expr": "powerflex_export_node_write_iops{plot_with_mean=~\"($ShowMean)\", name=~\"$Node_name\", ip =~\"($Node_ip)\"} and topk($TopX, avg_over_time(powerflex_export_node_write_iops{plot_with_mean=~\"($ShowMean)\", name=~\"$Node_name\", ip =~\"($Node_ip)\"}[$TimeFrame]))",
           "interval": "",
-          "legendFormat": "{{Name}}",
+          "legendFormat": "{{name}}",
           "refId": "A"
         },
         {
-          "expr": "sum(PowerFlexExportNodeWriteIOPS{PlotWithMean=~\"($ShowMean)|No\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"}) / count(PowerFlexExportNodeWriteIOPS{PlotWithMean=~\"($ShowMean)|No\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"})",
+          "expr": "sum(powerflex_export_node_write_iops{plot_with_mean=~\"($ShowMean)|No\", name=~\"$Node_name\", ip =~\"($Node_ip)\"}) / count(powerflex_export_node_write_iops{plot_with_mean=~\"($ShowMean)|No\", name=~\"$Node_name\", ip =~\"($Node_ip)\"})",
           "interval": "",
           "legendFormat": "Average WriteIOP",
           "refId": "B"
@@ -229,7 +229,7 @@
     },
     {
       "aliasColors": {
-        "Average ReadLatency": "dark-red"
+        "Average read_latency": "dark-red"
       },
       "bars": false,
       "dashLength": 10,
@@ -277,15 +277,15 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "PowerFlexExportNodeReadLatency{PlotWithMean=~\"($ShowMean)\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"} and topk($TopX, avg_over_time(PowerFlexExportNodeReadLatency{PlotWithMean=~\"($ShowMean)\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"}[$TimeFrame]))",
+          "expr": "powerflex_export_node_read_latency{plot_with_mean=~\"($ShowMean)\", name=~\"$Node_name\", ip =~\"($Node_ip)\"} and topk($TopX, avg_over_time(powerflex_export_node_read_latency{plot_with_mean=~\"($ShowMean)\", name=~\"$Node_name\", ip =~\"($Node_ip)\"}[$TimeFrame]))",
           "interval": "",
-          "legendFormat": "{{Name}}",
+          "legendFormat": "{{name}}",
           "refId": "A"
         },
         {
-          "expr": "sum(PowerFlexExportNodeReadLatency{PlotWithMean=~\"($ShowMean)|No\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"}) / count(PowerFlexExportNodeReadLatency{PlotWithMean=~\"($ShowMean)|No\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"})",
+          "expr": "sum(powerflex_export_node_read_latency{plot_with_mean=~\"($ShowMean)|No\", name=~\"$Node_name\", ip =~\"($Node_ip)\"}) / count(powerflex_export_node_read_latency{plot_with_mean=~\"($ShowMean)|No\", name=~\"$Node_name\", ip =~\"($Node_ip)\"})",
           "interval": "",
-          "legendFormat": "Average ReadLatency",
+          "legendFormat": "Average read_latency",
           "refId": "B"
         }
       ],
@@ -332,7 +332,7 @@
     },
     {
       "aliasColors": {
-        "Average WriteLatency": "dark-red"
+        "Average write_latency": "dark-red"
       },
       "bars": false,
       "dashLength": 10,
@@ -379,15 +379,15 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "PowerFlexExportNodeWriteLatency{PlotWithMean=~\"($ShowMean)\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"} and topk($TopX, avg_over_time(PowerFlexExportNodeWriteLatency{PlotWithMean=~\"($ShowMean)\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"}[$TimeFrame]))",
+          "expr": "powerflex_export_node_write_latency{plot_with_mean=~\"($ShowMean)\", name=~\"$Node_name\", ip =~\"($Node_ip)\"} and topk($TopX, avg_over_time(powerflex_export_node_write_latency{plot_with_mean=~\"($ShowMean)\", name=~\"$Node_name\", ip =~\"($Node_ip)\"}[$TimeFrame]))",
           "interval": "",
-          "legendFormat": "{{Name}}",
+          "legendFormat": "{{name}}",
           "refId": "A"
         },
         {
-          "expr": "sum(PowerFlexExportNodeWriteLatency{PlotWithMean=~\"($ShowMean)|No\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"}) / count(PowerFlexExportNodeWriteLatency{PlotWithMean=~\"($ShowMean)|No\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"})",
+          "expr": "sum(powerflex_export_node_write_latency{plot_with_mean=~\"($ShowMean)|No\", name=~\"$Node_name\", ip =~\"($Node_ip)\"}) / count(powerflex_export_node_write_latency{plot_with_mean=~\"($ShowMean)|No\", name=~\"$Node_name\", ip =~\"($Node_ip)\"})",
           "interval": "",
-          "legendFormat": "Average WriteLatency",
+          "legendFormat": "Average write_latency",
           "refId": "B"
         }
       ],
@@ -481,13 +481,13 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "PowerFlexExportNodeReadBW{PlotWithMean=~\"($ShowMean)\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"} and topk($TopX, avg_over_time(PowerFlexExportNodeReadBW{PlotWithMean=~\"($ShowMean)\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"}[$TimeFrame]))",
+          "expr": "powerflex_export_node_read_bw{plot_with_mean=~\"($ShowMean)\", name=~\"$Node_name\", ip =~\"($Node_ip)\"} and topk($TopX, avg_over_time(powerflex_export_node_read_bw{plot_with_mean=~\"($ShowMean)\", name=~\"$Node_name\", ip =~\"($Node_ip)\"}[$TimeFrame]))",
           "interval": "",
-          "legendFormat": "{{Name}}",
+          "legendFormat": "{{name}}",
           "refId": "A"
         },
         {
-          "expr": "sum(PowerFlexExportNodeReadBW{PlotWithMean=~\"($ShowMean)|No\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"}) / count(PowerFlexExportNodeReadBW{PlotWithMean=~\"($ShowMean)|No\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"})",
+          "expr": "sum(powerflex_export_node_read_bw{plot_with_mean=~\"($ShowMean)|No\", name=~\"$Node_name\", ip =~\"($Node_ip)\"}) / count(powerflex_export_node_read_bw{plot_with_mean=~\"($ShowMean)|No\", name=~\"$Node_name\", ip =~\"($Node_ip)\"})",
           "interval": "",
           "legendFormat": "Average Read BW",
           "refId": "B"
@@ -583,13 +583,13 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "PowerFlexExportNodeWriteBW{PlotWithMean=~\"($ShowMean)\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"} and topk($TopX, avg_over_time(PowerFlexExportNodeWriteBW{PlotWithMean=~\"($ShowMean)\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"}[$TimeFrame]))",
+          "expr": "powerflex_export_node_write_bw{plot_with_mean=~\"($ShowMean)\", name=~\"$Node_name\", ip =~\"($Node_ip)\"} and topk($TopX, avg_over_time(powerflex_export_node_write_bw{plot_with_mean=~\"($ShowMean)\", name=~\"$Node_name\", ip =~\"($Node_ip)\"}[$TimeFrame]))",
           "interval": "",
-          "legendFormat": "{{Name}}",
+          "legendFormat": "{{name}}",
           "refId": "A"
         },
         {
-          "expr": "sum(PowerFlexExportNodeWriteBW{PlotWithMean=~\"($ShowMean)|No\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"}) / count(PowerFlexExportNodeWriteBW{PlotWithMean=~\"($ShowMean)|No\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"})",
+          "expr": "sum(powerflex_export_node_write_bw{plot_with_mean=~\"($ShowMean)|No\", name=~\"$Node_name\", ip =~\"($Node_ip)\"}) / count(powerflex_export_node_write_bw{plot_with_mean=~\"($ShowMean)|No\", name=~\"$Node_name\", ip =~\"($Node_ip)\"})",
           "interval": "",
           "legendFormat": "Average Write BW",
           "refId": "B"
@@ -813,14 +813,14 @@
           ]
         },
         "datasource": "Prometheus",
-        "definition": "label_values(Name)",
+        "definition": "label_values(name)",
         "hide": 0,
         "includeAll": true,
-        "label": "Node Name",
+        "label": "Node name",
         "multi": true,
-        "name": "Node_Name",
+        "name": "Node_name",
         "options": [],
-        "query": "label_values(Name)",
+        "query": "label_values(name)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -842,14 +842,14 @@
           ]
         },
         "datasource": "Prometheus",
-        "definition": "label_values(IP)",
+        "definition": "label_values(ip)",
         "hide": 0,
         "includeAll": true,
-        "label": "Node IP",
+        "label": "Node ip",
         "multi": true,
-        "name": "Node_IP",
+        "name": "Node_ip",
         "options": [],
-        "query": "label_values(IP)",
+        "query": "label_values(ip)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
