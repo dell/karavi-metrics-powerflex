@@ -36,7 +36,7 @@ Karavi PowerFlex Metrics current has support for the following Dell EMC storage 
 
 ### OpenTelemetry Collector
 
-[OpenTelemetry](https://blog.newrelic.com/product-news/what-is-opentelemetry/) standardizes how telemetry data can be collected and transferred to various open source observability tools. Karavi PowerFlex Metrics captures telemetry data and pushes it to the Open Telemetry Collector so it can be processed, and exported in an open-source telemetry data format of your choice. Simply point the observability tool of your choice, such as Prometheus, to scrape data from the Open Telemetry collector exporter endpoint.
+[OpenTelemetry](https://blog.newrelic.com/product-news/what-is-opentelemetry/) standardizes how telemetry data can be collected and transferred to various open source observability tools. Karavi PowerFlex Metrics captures telemetry data and pushes it to the Open Telemetry Collector so it can be processed, and exported in an open-source telemetry data format of your choice. Simply point the observability tool of your choice, such as Prometheus, to scrape data from the Open Telemetry collector exporter endpoint. The OpenTelemetry service should be running on the same Kubernetes cluster as the karavi-powerflex-metrics service.
 
 | Supported Version | Image                              | Helm Chart |
 | ----------------- | ---------------------------------- | ---------- |
@@ -46,7 +46,7 @@ The OpenTelemetry Collector must be configured with an exporter that is accessib
 
 ### Prometheus
 
-The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Prometheus to scrape the metrics data from the Open Telemetry Collector.
+The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Prometheus to scrape the metrics data from the Open Telemetry Collector. The Prometheus service should be running on the same Kubernetes cluster as the karavi-powerflex-metrics service.
 
 | Supported Version | Image                   | Helm Chart                                                   |
 | ----------------- | ----------------------- | ------------------------------------------------------------ |
@@ -58,7 +58,7 @@ If you have the Prometheus OpenTelemetry collector exporter configured, you must
 
 #### Grafana
 
-The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require the following Grafana to be deployed in the k8s cluster. You must also have Prometheus and the OpenTelemetry Collector deployed (see above).
+The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require the following Grafana to be deployed in the same Kubernetes cluster as the karavi-powerflex-metrics service. You must also have Prometheus and the OpenTelemetry Collector deployed (see above).
 
 | Supported Version | Image                 | Helm Chart                                                |
 | ----------------- | --------------------- | --------------------------------------------------------- |
