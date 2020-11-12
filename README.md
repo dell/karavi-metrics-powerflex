@@ -34,7 +34,7 @@ Karavi PowerFlex Metrics currently has support for the following Dell EMC storag
 ## Table of Content
 - [Code of Conduct](./docs/CODE_OF_CONDUCT.md)
 - Guides
-  - [Maintainer Guide](./docs/MAINTAINERS.md)
+  - [Maintainer Guide](./docs/MAINTAINER_GUIDE.md)
   - [Committer Guide](./docs/COMMITTER_GUIDE.md)
   - [Contributing Guide](./docs/CONTRIBUTING.md)
   - [Getting Started Guide](./docs/GETTING_STARTED_GUIDE.md)
