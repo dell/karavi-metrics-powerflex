@@ -26,7 +26,7 @@ type OtlCollectorExporter struct {
 
 // InitExporter is the initialization method for the OpenTelemetry Collector exporter
 func (c *OtlCollectorExporter) InitExporter(opts ...otlp.ExporterOption) error {
-	exporter, pusher, err := c.initOTLPExporter()
+	exporter, pusher, err := c.initOTLPExporter(opts...)
 	if err != nil {
 		return err
 	}

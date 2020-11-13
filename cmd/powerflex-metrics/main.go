@@ -11,8 +11,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -31,7 +29,8 @@ import (
 )
 
 const (
-	defaultTickInterval = 5 * time.Second
+	defaultTickInterval      = 5 * time.Second
+	defaultCollectorCertPath = "/etc/ssl/certs/cert.crt"
 )
 
 func main() {
@@ -162,23 +161,21 @@ func main() {
 		}
 	}
 
+	collectorCertPath := os.Getenv("COLLECTOR_CERT_PATH")
+	if len(strings.TrimSpace(collectorCertPath)) < 1 {
+		collectorCertPath = defaultCollectorCertPath
+	}
+
 	exporterConf := entrypoint.ExporterConfig{
 		Options: []otlp.ExporterOption{
 			otlp.WithAddress(collectorAddress),
 		},
 	}
 
-	if mTLS := os.Getenv("MTLS_ENABLED"); mTLS == "true" {
-		//configure mTLS
-	} else if tls := os.Getenv("TLS_ENABLED"); tls == "true" {
-		data, err := ioutil.ReadFile("/etc/ssl/certs/collector-cert.pem")
+	if tls := os.Getenv("TLS_ENABLED"); tls == "true" {
+		transportCreds, err := credentials.NewClientTLSFromFile(collectorCertPath, "")
 		if err != nil {
-			log.Fatal(err)
-		}
-		log.Printf(string(data))
-		transportCreds, err := credentials.NewClientTLSFromFile("/etc/ssl/certs/collector-cert.pem", "")
-		if err != nil {
-			fmt.Printf("Failed to create TLS credentials from certificate %s: %v", "/etc/ssl/certs/collector-cert.pem", err)
+			fmt.Printf("Failed to create TLS credentials from certificate: %v", err)
 			os.Exit(1)
 		}
 		exporterConf.Options = append(exporterConf.Options, otlp.WithTLSCredentials(transportCreds))

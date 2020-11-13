@@ -44,6 +44,7 @@ var (
 	ConfigValidatorFunc func(*Config) error = ValidateConfig
 )
 
+// ExporterConfig holds configuration details for the OpenTelemetry exporter
 type ExporterConfig struct {
 	PathToCollectorCert string
 	Options             []otlp.ExporterOption
