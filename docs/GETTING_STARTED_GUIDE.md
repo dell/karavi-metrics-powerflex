@@ -24,25 +24,7 @@ A Kubernetes cluster with the appropriate version below is required for Karavi P
 
 | Version   | 
 | --------- |
-| 1.16-1.17 |
-
-### Dell EMC Storage and CSI Driver
-
-Karavi PowerFlex Metrics current has support for the following Dell EMC storage systems and associated CSI drivers.  One of the CSI drivers below must be deployed in the k8s cluster.  The k8s cluster must also have access to the associated storage system.
-
-| Dell EMC Storge Product | CSI Driver |
-| ----------------------- | ---------- |
-| PowerFlex v3.0/3.5 | [CSI Driver for PowerFlex v1.1.5+](https://github.com/dell/csi-vxflexos) |
-
-### OpenTelemetry Collector
-
-[OpenTelemetry](https://blog.newrelic.com/product-news/what-is-opentelemetry/) standardizes how telemetry data can be collected and transferred to various open source observability tools. Karavi PowerFlex Metrics captures telemetry data and pushes it to the Open Telemetry Collector so it can be processed, and exported in an open-source telemetry data format of your choice. Simply point the observability tool of your choice, such as Prometheus, to scrape data from the Open Telemetry collector exporter endpoint. The OpenTelemetry service should be running on the same Kubernetes cluster as the karavi-powerflex-metrics service.
-
-| Supported Version | Image                              | Helm Chart |
-| ----------------- | ---------------------------------- | ---------- |
-| 0.4.0             | otel/opentelemetry-collector:0.4.0 | N/A        |
-
-The OpenTelemetry Collector must be configured with an exporter that is accessible at a specific URL. This URL will be scraped by the corresponding backend that has also been deployed. Example: If you have a Prometheus backend, you would configure the OpenTelmetry collector with a Prometheus exporter. In order to access the reference dashboards, you will need to configure the Prometheus OpenTelemetry exporter.
+| 1.17,1.18,1.19 |
 
 ### Prometheus
 
@@ -50,7 +32,7 @@ The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Promet
 
 | Supported Version | Image                   | Helm Chart                                                   |
 | ----------------- | ----------------------- | ------------------------------------------------------------ |
-| 2.19.2            | prom/prometheus:v2.19.2 | https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus |
+| 2.22.0           | prom/prometheus:v2.22.0 | https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus |
 
 **NOTE:** Version 2.19.2 has been qualified with Karavi PowerFlex Metrics but other versions may also work.
 
@@ -62,7 +44,7 @@ The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require the fo
 
 | Supported Version | Image                 | Helm Chart                                                |
 | ----------------- | --------------------- | --------------------------------------------------------- |
-| v.7.1.0+          | grafana/grafana:7.1.0 | https://github.com/grafana/helm-charts/tree/main/charts/grafana |
+| 7.1.0          | grafana/grafana:7.1.0 | https://github.com/grafana/helm-charts/tree/main/charts/grafana |
 
 - Grafana must be configured with the following data sources/plugins:
 
@@ -113,7 +95,7 @@ If you built the Karavi PowerFlex Metrics Docker image and pushed it to a local 
 
 ## Testing Karavi PowerFlex Metrics
 
-From the karavi-powerflex-metrics root directory where the repo was cloned, the unit tests can be exectued as follows:
+From the karavi-powerflex-metrics root directory where the repo was cloned, the unit tests can be executed as follows:
 ```console
 $ make test
 ```
