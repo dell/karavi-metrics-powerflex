@@ -163,7 +163,7 @@
         ],
         "targets": [
           {
-            "expr": "powerflex_storage_pool_total_logical_capacity{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"}\r",
+            "expr": "powerflex_storage_pool_total_logical_capacity_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"}\r",
             "format": "table",
             "instant": true,
             "interval": "",
@@ -171,7 +171,7 @@
             "refId": "A"
           },
           {
-            "expr": "powerflex_storage_pool_logical_capacity_available{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"}\r",
+            "expr": "powerflex_storage_pool_logical_capacity_available_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"}\r",
             "format": "table",
             "instant": true,
             "interval": "",
@@ -179,7 +179,7 @@
             "refId": "B"
           },
           {
-            "expr": "powerflex_storage_pool_logical_provisioned{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"}",
+            "expr": "powerflex_storage_pool_logical_provisioned_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"}",
             "format": "table",
             "instant": true,
             "interval": "",
@@ -305,7 +305,7 @@
         "targets": [
           {
             "alias": "$tag_source",
-            "expr": "avg by (storage_pool) (powerflex_storage_pool_logical_capacity_in_use{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"}*100 / powerflex_storage_pool_total_logical_capacity{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
+            "expr": "avg by (storage_pool) (powerflex_storage_pool_logical_capacity_in_use_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"}*100 / powerflex_storage_pool_total_logical_capacity_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
             "format": "time_series",
             "groupBy": [
               {
@@ -445,7 +445,7 @@
         "targets": [
           {
             "alias": "Total Capacity",
-            "expr": "avg by (storage_pool) (powerflex_storage_pool_total_logical_capacity{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
+            "expr": "avg by (storage_pool) (powerflex_storage_pool_total_logical_capacity_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
             "groupBy": [
               {
                 "params": [
@@ -476,7 +476,7 @@
           },
           {
             "alias": "Free Capacity",
-            "expr": "avg by (storage_pool) (powerflex_storage_pool_logical_capacity_available{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
+            "expr": "avg by (storage_pool) (powerflex_storage_pool_logical_capacity_available_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
             "groupBy": [
               {
                 "params": [
@@ -508,7 +508,7 @@
           },
           {
             "alias": "Provisioned",
-            "expr": "avg by (storage_pool) (powerflex_storage_pool_logical_provisioned{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
+            "expr": "avg by (storage_pool) (powerflex_storage_pool_logical_provisioned_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
             "groupBy": [
               {
                 "params": [
@@ -588,7 +588,7 @@
         "targets": [
           {
             "alias": "Used Capacity",
-            "expr": "avg by (storage_pool) (powerflex_storage_pool_logical_capacity_in_use{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
+            "expr": "avg by (storage_pool) (powerflex_storage_pool_logical_capacity_in_use_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
             "groupBy": [
               {
                 "params": [
@@ -633,7 +633,7 @@
           },
           {
             "alias": "Free Capacity",
-            "expr": "avg by (storage_pool) (powerflex_storage_pool_logical_capacity_available{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
+            "expr": "avg by (storage_pool) (powerflex_storage_pool_logical_capacity_available_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
             "groupBy": [
               {
                 "params": [

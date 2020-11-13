@@ -60,37 +60,37 @@ type CapacityMetrics struct {
 }
 
 func (mw *MetricsWrapper) initMetrics(prefix, metaID string, labels []kv.KeyValue) (*Metrics, error) {
-	unboundReadBW, err := mw.Meter.NewFloat64UpDownCounter(prefix + "read_bw")
+	unboundReadBW, err := mw.Meter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_seconds")
 	if err != nil {
 		return nil, err
 	}
 	readBW := unboundReadBW.Bind(labels...)
 
-	unboundWriteBW, err := mw.Meter.NewFloat64UpDownCounter(prefix + "write_bw")
+	unboundWriteBW, err := mw.Meter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_seconds")
 	if err != nil {
 		return nil, err
 	}
 	writeBW := unboundWriteBW.Bind(labels...)
 
-	unboundReadIOPS, err := mw.Meter.NewFloat64UpDownCounter(prefix + "read_iops")
+	unboundReadIOPS, err := mw.Meter.NewFloat64UpDownCounter(prefix + "read_iops_per_seconds")
 	if err != nil {
 		return nil, err
 	}
 	readIOPS := unboundReadIOPS.Bind(labels...)
 
-	unboundWriteIOPS, err := mw.Meter.NewFloat64UpDownCounter(prefix + "write_iops")
+	unboundWriteIOPS, err := mw.Meter.NewFloat64UpDownCounter(prefix + "write_iops_per_seconds")
 	if err != nil {
 		return nil, err
 	}
 	writeIOPS := unboundWriteIOPS.Bind(labels...)
 
-	unboundReadLatency, err := mw.Meter.NewFloat64UpDownCounter(prefix + "read_latency")
+	unboundReadLatency, err := mw.Meter.NewFloat64UpDownCounter(prefix + "read_latency_milliseconds")
 	if err != nil {
 		return nil, err
 	}
 	readLatency := unboundReadLatency.Bind(labels...)
 
-	unboundWriteLatency, err := mw.Meter.NewFloat64UpDownCounter(prefix + "write_latency")
+	unboundWriteLatency, err := mw.Meter.NewFloat64UpDownCounter(prefix + "write_latency_milliseconds")
 	if err != nil {
 		return nil, err
 	}
@@ -112,25 +112,25 @@ func (mw *MetricsWrapper) initMetrics(prefix, metaID string, labels []kv.KeyValu
 }
 
 func (mw *MetricsWrapper) initCapacityMetrics(prefix, metaID string, labels []kv.KeyValue) (*CapacityMetrics, error) {
-	unboundTotalLogicalCapacity, err := mw.Meter.NewFloat64UpDownCounter(prefix + "total_logical_capacity")
+	unboundTotalLogicalCapacity, err := mw.Meter.NewFloat64UpDownCounter(prefix + "total_logical_capacity_gigabytes")
 	if err != nil {
 		return nil, err
 	}
 	totalLogicalCapacity := unboundTotalLogicalCapacity.Bind(labels...)
 
-	unboundLogicalCapacityAvailable, err := mw.Meter.NewFloat64UpDownCounter(prefix + "logical_capacity_available")
+	unboundLogicalCapacityAvailable, err := mw.Meter.NewFloat64UpDownCounter(prefix + "logical_capacity_available_gigabytes")
 	if err != nil {
 		return nil, err
 	}
 	logicalCapacityAvailable := unboundLogicalCapacityAvailable.Bind(labels...)
 
-	unboundLogicalCapacityInUse, err := mw.Meter.NewFloat64UpDownCounter(prefix + "logical_capacity_in_use")
+	unboundLogicalCapacityInUse, err := mw.Meter.NewFloat64UpDownCounter(prefix + "logical_capacity_in_use_gigabytes")
 	if err != nil {
 		return nil, err
 	}
 	logicalCapacityInUse := unboundLogicalCapacityInUse.Bind(labels...)
 
-	unboundLogicalProvisioned, err := mw.Meter.NewFloat64UpDownCounter(prefix + "logical_provisioned")
+	unboundLogicalProvisioned, err := mw.Meter.NewFloat64UpDownCounter(prefix + "logical_provisioned_gigabytes")
 	if err != nil {
 		return nil, err
 	}

@@ -21,7 +21,7 @@
     {
       "aliasColors": {
         "Average": "dark-red",
-        "Average read_iops": "dark-red"
+        "Average read_iops_per_seconds": "dark-red"
       },
       "bars": false,
       "dashLength": 10,
@@ -68,18 +68,18 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "powerflex_volume_read_iops{plot_with_mean=~\"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",  mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"} and topk($TopX, avg_over_time(powerflex_volume_read_iops{plot_with_mean=~ \"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",  mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}[$TimeFrame]))",
+          "expr": "powerflex_volume_read_iops_per_seconds{plot_with_mean=~\"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",  mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"} and topk($TopX, avg_over_time(powerflex_volume_read_iops_per_seconds{plot_with_mean=~ \"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",  mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}[$TimeFrame]))",
           "interval": "",
           "legendFormat": "{{volume_name}}",
           "refId": "A"
         },
         {
-          "expr": "sum(powerflex_volume_read_iops{plot_with_mean=~\"($show_mean)|No\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",  mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}) / count(powerflex_volume_read_iops{plot_with_mean=~\"($show_mean)|No\",volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"})",
+          "expr": "sum(powerflex_volume_read_iops_per_seconds{plot_with_mean=~\"($show_mean)|No\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",  mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}) / count(powerflex_volume_read_iops_per_seconds{plot_with_mean=~\"($show_mean)|No\",volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"})",
           "format": "time_series",
           "instant": false,
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "Average read_iops",
+          "legendFormat": "Average read_iops_per_seconds",
           "refId": "B"
         }
       ],
@@ -173,13 +173,13 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "powerflex_volume_write_iops{plot_with_mean=~\"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"} and topk($TopX, avg_over_time(powerflex_volume_write_iops{plot_with_mean=~\"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}[$TimeFrame]))",
+          "expr": "powerflex_volume_write_iops_per_seconds{plot_with_mean=~\"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"} and topk($TopX, avg_over_time(powerflex_volume_write_iops_per_seconds{plot_with_mean=~\"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}[$TimeFrame]))",
           "interval": "",
           "legendFormat": "{{volume_name}}",
           "refId": "A"
         },
         {
-          "expr": "sum(powerflex_volume_write_iops{plot_with_mean=~\"($show_mean)|No\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",  mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}) / count(powerflex_volume_write_iops{plot_with_mean=~\"($show_mean)|No\",volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"})",
+          "expr": "sum(powerflex_volume_write_iops_per_seconds{plot_with_mean=~\"($show_mean)|No\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",  mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}) / count(powerflex_volume_write_iops_per_seconds{plot_with_mean=~\"($show_mean)|No\",volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"})",
           "interval": "",
           "legendFormat": "Average WriteIOP",
           "refId": "B"
@@ -228,7 +228,7 @@
     },
     {
       "aliasColors": {
-        "Average read_latency": "dark-red"
+        "Average read_latency_milliseconds": "dark-red"
       },
       "bars": false,
       "dashLength": 10,
@@ -276,15 +276,15 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "powerflex_volume_read_latency{plot_with_mean=~\"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"} and topk($TopX, avg_over_time(powerflex_volume_read_latency{plot_with_mean=~\"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}[$TimeFrame]))",
+          "expr": "powerflex_volume_read_latency_milliseconds{plot_with_mean=~\"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"} and topk($TopX, avg_over_time(powerflex_volume_read_latency_milliseconds{plot_with_mean=~\"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}[$TimeFrame]))",
           "interval": "",
           "legendFormat": "{{volume_name}}",
           "refId": "A"
         },
         {
-          "expr": "sum(powerflex_volume_read_latency{plot_with_mean=~\"($show_mean)|No\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",  mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}) / count(powerflex_volume_read_latency{plot_with_mean=~\"($show_mean)|No\",volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"})",
+          "expr": "sum(powerflex_volume_read_latency_milliseconds{plot_with_mean=~\"($show_mean)|No\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",  mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}) / count(powerflex_volume_read_latency_milliseconds{plot_with_mean=~\"($show_mean)|No\",volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"})",
           "interval": "",
-          "legendFormat": "Average read_latency",
+          "legendFormat": "Average read_latency_milliseconds",
           "refId": "B"
         }
       ],
@@ -331,7 +331,7 @@
     },
     {
       "aliasColors": {
-        "Average write_latency": "dark-red"
+        "Average write_latency_milliseconds": "dark-red"
       },
       "bars": false,
       "dashLength": 10,
@@ -378,15 +378,15 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "powerflex_volume_write_latency{plot_with_mean=~\"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"} and topk($TopX, avg_over_time(powerflex_volume_write_latency{plot_with_mean=~\"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}[$TimeFrame]))",
+          "expr": "powerflex_volume_write_latency_milliseconds{plot_with_mean=~\"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"} and topk($TopX, avg_over_time(powerflex_volume_write_latency_milliseconds{plot_with_mean=~\"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}[$TimeFrame]))",
           "interval": "",
           "legendFormat": "{{volume_name}}",
           "refId": "A"
         },
         {
-          "expr": "sum(powerflex_volume_write_latency{plot_with_mean=~\"($show_mean)|No\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",  mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}) / count(powerflex_volume_write_latency{plot_with_mean=~\"($show_mean)|No\",volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"})",
+          "expr": "sum(powerflex_volume_write_latency_milliseconds{plot_with_mean=~\"($show_mean)|No\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",  mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}) / count(powerflex_volume_write_latency_milliseconds{plot_with_mean=~\"($show_mean)|No\",volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"})",
           "interval": "",
-          "legendFormat": "Average write_latency",
+          "legendFormat": "Average write_latency_milliseconds",
           "refId": "B"
         }
       ],
@@ -433,7 +433,7 @@
     },
     {
       "aliasColors": {
-        "Average read_bw": "dark-red"
+        "Average read_bw_megabytes_per_seconds": "dark-red"
       },
       "bars": false,
       "dashLength": 10,
@@ -480,15 +480,15 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "powerflex_volume_read_bw{plot_with_mean=~\"($show_mean)\",volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"} and topk($TopX, avg_over_time(powerflex_volume_read_bw{plot_with_mean=~\"($show_mean)\",volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}[$TimeFrame]))",
+          "expr": "powerflex_volume_read_bw_megabytes_per_seconds{plot_with_mean=~\"($show_mean)\",volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"} and topk($TopX, avg_over_time(powerflex_volume_read_bw_megabytes_per_seconds{plot_with_mean=~\"($show_mean)\",volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}[$TimeFrame]))",
           "interval": "",
           "legendFormat": "{{volume_name}}",
           "refId": "A"
         },
         {
-          "expr": "sum(powerflex_volume_read_bw{plot_with_mean=~\"($show_mean)|No\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",  mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}) / count(powerflex_volume_read_bw{plot_with_mean=~\"($show_mean)|No\",volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"})",
+          "expr": "sum(powerflex_volume_read_bw_megabytes_per_seconds{plot_with_mean=~\"($show_mean)|No\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",  mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}) / count(powerflex_volume_read_bw_megabytes_per_seconds{plot_with_mean=~\"($show_mean)|No\",volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"})",
           "interval": "",
-          "legendFormat": "Average read_bw",
+          "legendFormat": "Average read_bw_megabytes_per_seconds",
           "refId": "B"
         }
       ],
@@ -535,7 +535,7 @@
     },
     {
       "aliasColors": {
-        "Average write_bw": "dark-red"
+        "Average write_bw_megabytes_per_seconds": "dark-red"
       },
       "bars": false,
       "dashLength": 10,
@@ -582,15 +582,15 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "powerflex_volume_write_bw{plot_with_mean=~\"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"} and topk($TopX, avg_over_time(powerflex_volume_write_bw{plot_with_mean=~\"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}[$TimeFrame]))",
+          "expr": "powerflex_volume_write_bw_megabytes_per_seconds{plot_with_mean=~\"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"} and topk($TopX, avg_over_time(powerflex_volume_write_bw_megabytes_per_seconds{plot_with_mean=~\"($show_mean)\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}[$TimeFrame]))",
           "interval": "",
           "legendFormat": "{{volume_name}}",
           "refId": "A"
         },
         {
-          "expr": "sum(powerflex_volume_write_bw{plot_with_mean=~\"($show_mean)|No\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",  mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}) / count(powerflex_volume_write_bw{plot_with_mean=~\"($show_mean)|No\",volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"})",
+          "expr": "sum(powerflex_volume_write_bw_megabytes_per_seconds{plot_with_mean=~\"($show_mean)|No\", volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",  mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"}) / count(powerflex_volume_write_bw_megabytes_per_seconds{plot_with_mean=~\"($show_mean)|No\",volume_id=~\"$volume_id\",volume_name=~\"$volume_name\", persistent_volume_name=~\"$PVName\", mapped_node_ids=~\"(.*__)($mapped_node_ids)(__.*)\",mapped_node_ips=~\"(.*__)($mapped_node_ips)(__.*)\"})",
           "interval": "",
-          "legendFormat": "Average write_bw",
+          "legendFormat": "Average write_bw_megabytes_per_seconds",
           "refId": "B"
         }
       ],
@@ -679,14 +679,14 @@
           "value": ["$__all"]
         },
         "datasource": "Prometheus",
-        "definition": "label_values(powerflex_volume_read_bw,volume_id)",
+        "definition": "label_values(powerflex_volume_read_bw_megabytes_per_seconds,volume_id)",
         "hide": 0,
         "includeAll": true,
         "label": "Volume ID",
         "multi": true,
         "name": "volume_id",
         "options": [],
-        "query": "label_values(powerflex_volume_read_bw,volume_id)",
+        "query": "label_values(powerflex_volume_read_bw_megabytes_per_seconds,volume_id)",
         "refresh": 2,
         "refresh_on_load": false,
         "regex": "",
@@ -706,14 +706,14 @@
           "value": ["$__all"]
         },
         "datasource": "Prometheus",
-        "definition": "label_values(powerflex_volume_read_bw,volume_name)",
+        "definition": "label_values(powerflex_volume_read_bw_megabytes_per_seconds,volume_name)",
         "hide": 0,
         "includeAll": true,
         "label": "Volume Name",
         "multi": true,
         "name": "volume_name",
         "options": [],
-        "query": "label_values(powerflex_volume_read_bw,volume_name)",
+        "query": "label_values(powerflex_volume_read_bw_megabytes_per_seconds,volume_name)",
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
@@ -732,14 +732,14 @@
           "value": ["$__all"]
         },
         "datasource": "Prometheus",
-        "definition": "label_values(powerflex_volume_read_bw,persistent_volume_name)",
+        "definition": "label_values(powerflex_volume_read_bw_megabytes_per_seconds,persistent_volume_name)",
         "hide": 0,
         "includeAll": true,
         "label": "PV Name",
         "multi": true,
         "name": "PVName",
         "options": [],
-        "query": "label_values(powerflex_volume_read_bw,persistent_volume_name)",
+        "query": "label_values(powerflex_volume_read_bw_megabytes_per_seconds,persistent_volume_name)",
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
