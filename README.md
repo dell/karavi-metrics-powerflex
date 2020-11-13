@@ -50,6 +50,10 @@ Karavi PowerFlex Metrics currently has support for the following Dell EMC storag
 Don’t hesitate to ask! Contact the team and community on [our support page](./docs/SUPPORT.md).
 Open an issue if you found a bug on [Github Issues](https://github.com/dell/karavi-powerflex-metrics/issues).
 
+## Versioning
+
+This project is adhering to [Semantic Versioning](https://semver.org/). 
+
 ## About
 
 Karavi is 100% open source and community-driven. All components are available
