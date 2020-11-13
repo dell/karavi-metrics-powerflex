@@ -32,7 +32,7 @@ The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Promet
 
 | Supported Version | Image                   | Helm Chart                                                   |
 | ----------------- | ----------------------- | ------------------------------------------------------------ |
-| 2.19.2            | prom/prometheus:v2.19.2 | https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus |
+| 2.22.0           | prom/prometheus:v2.22.0 | https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus |
 
 **NOTE:** Version 2.19.2 has been qualified with Karavi PowerFlex Metrics but other versions may also work.
 
@@ -44,7 +44,7 @@ The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require the fo
 
 | Supported Version | Image                 | Helm Chart                                                |
 | ----------------- | --------------------- | --------------------------------------------------------- |
-| v.7.1.0+          | grafana/grafana:7.1.0 | https://github.com/grafana/helm-charts/tree/main/charts/grafana |
+| 7.1.0          | grafana/grafana:7.1.0 | https://github.com/grafana/helm-charts/tree/main/charts/grafana |
 
 - Grafana must be configured with the following data sources/plugins:
 
@@ -95,7 +95,7 @@ If you built the Karavi PowerFlex Metrics Docker image and pushed it to a local 
 
 ## Testing Karavi PowerFlex Metrics
 
-From the karavi-powerflex-metrics root directory where the repo was cloned, the unit tests can be exectued as follows:
+From the karavi-powerflex-metrics root directory where the repo was cloned, the unit tests can be executed as follows:
 ```console
 $ make test
 ```
