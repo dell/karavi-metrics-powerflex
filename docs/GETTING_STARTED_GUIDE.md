@@ -28,7 +28,7 @@ A Kubernetes cluster with the appropriate version below is required for Karavi P
 
 ### Prometheus
 
-The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Prometheus to scrape the metrics data from the Open Telemetry Collector.
+The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Prometheus to scrape the metrics data from the Open Telemetry Collector. The Prometheus service should be running on the same Kubernetes cluster as the karavi-powerflex-metrics service.
 
 | Supported Version | Image                   | Helm Chart                                                   |
 | ----------------- | ----------------------- | ------------------------------------------------------------ |
@@ -40,7 +40,7 @@ If you have the Prometheus OpenTelemetry collector exporter configured, you must
 
 #### Grafana
 
-The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require the following Grafana to be deployed in the k8s cluster. You must also have Prometheus and the OpenTelemetry Collector deployed (see above).
+The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require the following Grafana to be deployed in the same Kubernetes cluster as the karavi-powerflex-metrics service. You must also have Prometheus and the OpenTelemetry Collector deployed (see above).
 
 | Supported Version | Image                 | Helm Chart                                                |
 | ----------------- | --------------------- | --------------------------------------------------------- |
