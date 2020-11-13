@@ -24,25 +24,7 @@ A Kubernetes cluster with the appropriate version below is required for Karavi P
 
 | Version   | 
 | --------- |
-| 1.16-1.17 |
-
-### Dell EMC Storage and CSI Driver
-
-Karavi PowerFlex Metrics current has support for the following Dell EMC storage systems and associated CSI drivers.  One of the CSI drivers below must be deployed in the k8s cluster.  The k8s cluster must also have access to the associated storage system.
-
-| Dell EMC Storge Product | CSI Driver |
-| ----------------------- | ---------- |
-| PowerFlex v3.0/3.5 | [CSI Driver for PowerFlex v1.1.5+](https://github.com/dell/csi-vxflexos) |
-
-### OpenTelemetry Collector
-
-[OpenTelemetry](https://blog.newrelic.com/product-news/what-is-opentelemetry/) standardizes how telemetry data can be collected and transferred to various open source observability tools. Karavi PowerFlex Metrics captures telemetry data and pushes it to the Open Telemetry Collector so it can be processed, and exported in an open-source telemetry data format of your choice. Simply point the observability tool of your choice, such as Prometheus, to scrape data from the Open Telemetry collector exporter endpoint.
-
-| Supported Version | Image                              | Helm Chart |
-| ----------------- | ---------------------------------- | ---------- |
-| 0.4.0             | otel/opentelemetry-collector:0.4.0 | N/A        |
-
-The OpenTelemetry Collector must be configured with an exporter that is accessible at a specific URL. This URL will be scraped by the corresponding backend that has also been deployed. Example: If you have a Prometheus backend, you would configure the OpenTelmetry collector with a Prometheus exporter. In order to access the reference dashboards, you will need to configure the Prometheus OpenTelemetry exporter.
+| 1.17,1.18,1.19 |
 
 ### Prometheus
 
