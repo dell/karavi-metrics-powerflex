@@ -1,7 +1,7 @@
 # Storage Capacity
 Provides visibility into the total, used, and available capacity for a storage class and associated underlying storage construct.
 
-To disable these metrics, set the ```StorageClass_pool_metrics_enabled``` field to false in helm/values.yaml.
+To disable these metrics, set the ```storage_class_pool_metrics_enabled``` field to false in helm/values.yaml.
 
 The [Grafana reference dashboards](../../../grafana/dashboards/powerflex) for storage capacity/consumption can be uploaded to your Grafana instance.
 
