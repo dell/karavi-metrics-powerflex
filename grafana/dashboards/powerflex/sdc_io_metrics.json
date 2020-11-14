@@ -22,7 +22,7 @@
     {
       "aliasColors": {
         "Average": "dark-red",
-        "Average read_iops_per_second": "dark-red"
+        "Average ReadIOPS": "dark-red"
       },
       "bars": false,
       "dashLength": 10,
@@ -80,7 +80,7 @@
           "instant": false,
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "Average read_iops_per_second",
+          "legendFormat": "Average ReadIOPS",
           "refId": "B"
         }
       ],
@@ -229,7 +229,7 @@
     },
     {
       "aliasColors": {
-        "Average read_latency_milliseconds": "dark-red"
+        "Average ReadLatency": "dark-red"
       },
       "bars": false,
       "dashLength": 10,
@@ -285,7 +285,7 @@
         {
           "expr": "sum(powerflex_export_node_read_latency_milliseconds{PlotWithMean=~\"($ShowMean)|No\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"}) / count(powerflex_export_node_read_latency_milliseconds{PlotWithMean=~\"($ShowMean)|No\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"})",
           "interval": "",
-          "legendFormat": "Average read_latency_milliseconds",
+          "legendFormat": "Average ReadLatency",
           "refId": "B"
         }
       ],
@@ -332,7 +332,7 @@
     },
     {
       "aliasColors": {
-        "Average write_latency_milliseconds": "dark-red"
+        "Average WriteLatency": "dark-red"
       },
       "bars": false,
       "dashLength": 10,
@@ -387,7 +387,7 @@
         {
           "expr": "sum(powerflex_export_node_write_latency_milliseconds{PlotWithMean=~\"($ShowMean)|No\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"}) / count(powerflex_export_node_write_latency_milliseconds{PlotWithMean=~\"($ShowMean)|No\", Name=~\"$Node_Name\", IP =~\"($Node_IP)\"})",
           "interval": "",
-          "legendFormat": "Average write_latency_milliseconds",
+          "legendFormat": "Average WriteLatency",
           "refId": "B"
         }
       ],
@@ -813,14 +813,14 @@
           ]
         },
         "datasource": "Prometheus",
-        "definition": "label_values(name)",
+        "definition": "label_values(Name)",
         "hide": 0,
         "includeAll": true,
-        "label": "Node name",
+        "label": "Node Name",
         "multi": true,
         "name": "Node_Name",
         "options": [],
-        "query": "label_values(name)",
+        "query": "label_values(Name)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -842,14 +842,14 @@
           ]
         },
         "datasource": "Prometheus",
-        "definition": "label_values(ip)",
+        "definition": "label_values(IP)",
         "hide": 0,
         "includeAll": true,
-        "label": "Node ip",
+        "label": "Node IP",
         "multi": true,
         "name": "Node_IP",
         "options": [],
-        "query": "label_values(ip)",
+        "query": "label_values(IP)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,

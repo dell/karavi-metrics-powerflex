@@ -83,7 +83,7 @@ type SDCFinder interface {
 }
 
 // StorageClassFinder is used to find storage classes in kubernetes
-//go:generate mockgen -destination=mocks/StorageClass_finder_mocks.go -package=mocks github.com/dell/karavi-powerflex-metrics/internal/service StorageClassFinder
+//go:generate mockgen -destination=mocks/storage_class_finder_mocks.go -package=mocks github.com/dell/karavi-powerflex-metrics/internal/service StorageClassFinder
 type StorageClassFinder interface {
 	GetStorageClasses() ([]v1.StorageClass, error)
 }
@@ -101,7 +101,7 @@ type NodeFinder interface {
 }
 
 // StoragePoolStatisticsGetter supports getting storage pool statistics
-//go:generate mockgen -destination=mocks/StoragePool_statistics_getter_mocks.go -package=mocks github.com/dell/karavi-powerflex-metrics/internal/service StoragePoolStatisticsGetter
+//go:generate mockgen -destination=mocks/storage_pool_statistics_getter_mocks.go -package=mocks github.com/dell/karavi-powerflex-metrics/internal/service StoragePoolStatisticsGetter
 type StoragePoolStatisticsGetter interface {
 	GetStatistics() (*types.Statistics, error)
 }

@@ -170,7 +170,7 @@ func (mw *MetricsWrapper) Record(ctx context.Context, meta interface{},
 		labels = []kv.KeyValue{
 			kv.String("VolumeID", v.ID),
 			kv.String("VolumeName", v.Name),
-			kv.String("persistent_VolumeName", v.PersistentVolumeName),
+			kv.String("PersistentVolumeName", v.PersistentVolumeName),
 			kv.String("MappedNodeIDs", mappedSDCIDs),
 			kv.String("MappedNodeIPs", mappedSDCIPs),
 			kv.String("PlotWithMean", "No"),
@@ -178,9 +178,9 @@ func (mw *MetricsWrapper) Record(ctx context.Context, meta interface{},
 	case *SDCMeta:
 		prefix, metaID = "powerflex_export_node_", v.ID
 		labels = []kv.KeyValue{
-			kv.String("id", v.ID),
-			kv.String("name", v.Name),
-			kv.String("ip", v.IP),
+			kv.String("ID", v.ID),
+			kv.String("Name", v.Name),
+			kv.String("IP", v.IP),
 			kv.String("NodeGUID", v.SdcGUID),
 			kv.String("PlotWithMean", "No"),
 		}
@@ -252,7 +252,7 @@ func (mw *MetricsWrapper) RecordCapacity(ctx context.Context, meta interface{},
 			for pool := range v.StoragePools {
 				labels := []kv.KeyValue{
 					kv.String("StorageClass", v.Name),
-					kv.String("driver", v.Driver),
+					kv.String("Driver", v.Driver),
 					kv.String("StoragePool", pool),
 					kv.String("StorageSystemName", v.StorageSystemName),
 				}
