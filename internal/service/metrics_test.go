@@ -64,22 +64,22 @@ func Test_Metrics_Record(t *testing.T) {
 			getMeter := func(prefix string) *service.MetricsWrapper {
 				meter := mocks.NewMockFloat64UpDownCounterCreater(ctrl)
 				otMeter := global.Meter(prefix + "_test")
-				readBW, err := otMeter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_seconds")
+				readBW, err := otMeter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				writeBW, err := otMeter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_seconds")
+				writeBW, err := otMeter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				readIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "read_iops_per_seconds")
+				readIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "read_iops_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				writeIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "write_iops_per_seconds")
+				writeIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "write_iops_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -113,7 +113,7 @@ func Test_Metrics_Record(t *testing.T) {
 
 			return mws, checkFns(verifyNoError)
 		},
-		"error creating read_bw_megabytes_per_seconds": func(t *testing.T) ([]*service.MetricsWrapper, []checkFn) {
+		"error creating read_bw_megabytes_per_second": func(t *testing.T) ([]*service.MetricsWrapper, []checkFn) {
 			ctrl := gomock.NewController(t)
 			meter := mocks.NewMockFloat64UpDownCounterCreater(ctrl)
 
@@ -123,12 +123,12 @@ func Test_Metrics_Record(t *testing.T) {
 
 			return mws, checkFns(verifyError)
 		},
-		"error creating write_bw_megabytes_per_seconds": func(t *testing.T) ([]*service.MetricsWrapper, []checkFn) {
+		"error creating write_bw_megabytes_per_second": func(t *testing.T) ([]*service.MetricsWrapper, []checkFn) {
 			ctrl := gomock.NewController(t)
 			getMeter := func(prefix string) *service.MetricsWrapper {
 				meter := mocks.NewMockFloat64UpDownCounterCreater(ctrl)
 				otMeter := global.Meter(prefix + "_test")
-				readBW, err := otMeter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_seconds")
+				readBW, err := otMeter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -147,18 +147,18 @@ func Test_Metrics_Record(t *testing.T) {
 
 			return mws, checkFns(verifyError)
 		},
-		"error creating read_iops_per_seconds": func(t *testing.T) ([]*service.MetricsWrapper, []checkFn) {
+		"error creating read_iops_per_second": func(t *testing.T) ([]*service.MetricsWrapper, []checkFn) {
 			ctrl := gomock.NewController(t)
 			getMeter := func(prefix string) *service.MetricsWrapper {
 				meter := mocks.NewMockFloat64UpDownCounterCreater(ctrl)
 				otMeter := global.Meter(prefix + "_test")
 
-				readBW, err := otMeter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_seconds")
+				readBW, err := otMeter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				writeBW, err := otMeter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_seconds")
+				writeBW, err := otMeter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -179,23 +179,23 @@ func Test_Metrics_Record(t *testing.T) {
 
 			return mws, checkFns(verifyError)
 		},
-		"error creating write_iops_per_seconds": func(t *testing.T) ([]*service.MetricsWrapper, []checkFn) {
+		"error creating write_iops_per_second": func(t *testing.T) ([]*service.MetricsWrapper, []checkFn) {
 			ctrl := gomock.NewController(t)
 			getMeter := func(prefix string) *service.MetricsWrapper {
 				meter := mocks.NewMockFloat64UpDownCounterCreater(ctrl)
 				otMeter := global.Meter(prefix + "_test")
 
-				readBW, err := otMeter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_seconds")
+				readBW, err := otMeter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				writeBW, err := otMeter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_seconds")
+				writeBW, err := otMeter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				readIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "read_iops_per_seconds")
+				readIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "read_iops_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -223,22 +223,22 @@ func Test_Metrics_Record(t *testing.T) {
 				meter := mocks.NewMockFloat64UpDownCounterCreater(ctrl)
 				otMeter := global.Meter(prefix + "_test")
 
-				readBW, err := otMeter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_seconds")
+				readBW, err := otMeter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				writeBW, err := otMeter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_seconds")
+				writeBW, err := otMeter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				readIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "read_iops_per_seconds")
+				readIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "read_iops_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				writeIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "write_iops_per_seconds")
+				writeIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "write_iops_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -267,22 +267,22 @@ func Test_Metrics_Record(t *testing.T) {
 				meter := mocks.NewMockFloat64UpDownCounterCreater(ctrl)
 				otMeter := global.Meter(prefix + "_test")
 
-				readBW, err := otMeter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_seconds")
+				readBW, err := otMeter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				writeBW, err := otMeter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_seconds")
+				writeBW, err := otMeter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				readIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "read_iops_per_seconds")
+				readIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "read_iops_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				writeIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "write_iops_per_seconds")
+				writeIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "write_iops_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -447,10 +447,10 @@ func Test_Volume_Metrics_Label_Update(t *testing.T) {
 	}
 
 	expectedLables := []kv.KeyValue{
-		kv.String("volume_id", metaSecond.ID),
-		kv.String("volume_name", metaSecond.Name),
-		kv.String("mapped_node_ids", "__"+metaSecond.MappedSDCs[0].SdcID+"__"),
-		kv.String("mapped_node_ips", "__"+metaSecond.MappedSDCs[0].SdcIP+"__"),
+		kv.String("VolumeID", metaSecond.ID),
+		kv.String("VolumeName", metaSecond.Name),
+		kv.String("MappedNodeIDs", "__"+metaSecond.MappedSDCs[0].SdcID+"__"),
+		kv.String("MappedNodeIPs", "__"+metaSecond.MappedSDCs[0].SdcIP+"__"),
 		kv.String("PlotWithMean", "No"),
 	}
 
@@ -458,22 +458,22 @@ func Test_Volume_Metrics_Label_Update(t *testing.T) {
 
 	meter := mocks.NewMockFloat64UpDownCounterCreater(ctrl)
 	otMeter := global.Meter("powerflex_volume__test")
-	readBW, err := otMeter.NewFloat64UpDownCounter("powerflex_volume_read_bw_megabytes_per_seconds")
+	readBW, err := otMeter.NewFloat64UpDownCounter("powerflex_volume_read_bw_megabytes_per_second")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	writeBW, err := otMeter.NewFloat64UpDownCounter("powerflex_volume_write_bw_megabytes_per_seconds")
+	writeBW, err := otMeter.NewFloat64UpDownCounter("powerflex_volume_write_bw_megabytes_per_second")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	readIOPS, err := otMeter.NewFloat64UpDownCounter("powerflex_volume_read_iops_per_seconds")
+	readIOPS, err := otMeter.NewFloat64UpDownCounter("powerflex_volume_read_iops_per_second")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	writeIOPS, err := otMeter.NewFloat64UpDownCounter("powerflex_volume_write_iops_per_seconds")
+	writeIOPS, err := otMeter.NewFloat64UpDownCounter("powerflex_volume_write_iops_per_second")
 	if err != nil {
 		t.Fatal(err)
 	}

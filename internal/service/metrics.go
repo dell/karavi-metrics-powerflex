@@ -60,25 +60,25 @@ type CapacityMetrics struct {
 }
 
 func (mw *MetricsWrapper) initMetrics(prefix, metaID string, labels []kv.KeyValue) (*Metrics, error) {
-	unboundReadBW, err := mw.Meter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_seconds")
+	unboundReadBW, err := mw.Meter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_second")
 	if err != nil {
 		return nil, err
 	}
 	readBW := unboundReadBW.Bind(labels...)
 
-	unboundWriteBW, err := mw.Meter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_seconds")
+	unboundWriteBW, err := mw.Meter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_second")
 	if err != nil {
 		return nil, err
 	}
 	writeBW := unboundWriteBW.Bind(labels...)
 
-	unboundReadIOPS, err := mw.Meter.NewFloat64UpDownCounter(prefix + "read_iops_per_seconds")
+	unboundReadIOPS, err := mw.Meter.NewFloat64UpDownCounter(prefix + "read_iops_per_second")
 	if err != nil {
 		return nil, err
 	}
 	readIOPS := unboundReadIOPS.Bind(labels...)
 
-	unboundWriteIOPS, err := mw.Meter.NewFloat64UpDownCounter(prefix + "write_iops_per_seconds")
+	unboundWriteIOPS, err := mw.Meter.NewFloat64UpDownCounter(prefix + "write_iops_per_second")
 	if err != nil {
 		return nil, err
 	}
@@ -168,12 +168,12 @@ func (mw *MetricsWrapper) Record(ctx context.Context, meta interface{},
 			mappedSDCIPs += (ip.SdcIP + "__")
 		}
 		labels = []kv.KeyValue{
-			kv.String("volume_id", v.ID),
-			kv.String("volume_name", v.Name),
-			kv.String("persistent_volume_name", v.PersistentVolumeName),
-			kv.String("mapped_node_ids", mappedSDCIDs),
-			kv.String("mapped_node_ips", mappedSDCIPs),
-			kv.String("plot_with_mean", "No"),
+			kv.String("VolumeID", v.ID),
+			kv.String("VolumeName", v.Name),
+			kv.String("persistent_VolumeName", v.PersistentVolumeName),
+			kv.String("MappedNodeIDs", mappedSDCIDs),
+			kv.String("MappedNodeIPs", mappedSDCIPs),
+			kv.String("PlotWithMean", "No"),
 		}
 	case *SDCMeta:
 		prefix, metaID = "powerflex_export_node_", v.ID
@@ -181,8 +181,8 @@ func (mw *MetricsWrapper) Record(ctx context.Context, meta interface{},
 			kv.String("id", v.ID),
 			kv.String("name", v.Name),
 			kv.String("ip", v.IP),
-			kv.String("node_guid", v.SdcGUID),
-			kv.String("plot_with_mean", "No"),
+			kv.String("NodeGUID", v.SdcGUID),
+			kv.String("PlotWithMean", "No"),
 		}
 	default:
 		return errors.New("unknown MetaData type")
@@ -248,13 +248,13 @@ func (mw *MetricsWrapper) RecordCapacity(ctx context.Context, meta interface{},
 	case StorageClassMeta:
 		switch v.Driver {
 		case "csi-vxflexos.dellemc.com":
-			prefix, metaID := "powerflex_storage_pool_", v.ID
+			prefix, metaID := "powerflex_StoragePool_", v.ID
 			for pool := range v.StoragePools {
 				labels := []kv.KeyValue{
-					kv.String("storage_class", v.Name),
+					kv.String("StorageClass", v.Name),
 					kv.String("driver", v.Driver),
-					kv.String("storage_pool", pool),
-					kv.String("storage_system_name", v.StorageSystemName),
+					kv.String("StoragePool", pool),
+					kv.String("StorageSystemName", v.StorageSystemName),
 				}
 
 				metricsMapValue, ok := mw.CapacityMetrics.Load(metaID)

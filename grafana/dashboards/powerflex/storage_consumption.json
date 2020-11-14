@@ -163,7 +163,7 @@
         ],
         "targets": [
           {
-            "expr": "powerflex_storage_pool_total_logical_capacity_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"}\r",
+            "expr": "powerflex_StoragePool_total_logical_capacity_gigabytes{driver=~\"$driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"}\r",
             "format": "table",
             "instant": true,
             "interval": "",
@@ -171,7 +171,7 @@
             "refId": "A"
           },
           {
-            "expr": "powerflex_storage_pool_logical_capacity_available_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"}\r",
+            "expr": "powerflex_StoragePool_logical_capacity_available_gigabytes{driver=~\"$driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"}\r",
             "format": "table",
             "instant": true,
             "interval": "",
@@ -179,7 +179,7 @@
             "refId": "B"
           },
           {
-            "expr": "powerflex_storage_pool_logical_provisioned_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"}",
+            "expr": "powerflex_StoragePool_logical_provisioned_gigabytes{driver=~\"$driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"}",
             "format": "table",
             "instant": true,
             "interval": "",
@@ -224,9 +224,9 @@
               "include": {
                 "names": [
                   "driver",
-                  "storage_class",
-                  "storage_pool",
-                  "storage_system_name",
+                  "StorageClass",
+                  "StoragePool",
+                  "StorageSystemName",
                   "Value #A",
                   "Value #C",
                   "Value #B"
@@ -305,7 +305,7 @@
         "targets": [
           {
             "alias": "$tag_source",
-            "expr": "avg by (storage_pool) (powerflex_storage_pool_logical_capacity_in_use_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"}*100 / powerflex_storage_pool_total_logical_capacity_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
+            "expr": "avg by (StoragePool) (powerflex_StoragePool_logical_capacity_in_use_gigabytes{driver=~\"$driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"}*100 / powerflex_StoragePool_total_logical_capacity_gigabytes{driver=~\"$driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"})",
             "format": "time_series",
             "groupBy": [
               {
@@ -324,7 +324,7 @@
             "instant": true,
             "interval": "",
             "intervalFactor": 1,
-            "legendFormat": "{{storage_pool}}",
+            "legendFormat": "{{StoragePool}}",
             "orderByTime": "ASC",
             "policy": "default",
             "rawQuery": true,
@@ -375,8 +375,8 @@
         },
         "id": 55,
         "panels": [],
-        "repeat": "storage_pool",
-        "title": "$storage_pool",
+        "repeat": "StoragePool",
+        "title": "$StoragePool",
         "type": "row"
       },
       {
@@ -445,7 +445,7 @@
         "targets": [
           {
             "alias": "Total Capacity",
-            "expr": "avg by (storage_pool) (powerflex_storage_pool_total_logical_capacity_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
+            "expr": "avg by (StoragePool) (powerflex_StoragePool_total_logical_capacity_gigabytes{driver=~\"$driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"})",
             "groupBy": [
               {
                 "params": [
@@ -476,7 +476,7 @@
           },
           {
             "alias": "Free Capacity",
-            "expr": "avg by (storage_pool) (powerflex_storage_pool_logical_capacity_available_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
+            "expr": "avg by (StoragePool) (powerflex_StoragePool_logical_capacity_available_gigabytes{driver=~\"$driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"})",
             "groupBy": [
               {
                 "params": [
@@ -508,7 +508,7 @@
           },
           {
             "alias": "Provisioned",
-            "expr": "avg by (storage_pool) (powerflex_storage_pool_logical_provisioned_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
+            "expr": "avg by (StoragePool) (powerflex_StoragePool_logical_provisioned_gigabytes{driver=~\"$driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"})",
             "groupBy": [
               {
                 "params": [
@@ -588,7 +588,7 @@
         "targets": [
           {
             "alias": "Used Capacity",
-            "expr": "avg by (storage_pool) (powerflex_storage_pool_logical_capacity_in_use_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
+            "expr": "avg by (StoragePool) (powerflex_StoragePool_logical_capacity_in_use_gigabytes{driver=~\"$driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"})",
             "groupBy": [
               {
                 "params": [
@@ -633,7 +633,7 @@
           },
           {
             "alias": "Free Capacity",
-            "expr": "avg by (storage_pool) (powerflex_storage_pool_logical_capacity_available_gigabytes{driver=~\"$driver\",storage_class=~\"$storage_class\",storage_pool=~\"$storage_pool\",storage_system_name=~\"$storage_system_name\"})",
+            "expr": "avg by (StoragePool) (powerflex_StoragePool_logical_capacity_available_gigabytes{driver=~\"$driver\",StorageClass=~\"$StorageClass\",StoragePool=~\"$StoragePool\",StorageSystemName=~\"$StorageSystemName\"})",
             "groupBy": [
               {
                 "params": [
@@ -700,14 +700,14 @@
             ]
           },
           "datasource": "Prometheus",
-          "definition": "label_values(storage_class)",
+          "definition": "label_values(StorageClass)",
           "hide": 0,
           "includeAll": true,
           "label": null,
           "multi": true,
-          "name": "storage_class",
+          "name": "StorageClass",
           "options": [],
-          "query": "label_values(storage_class)",
+          "query": "label_values(StorageClass)",
           "refresh": 1,
           "regex": "",
           "skipUrlSync": false,
@@ -729,14 +729,14 @@
             ]
           },
           "datasource": "Prometheus",
-          "definition": "label_values(storage_pool)",
+          "definition": "label_values(StoragePool)",
           "hide": 0,
           "includeAll": true,
           "label": null,
           "multi": true,
-          "name": "storage_pool",
+          "name": "StoragePool",
           "options": [],
-          "query": "label_values(storage_pool)",
+          "query": "label_values(StoragePool)",
           "refresh": 1,
           "regex": "",
           "skipUrlSync": false,
@@ -781,14 +781,14 @@
             "value": "$__all"
           },
           "datasource": "Prometheus",
-          "definition": "label_values(storage_system_name)",
+          "definition": "label_values(StorageSystemName)",
           "hide": 0,
           "includeAll": true,
           "label": null,
           "multi": true,
-          "name": "storage_system_name",
+          "name": "StorageSystemName",
           "options": [],
-          "query": "label_values(storage_system_name)",
+          "query": "label_values(StorageSystemName)",
           "refresh": 1,
           "regex": "",
           "skipUrlSync": false,
