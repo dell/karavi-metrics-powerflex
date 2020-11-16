@@ -25,6 +25,7 @@ type OtlCollectorExporter struct {
 }
 
 const (
+	// DefaultCollectorCertPath is the default location to look for the Collector certificate
 	DefaultCollectorCertPath = "/etc/ssl/certs/cert.crt"
 )
 
