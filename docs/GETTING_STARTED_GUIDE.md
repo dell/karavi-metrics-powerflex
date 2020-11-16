@@ -34,17 +34,15 @@ The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Promet
 | ----------------- | ----------------------- | ------------------------------------------------------------ |
 | 2.22.0           | prom/prometheus:v2.22.0 | https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus |
 
-**NOTE:** Version 2.19.2 has been qualified with Karavi PowerFlex Metrics but other versions may also work.
-
 If you have the Prometheus OpenTelemetry collector exporter configured, you must configure Prometheus to scrape the endpoint.
 
 #### Grafana
 
 The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require the following Grafana to be deployed in the same Kubernetes cluster as the karavi-powerflex-metrics service. You must also have Prometheus and the OpenTelemetry Collector deployed (see above).
 
-| Supported Version | Image                 | Helm Chart                                                |
-| ----------------- | --------------------- | --------------------------------------------------------- |
-| 7.1.0          | grafana/grafana:7.1.0 | https://github.com/grafana/helm-charts/tree/main/charts/grafana |
+| Supported Version | Helm Chart                                                |
+| ----------------- | --------------------------------------------------------- |
+| 7.3.0-7.3.2       | https://github.com/grafana/helm-charts/tree/main/charts/grafana |
 
 - Grafana must be configured with the following data sources/plugins:
 
