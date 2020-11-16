@@ -21,11 +21,11 @@ import (
 	metrics "github.com/dell/karavi-powerflex-metrics/internal/service/mocks"
 	otlexporters "github.com/dell/karavi-powerflex-metrics/opentelemetry/exporters"
 	exportermocks "github.com/dell/karavi-powerflex-metrics/opentelemetry/exporters/mocks"
+	"k8s.io/api/storage/v1beta1"
 
 	sio "github.com/dell/goscaleio"
 	"github.com/golang/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/storage/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -76,7 +76,7 @@ func Test_Run(t *testing.T) {
 			entrypoint.ConfigValidatorFunc = noCheckConfig
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
-			e.EXPECT().InitExporter().Return(nil)
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metrics.NewMockService(ctrl)
@@ -130,7 +130,7 @@ func Test_Run(t *testing.T) {
 			entrypoint.ConfigValidatorFunc = noCheckConfig
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
-			e.EXPECT().InitExporter().Return(nil)
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metrics.NewMockService(ctrl)
@@ -170,7 +170,7 @@ func Test_Run(t *testing.T) {
 			entrypoint.ConfigValidatorFunc = noCheckConfig
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
-			e.EXPECT().InitExporter().Return(nil)
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metrics.NewMockService(ctrl)
@@ -225,7 +225,7 @@ func Test_Run(t *testing.T) {
 			entrypoint.ConfigValidatorFunc = noCheckConfig
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
-			e.EXPECT().InitExporter().Return(nil)
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metrics.NewMockService(ctrl)
@@ -276,7 +276,7 @@ func Test_Run(t *testing.T) {
 			entrypoint.ConfigValidatorFunc = noCheckConfig
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
-			e.EXPECT().InitExporter().Return(nil)
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metrics.NewMockService(ctrl)
@@ -467,7 +467,7 @@ func Test_Run(t *testing.T) {
 			entrypoint.ConfigValidatorFunc = noCheckConfig
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
-			e.EXPECT().InitExporter().Return(fmt.Errorf("An error occurred while initializing the exporter"))
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(fmt.Errorf("An error occurred while initializing the exporter"))
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metrics.NewMockService(ctrl)
@@ -497,7 +497,7 @@ func Test_Run(t *testing.T) {
 			entrypoint.ConfigValidatorFunc = noCheckConfig
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
-			e.EXPECT().InitExporter().Return(nil)
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metrics.NewMockService(ctrl)
@@ -534,7 +534,7 @@ func Test_Run(t *testing.T) {
 			entrypoint.ConfigValidatorFunc = noCheckConfig
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
-			e.EXPECT().InitExporter().Return(nil)
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metrics.NewMockService(ctrl)
@@ -564,7 +564,7 @@ func Test_Run(t *testing.T) {
 			entrypoint.ConfigValidatorFunc = noCheckConfig
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
-			e.EXPECT().InitExporter().Return(nil)
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metrics.NewMockService(ctrl)
@@ -602,7 +602,7 @@ func Test_Run(t *testing.T) {
 			entrypoint.ConfigValidatorFunc = noCheckConfig
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
-			e.EXPECT().InitExporter().Return(nil)
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metrics.NewMockService(ctrl)
@@ -623,7 +623,7 @@ func Test_Run(t *testing.T) {
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)
 			pfClient.EXPECT().Authenticate(gomock.Any()).AnyTimes().Return(sio.Cluster{}, nil)
 
-			sc1 := v1.StorageClass{}
+			sc1 := v1beta1.StorageClass{}
 			sc1.Provisioner = "csi-vxflexos.dellemc.com"
 			sc1.ObjectMeta = metav1.ObjectMeta{
 				UID:  "123",
@@ -635,7 +635,7 @@ func Test_Run(t *testing.T) {
 
 			storageClassFinder := mocks.NewMockStorageClassFinder(ctrl)
 			storageClassFinder.EXPECT().GetStorageClasses().AnyTimes().
-				Return([]v1.StorageClass{sc1}, nil)
+				Return([]v1beta1.StorageClass{sc1}, nil)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").Times(1).Return(nil)
@@ -652,7 +652,7 @@ func Test_Run(t *testing.T) {
 			entrypoint.ConfigValidatorFunc = noCheckConfig
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
-			e.EXPECT().InitExporter().Return(nil)
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metrics.NewMockService(ctrl)
@@ -718,7 +718,7 @@ func Test_Run(t *testing.T) {
 			entrypoint.ConfigValidatorFunc = noCheckConfig
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
-			e.EXPECT().InitExporter().Return(nil)
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metrics.NewMockService(ctrl)
@@ -736,7 +736,7 @@ func Test_Run(t *testing.T) {
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)
 			pfClient.EXPECT().Authenticate(gomock.Any()).AnyTimes().Return(sio.Cluster{}, nil)
 
-			sc1 := v1.StorageClass{}
+			sc1 := v1beta1.StorageClass{}
 			sc1.Provisioner = "csi-vxflexos.dellemc.com"
 			sc1.ObjectMeta = metav1.ObjectMeta{
 				UID:  "123",
@@ -748,7 +748,7 @@ func Test_Run(t *testing.T) {
 
 			storageClassFinder := mocks.NewMockStorageClassFinder(ctrl)
 			storageClassFinder.EXPECT().GetStorageClasses().AnyTimes().
-				Return([]v1.StorageClass{sc1}, nil)
+				Return([]v1beta1.StorageClass{sc1}, nil)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").Times(1).Return(nil)
@@ -765,7 +765,7 @@ func Test_Run(t *testing.T) {
 			entrypoint.ConfigValidatorFunc = noCheckConfig
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
-			e.EXPECT().InitExporter().Return(nil)
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metrics.NewMockService(ctrl)
@@ -797,7 +797,7 @@ func Test_Run(t *testing.T) {
 			entrypoint.ConfigValidatorFunc = noCheckConfig
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
-			e.EXPECT().InitExporter().Return(nil)
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metrics.NewMockService(ctrl)
@@ -806,6 +806,50 @@ func Test_Run(t *testing.T) {
 				Return(nil, fmt.Errorf("there was error getting the StorageClass"))
 
 			return false, config, e, svc, prevConfigValidationFunc, ctrl, false
+		},
+		"success using TLS": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
+			ctrl := gomock.NewController(t)
+
+			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").Times(1).Return(nil)
+			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
+
+			config := &entrypoint.Config{
+				LeaderElector:     leaderElector,
+				CollectorCertPath: "testdata/test-cert.crt",
+			}
+			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
+			entrypoint.ConfigValidatorFunc = noCheckConfig
+
+			e := exportermocks.NewMockOtlexporter(ctrl)
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
+			e.EXPECT().StopExporter().Return(nil)
+
+			svc := metrics.NewMockService(ctrl)
+
+			return false, config, e, svc, prevConfigValidationFunc, ctrl, false
+		},
+		"error reading certificate": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
+			ctrl := gomock.NewController(t)
+
+			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").AnyTimes().Return(nil)
+			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
+
+			config := &entrypoint.Config{
+				LeaderElector:     leaderElector,
+				CollectorCertPath: "testdata/bad-cert.crt",
+			}
+			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
+			entrypoint.ConfigValidatorFunc = noCheckConfig
+
+			e := exportermocks.NewMockOtlexporter(ctrl)
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
+			e.EXPECT().StopExporter().Return(nil)
+
+			svc := metrics.NewMockService(ctrl)
+
+			return true, config, e, svc, prevConfigValidationFunc, ctrl, false
 		},
 	}
 

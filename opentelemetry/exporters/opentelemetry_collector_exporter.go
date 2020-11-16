@@ -24,6 +24,10 @@ type OtlCollectorExporter struct {
 	pusher        *push.Controller
 }
 
+const (
+	DefaultCollectorCertPath = "/etc/ssl/certs/cert.crt"
+)
+
 // InitExporter is the initialization method for the OpenTelemetry Collector exporter
 func (c *OtlCollectorExporter) InitExporter(opts ...otlp.ExporterOption) error {
 	exporter, pusher, err := c.initOTLPExporter(opts...)

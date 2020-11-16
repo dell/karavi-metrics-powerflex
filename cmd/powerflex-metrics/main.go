@@ -19,18 +19,15 @@ import (
 	"github.com/dell/karavi-powerflex-metrics/internal/k8s"
 	"github.com/dell/karavi-powerflex-metrics/internal/service"
 	otlexporters "github.com/dell/karavi-powerflex-metrics/opentelemetry/exporters"
-	"google.golang.org/grpc/credentials"
 
 	sio "github.com/dell/goscaleio"
 	"go.opentelemetry.io/otel/api/global"
-	"go.opentelemetry.io/otel/exporters/otlp"
 
 	"os"
 )
 
 const (
-	defaultTickInterval      = 5 * time.Second
-	defaultCollectorCertPath = "/etc/ssl/certs/cert.crt"
+	defaultTickInterval = 5 * time.Second
 )
 
 func main() {
@@ -161,26 +158,12 @@ func main() {
 		}
 	}
 
-	collectorCertPath := os.Getenv("COLLECTOR_CERT_PATH")
-	if len(strings.TrimSpace(collectorCertPath)) < 1 {
-		collectorCertPath = defaultCollectorCertPath
-	}
-
-	exporterConf := entrypoint.ExporterConfig{
-		Options: []otlp.ExporterOption{
-			otlp.WithAddress(collectorAddress),
-		},
-	}
-
+	var collectorCertPath string
 	if tls := os.Getenv("TLS_ENABLED"); tls == "true" {
-		transportCreds, err := credentials.NewClientTLSFromFile(collectorCertPath, "")
-		if err != nil {
-			fmt.Printf("Failed to create TLS credentials from certificate: %v", err)
-			os.Exit(1)
+		collectorCertPath = os.Getenv("COLLECTOR_CERT_PATH")
+		if len(strings.TrimSpace(collectorCertPath)) < 1 {
+			collectorCertPath = otlexporters.DefaultCollectorCertPath
 		}
-		exporterConf.Options = append(exporterConf.Options, otlp.WithTLSCredentials(transportCreds))
-	} else {
-		exporterConf.Options = append(exporterConf.Options, otlp.WithInsecure())
 	}
 
 	config := &entrypoint.Config{
@@ -197,7 +180,8 @@ func main() {
 		SDCMetricsEnabled:         powerflexSdcMetricsEnabled,
 		VolumeMetricsEnabled:      powerflexVolumeMetricsEnabled,
 		StoragePoolMetricsEnabled: storagePoolMetricsEnabled,
-		ExporterConfig:            exporterConf,
+		CollectorAddress:          collectorAddress,
+		CollectorCertPath:         collectorCertPath,
 	}
 
 	exporter := &otlexporters.OtlCollectorExporter{CollectorAddr: collectorAddress}

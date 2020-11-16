@@ -20,6 +20,7 @@ import (
 	pflexServices "github.com/dell/karavi-powerflex-metrics/internal/service"
 	otlexporters "github.com/dell/karavi-powerflex-metrics/opentelemetry/exporters"
 	"go.opentelemetry.io/otel/exporters/otlp"
+	"google.golang.org/grpc/credentials"
 
 	sio "github.com/dell/goscaleio"
 )
@@ -44,12 +45,6 @@ var (
 	ConfigValidatorFunc func(*Config) error = ValidateConfig
 )
 
-// ExporterConfig holds configuration details for the OpenTelemetry exporter
-type ExporterConfig struct {
-	PathToCollectorCert string
-	Options             []otlp.ExporterOption
-}
-
 // Config holds data that will be used by the service
 type Config struct {
 	SDCTickInterval           time.Duration
@@ -65,7 +60,8 @@ type Config struct {
 	SDCMetricsEnabled         bool
 	VolumeMetricsEnabled      bool
 	StoragePoolMetricsEnabled bool
-	ExporterConfig            ExporterConfig
+	CollectorAddress          string
+	CollectorCertPath         string
 }
 
 // Run is the entry point for starting the service
@@ -89,7 +85,21 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 	}()
 
 	go func() {
-		errCh <- exporter.InitExporter(config.ExporterConfig.Options...)
+		options := []otlp.ExporterOption{
+			otlp.WithAddress(config.CollectorAddress),
+		}
+
+		if config.CollectorCertPath != "" {
+			transportCreds, err := credentials.NewClientTLSFromFile(config.CollectorCertPath, "")
+			if err != nil {
+				errCh <- err
+			}
+			options = append(options, otlp.WithTLSCredentials(transportCreds))
+		} else {
+			options = append(options, otlp.WithInsecure())
+		}
+
+		errCh <- exporter.InitExporter(options...)
 	}()
 
 	defer exporter.StopExporter()
