@@ -248,7 +248,7 @@ func (mw *MetricsWrapper) RecordCapacity(ctx context.Context, meta interface{},
 	case StorageClassMeta:
 		switch v.Driver {
 		case "csi-vxflexos.dellemc.com":
-			prefix, metaID := "powerflex_StoragePool_", v.ID
+			prefix, metaID := "powerflex_storage_pool_", v.ID
 			for pool := range v.StoragePools {
 				labels := []kv.KeyValue{
 					kv.String("StorageClass", v.Name),
