@@ -16,7 +16,7 @@ This document steps through the deployment and configuration of Karavi PowerFlex
 
 ## Kubernetes
 
-First and foremost, Karavi PowerFlex Metrics requires a Kubernetes cluster that aligns the supported versions listed below.
+First and foremost, Karavi PowerFlex Metrics requires a Kubernetes cluster that aligns with the supported versions listed below.
 
 | Version   |
 | --------- |
