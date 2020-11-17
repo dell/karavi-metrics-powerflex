@@ -31,7 +31,7 @@ Karavi PowerFlex Metrics requires the following third party components to be dep
 
 It is the user's responsibility to deploy these in the same Kubernetes cluster as the karavi-powerflex-metrics service.  These components must be deployed according to the specifications defined below.
 
-**Note**: The OpenTelemetry Collector is deployed and configured as part of the Karavi PowerFlex Metrics deployment.
+**Note**: The OpenTelemetry Collector is deployed and configured as part of the Karavi PowerFlex Metrics deployment.  The OpenTelemetry Collector is configured to require all communication happen using TLS.  The deployment options listed below will require a signed certificate file and a signed certificate private key file.
 
 ### Prometheus
 
