@@ -7,6 +7,7 @@ You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
 -->
+
 # How to Contribute
 
 Become one of the contributors to this project! We thrive to build a welcoming and open community for anyone who wants to use the project or contribute to it. There are just a few small guidelines you need to follow. To help us create a safe and positive community experience for all, we require all participants to adhere to the [Code of Conduct](CODE_OF_CONDUCT.md).
@@ -101,7 +102,7 @@ We are following a scaled trunk branching strategy where short-lived branches ar
 
 ### Branch Types
 
-* A Release branch is a branch created from main that will be solely used for release a Karavi version. Only critical bug fixes will be merged into this branch.
+* A Release branch is a branch created from the main branch used for releasing a Karavi version. Only critical bug fixes will be merged into this branch.
 * Bug Fix branch is a branch which is created for the purpose of fixing the given defect/issue.
 * Feature branch is created for a feature development purpose.
 
