@@ -16,7 +16,6 @@ You may obtain a copy of the License at
 
 # How to get support for Karavi
 
-If you require help or support for Karavi PowerFlex Metrics:
-
-- For example, if you want to alert a security vulnerability in Karavi, send an email to the maintainers on the [mailing list](mailto:karavi@dell.com?subject=[Dell-karavi-PowerFlex-Metrics]%20<replace%20me%20with%20more%20specific%20subject>) describing issue, impact, fix, if applicable.
-- Ask a general question to the community, fill out the details @ **[Ask a Question](https://github.com/dell/karavi-powerflex-metrics/issues/new?template=ask-a-question.md)**.
+If you require help or support for Karavi PowerFlex Metrics: 
+- For example, if you want to alert a security vulnerability in Karavi, send an email to the maintainers on the [mailing list](mailto:karavi@dell.com?subject=[Dell-karavi-PowerFlex-Metrics]%20<replace%20me%20with%20more%20specific%20subject>) describing issue, impact, fix, if applicable. 
+- Ask a general question to the community, fill out the details @ **[Ask a Question](https://github.com/dell/karavi-powerflex-metrics/issues/new?labels=type%2Fquestion&template=ask-a-question.md&title=%5BQUESTION%5D%3A)**.
