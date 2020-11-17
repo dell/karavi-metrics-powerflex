@@ -29,19 +29,44 @@ Karavi PowerFlex Metrics requires the following third party components to be dep
 * Prometheus
 * Grafana
 
-It is the user's responsibility to deploy these in the same Kubernetes cluster as the karavi-powerflex-metrics service.  These components must be deployed according to the specifications defined below.
+It is the user's responsibility to deploy these components in the same Kubernetes cluster as the karavi-powerflex-metrics service.  These components must be deployed according to the specifications defined below.
 
-**Note**: The OpenTelemetry Collector is deployed and configured as part of the Karavi PowerFlex Metrics deployment.  The OpenTelemetry Collector is configured to require all communication happen using TLS.  The deployment options listed below will require a signed certificate file and a signed certificate private key file.
+The one exception is the OpenTelemetry Collector.  This is deployed and configured as part of the Karavi PowerFlex Metrics deployment.  This is not the user's responsibility.
+
+### OpenTelemetry Collector
+
+The OpenTelemetry Collector is configured to require all communication happen using TLS.  The deployment options listed below will require a signed certificate file and a signed certificate private key file.
+
+The karavi-powerflex-metrics service requires the OpenTelemetry Collector so that metrics can be pushed and later consumed by a backend. The [Karavi PowerFlex Metrics Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-powerflex-metrics) takes care of deploying the OpenTelemetry Collector and securing communication between karavi-powerflex-metrics and the OpenTelemetry Collector using TLS 1.2 via the user-provided certificate and key files.
+
+**Note**: Although the OpenTelmetry Collector can provide metrics for different backends, we currently only support Prometheus.
+
+The OpenTelemetry Collector endpoint is to be scraped by Prometheus, which must be running within the same Kubernetes cluster.
 
 ### Prometheus
 
-The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Prometheus to scrape the metrics data from the Open Telemetry Collector. The Prometheus service should be running on the same Kubernetes cluster as the karavi-powerflex-metrics service.
+The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Prometheus to scrape the metrics data from the Open Telemetry Collector.
+
+The Prometheus service should be running on the same Kubernetes cluster as the karavi-powerflex-metrics service and be configured to scrape the OpenTelemetry Collector.
 
 | Supported Version | Image                   | Helm Chart                                                   |
 | ----------------- | ----------------------- | ------------------------------------------------------------ |
 | 2.22.0           | prom/prometheus:v2.22.0 | [Prometheus Helm chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus) |
 
 **Note**: It is the user's responsibility to provide persistent storage for Prometheus if they want to preserve historical data.
+
+Here is a sample minmimal configuration for Prometheus. For more information about Prometheus configuration, see [Prometheus onfiguration](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#configuration).
+
+```
+scrape_configs:
+    - job_name: 'karavi-powerflex-metrics'
+      scrape_interval: 5s
+      scheme: https
+      static_configs:
+        - targets: ['otel-collector:443']
+      tls_config:
+        insecure_skip_verify: true
+```
 
 ### Grafana
 
