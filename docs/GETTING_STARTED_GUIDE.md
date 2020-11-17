@@ -41,7 +41,7 @@ The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Promet
 | ----------------- | ----------------------- | ------------------------------------------------------------ |
 | 2.22.0           | prom/prometheus:v2.22.0 | [Prometheus Helm chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus) |
 
-**Note**: It is the user's option to provide persistent storage for Prometheus if they want to preserve historical data.
+**Note**: It is the user's responsibility to provide persistent storage for Prometheus if they want to preserve historical data.
 
 ### Grafana
 
