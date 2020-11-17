@@ -10,29 +10,38 @@ You may obtain a copy of the License at
 
 # Getting Started Guide
 
+Karavi PowerFlex Metrics captures telemetry data about storage usage and performance and pushes it to the [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector), so it can be processed, and exported in a format consumable by Prometheus.  Prometheus can then be configured to scrape the OpenTelemetry Collector exporter endpoint to provide metrics so they can be visualized in Grafana.  
+
 This document steps through the deployment and configuration of Karavi PowerFlex Metrics.
 
-## Prerequisites
+## Kubernetes
 
-The following are prerequisites for building and deploying Karavi PowerFlex Metrics.
+First and foremost, Karavi PowerFlex Metrics requires a Kubernetes cluster that aligns with the supported versions listed below.
 
-### Kubernetes
-
-The following environment prerequisites are required for deploying karavi-powerflex-metrics.
-
-A Kubernetes cluster with the appropriate version below is required for Karavi PowerFlex Metrics
-
-| Version   | 
+| Version   |
 | --------- |
-| 1.17,1.18,1.19 |
+| 1.17-1.19 |
+
+## Required Components
+
+Karavi PowerFlex Metrics requires the following third party components to be deployed in the same Kubernetes cluster as the karavi-powerflex-metrics service:
+
+* Prometheus
+* Grafana
+
+It is the user's responsibility to deploy these components in the same Kubernetes cluster as the karavi-powerflex-metrics service.  These components must be deployed according to the specifications defined below.
+
+The one exception is the OpenTelemetry Collector.  This is deployed and configured as part of the Karavi PowerFlex Metrics deployment.  This is not the user's responsibility.
 
 ### OpenTelemetry Collector
 
-karavi-powerflex-metrics requires the OpenTelemetry Collector to push metrics to so that the metrics can be consumed by a backend. The helm chart takes care of deploying the Open Telemetry Collector and securing communication between karavi-powerflex-metrics and the Open Telemetry Collector using TLS 1.2 via the user-provided certificate and key files.
+The OpenTelemetry Collector is configured to require all communication happen using TLS.  The deployment options listed below will require a signed certificate file and a signed certificate private key file.
 
-Note that although the Open Telmetry Collector can provide metrics for different backends, we currently only support Prometheus.
+The karavi-powerflex-metrics service requires the OpenTelemetry Collector so that metrics can be pushed and later consumed by a backend. The [Karavi PowerFlex Metrics Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-powerflex-metrics) takes care of deploying the OpenTelemetry Collector and securing communication between karavi-powerflex-metrics and the OpenTelemetry Collector using TLS 1.2 via the user-provided certificate and key files.
 
-The OpenTelemetry Collector endpoint to be scraped by Prometheus within the Kubernetes cluster, `otel-collector:443`, is also configured securely (https) via the user-provided certificate and key files. The Prometheus configuration must account for this. See the Prometheus section for an example of a working, minmimal configuration.
+**Note**: Although the OpenTelmetry Collector can provide metrics for different backends, we currently only support Prometheus.
+
+The OpenTelemetry Collector endpoint is to be scraped by Prometheus, which must be running within the same Kubernetes cluster.
 
 ### Prometheus
 
@@ -42,9 +51,11 @@ The Prometheus service should be running on the same Kubernetes cluster as the k
 
 | Supported Version | Image                   | Helm Chart                                                   |
 | ----------------- | ----------------------- | ------------------------------------------------------------ |
-| 2.22.0           | prom/prometheus:v2.22.0 | https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus |
+| 2.22.0           | prom/prometheus:v2.22.0 | [Prometheus Helm chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus) |
 
-See below for an example of a working, minmimal configuration. For more information about Prometheus configuration, see https://prometheus.io/docs/prometheus/latest/configuration/configuration/#configuration.
+**Note**: It is the user's responsibility to provide persistent storage for Prometheus if they want to preserve historical data.
+
+Here is a sample minmimal configuration for Prometheus. For more information about Prometheus configuration, see [Prometheus onfiguration](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#configuration).
 
 ```
 scrape_configs:
@@ -57,25 +68,23 @@ scrape_configs:
         insecure_skip_verify: true
 ```
 
-Note that although the Open Telmetry Collector can provide metrics for different backends, we currently only support Prometheus.
+### Grafana
 
-#### Grafana
-
-The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require the following Grafana to be deployed in the same Kubernetes cluster as the karavi-powerflex-metrics service. You must also have Prometheus and the OpenTelemetry Collector deployed (see above).
+The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Grafana to be deployed in the same Kubernetes cluster as the karavi-powerflex-metrics service. You must also have Prometheus and the OpenTelemetry Collector deployed (see above).
 
 | Supported Version | Helm Chart                                                |
 | ----------------- | --------------------------------------------------------- |
-| 7.3.0-7.3.2       | https://github.com/grafana/helm-charts/tree/main/charts/grafana |
+| 7.3.0-7.3.2       | [Grafana Helm chart](https://github.com/grafana/helm-charts/tree/main/charts/grafana) |
 
-- Grafana must be configured with the following data sources/plugins:
+Grafana must be configured with the following data sources/plugins:
 
 | Name                   | Additional Information                                                     |
 | ---------------------- | -------------------------------------------------------------------------- |
-| Prometheus data source | https://grafana.com/docs/grafana/latest/features/datasources/prometheus/   |
-| Data Table plugin      | https://grafana.com/grafana/plugins/briangann-datatable-panel/installation |
-| Pie Chart plugin       | https://grafana.com/grafana/plugins/grafana-piechart-panel                 |
+| Prometheus data source | [Prometheus data source](https://grafana.com/docs/grafana/latest/features/datasources/prometheus/)   |
+| Data Table plugin      | [Data Table plugin](https://grafana.com/grafana/plugins/briangann-datatable-panel/installation) |
+| Pie Chart plugin       | [Pie Chart plugin](https://grafana.com/grafana/plugins/grafana-piechart-panel)                 |
 
-- Configure the Grafana Prometheus data source
+Configure the Grafana Prometheus data source
 
 | Setting | Value                     | Additional Information                          |
 | ------- | ------------------------- | ----------------------------------------------- |
@@ -90,15 +99,15 @@ If you wish to clone and build karavi-powerflex-metrics, a Linux host is require
 
 | Component       | Version   | Additional Information                                                                                                                     |
 | --------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Docker          | v19+      | https://docs.docker.com/engine/install/                                                                                                    |
+| Docker          | v19+      | [Docker installation](https://docs.docker.com/engine/install/)                                                                                                    |
 | Docker Registry |           | Access to a local/corporate [Docker registry](https://docs.docker.com/registry/)                                                           |
-| Golang          | v1.14+    | https://github.com/travis-ci/gimme                                                                                                         |
-| gosec           |           | https://github.com/securego/gosec                                                                                                          |
-| gomock          | v.1.4.3   | https://github.com/golang/mock                                                                                                             |
-| git             | latest    | https://git-scm.com/book/en/v2/Getting-Started-Installing-Git                                                                              |
+| Golang          | v1.14+    | [Golang installation](https://github.com/travis-ci/gimme)                                                                                                         |
+| gosec           |           | [gosec](https://github.com/securego/gosec)                                                                                                          |
+| gomock          | v.1.4.3   | [Go Mock](https://github.com/golang/mock)                                                                                                             |
+| git             | latest    | [Git installation](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)                                                                              |
 | gcc             |           | Run ```sudo apt install build-essential```                                                                                                 |
-| kubectl         | 1.16-1.17 | Ensure you copy the kubeconfig file from the Kubernetes cluster to the linux host. https://kubernetes.io/docs/tasks/tools/install-kubectl/ |
-| Helm            | v.3.3.0   | https://helm.sh/docs/intro/install/                                                                                                        | 
+| kubectl         | 1.16-1.17 | Ensure you copy the kubeconfig file from the Kubernetes cluster to the linux host. [kubectl installation](https://kubernetes.io/docs/tasks/tools/install-kubectl/) |
+| Helm            | v.3.3.0   | [Helm installation](https://helm.sh/docs/intro/install/)                                                                                                        |
 
 Once all prerequisites are on the Linux host, follow the steps below to clone and build karavi-powerflex-metrics:
 
@@ -110,14 +119,17 @@ Once all prerequisites are on the Linux host, follow the steps below to clone an
 __Note:__ If you are using a local insecure docker registry, ensure you configure the insecure registries on each of the Kubernetes worker nodes to allow access to the local docker repository
 
 ## Deploying Karavi PowerFlex Metrics
-Karavi PowerFlex Metrics is deployed using Helm.  Usage information and available release versions can be found here: https://github.com/dell/helm-charts/tree/main/charts/karavi-powerflex-metrics.
 
-If you built the Karavi PowerFlex Metrics Docker image and pushed it to a local registry, you can deploy it using the same Helm chart above.  You simply need to override the helm chart value pointing to where the Karavi PowerFlex Metrics image lives.  See https://github.com/dell/helm-charts/tree/main/charts/karavi-powerflex-metrics for more details.
+Karavi PowerFlex Metrics is deployed using Helm.  Usage information and available release versions can be found here: [Karavi PowerFlex Metrics Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-powerflex-metrics).
+
+If you built the Karavi PowerFlex Metrics Docker image and pushed it to a local registry, you can deploy it using the same Helm chart above.  You simply need to override the helm chart value pointing to where the Karavi PowerFlex Metrics image lives.  See [Karavi PowerFlex Metrics Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-powerflex-metrics) for more details.
 
 ## Testing Karavi PowerFlex Metrics
 
 From the karavi-powerflex-metrics root directory where the repo was cloned, the unit tests can be executed as follows:
+
 ```console
-$ make test
+make test
 ```
+
 This will also provide code coverage statistics for the various Go packages.

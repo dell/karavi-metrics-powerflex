@@ -7,7 +7,9 @@ You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
 -->
+
 # I/O Performance
+
 Storage system I/O performance metrics (IOPS, bandwidth, latency) are available by default and broken down by export node and volume.
 
 To disable these metrics, set the ```sdc_metrics_enabled``` field to false in helm/values.yaml.
@@ -15,7 +17,8 @@ To disable these metrics, set the ```sdc_metrics_enabled``` field to false in he
 The [Grafana reference dashboards](../../../grafana/dashboards/powerflex) for I/O metrics can but uploaded to your Grafana instance.
 
 ## Available Metrics from the OpenTelemetry Collector
-The following metrics are available from the OpenTelemetry collector endpoint.  Please see the [GETTING STARTED GUIDE](../GETTING_STARTED_GUIDE.md) for more information on deploying and configuring the OpenTelemetry collector.
+
+The following metrics are available from the OpenTelemetry collector endpoint.  Please see the [Getting Started Guide](../GETTING_STARTED_GUIDE.md) for more information on deploying and configuring the OpenTelemetry collector.
 
 ### PowerFlex Metrics
 

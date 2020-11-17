@@ -7,7 +7,9 @@ You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
 -->
+
 # Storage Capacity
+
 Provides visibility into the total, used, and available capacity for a storage class and associated underlying storage construct.
 
 To disable these metrics, set the ```storage_class_pool_metrics_enabled``` field to false in helm/values.yaml.
@@ -15,6 +17,7 @@ To disable these metrics, set the ```storage_class_pool_metrics_enabled``` field
 The [Grafana reference dashboards](../../../grafana/dashboards/powerflex) for storage capacity/consumption can be uploaded to your Grafana instance.
 
 ## Available Metrics from the OpenTelemetry Collector
+
 The following metrics are available from the OpenTelemetry collector endpoint.  Please see the [GETTING STARTED GUIDE](../GETTING_STARTED_GUIDE.md) for more information on deploying and configuring the OpenTelemetry collector.
 
 ### PowerFlex Metrics
