@@ -26,15 +26,38 @@ A Kubernetes cluster with the appropriate version below is required for Karavi P
 | --------- |
 | 1.17,1.18,1.19 |
 
+### OpenTelemetry Collector
+
+karavi-powerflex-metrics requires the OpenTelemetry Collector to push metrics to so that the metrics can be consumed by a backend. The helm chart takes care of deploying the Open Telemetry Collector and securing communication between karavi-powerflex-metrics and the Open Telemetry Collector using TLS 1.2 via the user-provided certificate and key files.
+
+Note that although the Open Telmetry Collector can provide metrics for different backends, we currently only support Prometheus.
+
+The OpenTelemetry Collector endpoint to be scraped by Prometheus within the Kubernetes cluster, `otel-collector:443`, is also configured securely (https) via the user-provided certificate and key files. The Prometheus configuration must account for this. See the Prometheus section for an example of a working, minmimal configuration.
+
 ### Prometheus
 
-The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Prometheus to scrape the metrics data from the Open Telemetry Collector. The Prometheus service should be running on the same Kubernetes cluster as the karavi-powerflex-metrics service.
+The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Prometheus to scrape the metrics data from the Open Telemetry Collector.
+
+The Prometheus service should be running on the same Kubernetes cluster as the karavi-powerflex-metrics service and be configured to scrape the OpenTelemetry Collector.
 
 | Supported Version | Image                   | Helm Chart                                                   |
 | ----------------- | ----------------------- | ------------------------------------------------------------ |
 | 2.22.0           | prom/prometheus:v2.22.0 | https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus |
 
-If you have the Prometheus OpenTelemetry collector exporter configured, you must configure Prometheus to scrape the endpoint.
+See below for an example of a working, minmimal configuration. For more information about Prometheus configuration, see https://prometheus.io/docs/prometheus/latest/configuration/configuration/#configuration.
+
+```
+scrape_configs:
+    - job_name: 'karavi-powerflex-metrics'
+      scrape_interval: 5s
+      scheme: https
+      static_configs:
+        - targets: ['otel-collector:443']
+      tls_config:
+        insecure_skip_verify: true
+```
+
+Note that although the Open Telmetry Collector can provide metrics for different backends, we currently only support Prometheus.
 
 #### Grafana
 

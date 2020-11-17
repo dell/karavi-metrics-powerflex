@@ -158,6 +158,14 @@ func main() {
 		}
 	}
 
+	var collectorCertPath string
+	if tls := os.Getenv("TLS_ENABLED"); tls == "true" {
+		collectorCertPath = os.Getenv("COLLECTOR_CERT_PATH")
+		if len(strings.TrimSpace(collectorCertPath)) < 1 {
+			collectorCertPath = otlexporters.DefaultCollectorCertPath
+		}
+	}
+
 	config := &entrypoint.Config{
 		SDCTickInterval:           sdcTickInterval,
 		VolumeTickInterval:        volumeTickInterval,
@@ -172,6 +180,8 @@ func main() {
 		SDCMetricsEnabled:         powerflexSdcMetricsEnabled,
 		VolumeMetricsEnabled:      powerflexVolumeMetricsEnabled,
 		StoragePoolMetricsEnabled: storagePoolMetricsEnabled,
+		CollectorAddress:          collectorAddress,
+		CollectorCertPath:         collectorCertPath,
 	}
 
 	exporter := &otlexporters.OtlCollectorExporter{CollectorAddr: collectorAddress}

@@ -24,9 +24,14 @@ type OtlCollectorExporter struct {
 	pusher        *push.Controller
 }
 
+const (
+	// DefaultCollectorCertPath is the default location to look for the Collector certificate
+	DefaultCollectorCertPath = "/etc/ssl/certs/cert.crt"
+)
+
 // InitExporter is the initialization method for the OpenTelemetry Collector exporter
-func (c *OtlCollectorExporter) InitExporter() error {
-	exporter, pusher, err := c.initOTLPExporter()
+func (c *OtlCollectorExporter) InitExporter(opts ...otlp.ExporterOption) error {
+	exporter, pusher, err := c.initOTLPExporter(opts...)
 	if err != nil {
 		return err
 	}
@@ -46,11 +51,8 @@ func (c *OtlCollectorExporter) StopExporter() error {
 	return nil
 }
 
-func (c *OtlCollectorExporter) initOTLPExporter() (*otlp.Exporter, *push.Controller, error) {
-	exporter, err := otlp.NewExporter(
-		otlp.WithInsecure(),
-		otlp.WithAddress(c.CollectorAddr),
-	)
+func (c *OtlCollectorExporter) initOTLPExporter(opts ...otlp.ExporterOption) (*otlp.Exporter, *push.Controller, error) {
+	exporter, err := otlp.NewExporter(opts...)
 	if err != nil {
 		return nil, nil, err
 	}
