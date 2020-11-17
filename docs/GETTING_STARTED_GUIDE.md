@@ -87,9 +87,41 @@ Once all prerequisites are on the Linux host, follow the steps below to clone an
 __Note:__ If you are using a local insecure docker registry, ensure you configure the insecure registries on each of the Kubernetes worker nodes to allow access to the local docker repository
 
 ## Deploying Karavi PowerFlex Metrics
+Karavi PowerFlex Metrics will be deployed using Helm. A developer can deploy in standalone mode.
+
+### Helm Deployment
 Karavi PowerFlex Metrics is deployed using Helm.  Usage information and available release versions can be found here: https://github.com/dell/helm-charts/tree/main/charts/karavi-powerflex-metrics.
 
 If you built the Karavi PowerFlex Metrics Docker image and pushed it to a local registry, you can deploy it using the same Helm chart above.  You simply need to override the helm chart value pointing to where the Karavi PowerFlex Metrics image lives.  See https://github.com/dell/helm-charts/tree/main/charts/karavi-powerflex-metrics for more details.
+
+### Standalone Deployment
+If you want to run Karavi PowerFlex Metrics in standalone mode, built the Karavi PowerFlex Metrics in your development environment. You can run Go command.
+```console
+$ go run <path to main.go>/main.go
+
+or
+
+$cd ../karavi-powerflex-metrics/cmd/topology
+$ go run main.go
+```
+Following environment variables are required to be set:
+| Environment Variable | Description                  | Default                                    |
+| -------------------- | ---------------------------- | ------------------------------------------ |
+| POWERFLEX_ENDPOINT   | PowerFlex Gateway URL        | ` ` |
+| POWERFLEX_USER       | PowerFlex Gateway administrator username(in base64) | ` ` |
+| POWERFLEX_PASSWORD   | PowerFlex Gateway administrator password(in base64) | ` ` |
+| COLLECTOR_ADDR       | Metrics Collector address accessible from the Kubernetes cluster, an example `otel-collector:55680` | ` ` |
+| PROVISIONER_NAMES    | Comma-separated external-provisioner names. The external-provisioner is a sidecar container that dynamically provisions volumes by calling ControllerCreateVolume and ControllerDeleteVolume functions for CSI drivers. An example, `csi-vxflexos.dellemc.com ` | ` ` |
+| POWERFLEX_SDC_METRICS_ENABLED | Enable PowerFlex SDC Metrics Collection | `true` |
+| POWERFLEX_VOLUME_METRICS_ENABLED | Enable PowerFlex Volume Metrics Collection | `true` |
+| POWERFLEX_STORAGE_POOL_METRICS_ENABLED | Enable PowerFlex  Storage Class/Pool Metrics Collection | `true` |
+| POWERFLEX_SDC_IO_POLL_FREQUENCY | The polling frequency (in seconds) to gather SDC metrics | `10` |
+| POWERFLEX_VOLUME_IO_POLL_FREQUENCY | The polling frequency (in seconds) to gather volume metrics | `10` |
+| POWERFLEX_STORAGE_POOL_POLL_FREQUENCY | The polling frequency (in seconds) to gather storage class/pool metrics | `10` |
+| POWERFLEX_MAX_CONCURRENT_QUERIES | The number of simultaneous metrics queries to make to Powerflex(MUST be less than or equal 10; otherwise, several request errors from Powerflex will ensue.) | `10` |
+| TLS_ENABLE        | Enable TLS certfication for inter-services communication | `true` |
+| COLLECTOR_CERT_PATH         | Location of the signed certificate file | ` ` |
+
 
 ## Testing Karavi PowerFlex Metrics
 
