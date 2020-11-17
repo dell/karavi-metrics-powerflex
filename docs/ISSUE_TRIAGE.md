@@ -7,6 +7,7 @@ You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
 -->
+
 # Triage issues
 
 The main goal of issue triage is to categorize all incoming Karavi PowerFlex Metrics issues and make sure each issue has all basic information needed for anyone else to understand and be able to start working on it.

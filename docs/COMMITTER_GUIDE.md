@@ -7,6 +7,7 @@ You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
 -->
+
 # Committer Guidelines
 
 These are the guidelines for people with commit privileges on the GitHub repository. Committers act as members of the Core Team and not necessarily employees of Dell.

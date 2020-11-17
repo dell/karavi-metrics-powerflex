@@ -7,6 +7,7 @@ You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
 -->
+
 # Security Policy
 
 This repository is inspected for security vulnerabilities via [gosec](https://github.com/securego/gosec) in the ```check``` target in the [Makefile](../Makefile).
