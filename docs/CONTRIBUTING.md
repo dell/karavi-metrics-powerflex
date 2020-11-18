@@ -23,6 +23,7 @@ Become one of the contributors to this project! We thrive to build a welcoming a
 * [Branching Strategy](#Branching-strategy)
 * [Signing your commits](#Signing-your-commits)
 * [Pull requests](#Pull-requests)
+* [Quality Gates for pull request](#Quality-Gates-for-pull-request)
 * [Code reviews](#Code-reviews)
 * [Code Style](#Code-Style)
 * [TODOs in the code](#TODOs-in-the-code)
@@ -80,7 +81,7 @@ Read more about the ways you can [Triage issues](ISSUE_TRIAGE.md).
 
 ## Your first contribution
 
-Unsure where to begin contributing to Karavi PowerFlex Metrics? Start by browsing issues labeled `beginner friendly` or `help wanted`.
+Unsure where to begin contributing to Karavi PowerFlex? Start by browsing issues labeled `beginner friendly` or `help wanted`.
 
 * [Beginner-friendly](https://github.com/dell/karavi-powerflex-metrics/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22) issues are generally straightforward to complete.
 * [Help wanted](https://github.com/dell/karavi-powerflex-metrics/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) issues are problems we would like the community to help us with regardless of complexity.
