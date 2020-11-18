@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dell/karavi-powerflex-metrics/internal/k8s"
+	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 
 	sio "github.com/dell/goscaleio"
 	types "github.com/dell/goscaleio/types/v1"
@@ -31,7 +31,7 @@ const (
 )
 
 // Service contains operations that would be used to interact with a PowerFlex system
-//go:generate mockgen -destination=mocks/service_mocks.go -package=mocks github.com/dell/karavi-powerflex-metrics/internal/service Service
+//go:generate mockgen -destination=mocks/service_mocks.go -package=mocks github.com/dell/karavi-metrics-powerflex/internal/service Service
 type Service interface {
 	GetSDCs(context.Context, PowerFlexClient, SDCFinder) ([]StatisticsGetter, error)
 	GetSDCStatistics(context.Context, []corev1.Node, []StatisticsGetter)
@@ -42,7 +42,7 @@ type Service interface {
 }
 
 // StatisticsGetter supports getting statistics
-//go:generate mockgen -destination=mocks/statistics_getter_mocks.go -package=mocks github.com/dell/karavi-powerflex-metrics/internal/service StatisticsGetter
+//go:generate mockgen -destination=mocks/statistics_getter_mocks.go -package=mocks github.com/dell/karavi-metrics-powerflex/internal/service StatisticsGetter
 type StatisticsGetter interface {
 	GetStatistics() (*types.SdcStatistics, error)
 	GetVolume() ([]*types.Volume, error)
@@ -50,13 +50,13 @@ type StatisticsGetter interface {
 }
 
 // VolumeStatisticsGetter supports getting statistics
-//go:generate mockgen -destination=mocks/volume_statistics_getter_mocks.go -package=mocks github.com/dell/karavi-powerflex-metrics/internal/service VolumeStatisticsGetter
+//go:generate mockgen -destination=mocks/volume_statistics_getter_mocks.go -package=mocks github.com/dell/karavi-metrics-powerflex/internal/service VolumeStatisticsGetter
 type VolumeStatisticsGetter interface {
 	GetVolumeStatistics() (*types.VolumeStatistics, error)
 }
 
 // PowerFlexClient contains operations for a powerflex client
-//go:generate mockgen -destination=mocks/powerflex_client_mocks.go -package=mocks github.com/dell/karavi-powerflex-metrics/internal/service PowerFlexClient
+//go:generate mockgen -destination=mocks/powerflex_client_mocks.go -package=mocks github.com/dell/karavi-metrics-powerflex/internal/service PowerFlexClient
 type PowerFlexClient interface {
 	Authenticate(*sio.ConfigConnect) (sio.Cluster, error)
 	GetInstance(string) ([]*types.System, error)
@@ -65,7 +65,7 @@ type PowerFlexClient interface {
 }
 
 // PowerFlexSystem contains operations for a powerflex system
-//go:generate mockgen -destination=mocks/powerflex_system_mocks.go -package=mocks github.com/dell/karavi-powerflex-metrics/internal/service PowerFlexSystem
+//go:generate mockgen -destination=mocks/powerflex_system_mocks.go -package=mocks github.com/dell/karavi-metrics-powerflex/internal/service PowerFlexSystem
 type PowerFlexSystem interface {
 	FindSdc(string, string) (*sio.Sdc, error)
 }
@@ -77,37 +77,37 @@ type PowerFlexService struct {
 }
 
 // SDCFinder is used to find SDC GUIDs
-//go:generate mockgen -destination=mocks/sdc_finder_mocks.go -package=mocks github.com/dell/karavi-powerflex-metrics/internal/service SDCFinder
+//go:generate mockgen -destination=mocks/sdc_finder_mocks.go -package=mocks github.com/dell/karavi-metrics-powerflex/internal/service SDCFinder
 type SDCFinder interface {
 	GetSDCGuids() ([]string, error)
 }
 
 // StorageClassFinder is used to find storage classes in kubernetes
-//go:generate mockgen -destination=mocks/storage_class_finder_mocks.go -package=mocks github.com/dell/karavi-powerflex-metrics/internal/service StorageClassFinder
+//go:generate mockgen -destination=mocks/storage_class_finder_mocks.go -package=mocks github.com/dell/karavi-metrics-powerflex/internal/service StorageClassFinder
 type StorageClassFinder interface {
 	GetStorageClasses() ([]v1.StorageClass, error)
 }
 
 // VolumeFinder is used to find volume information in kubernetes
-//go:generate mockgen -destination=mocks/volume_finder_mocks.go -package=mocks github.com/dell/karavi-powerflex-metrics/internal/service VolumeFinder
+//go:generate mockgen -destination=mocks/volume_finder_mocks.go -package=mocks github.com/dell/karavi-metrics-powerflex/internal/service VolumeFinder
 type VolumeFinder interface {
 	GetPersistentVolumes() ([]k8s.VolumeInfo, error)
 }
 
 // NodeFinder is a node finder that will query the Kubernetes API for a slice of cluster nodes
-//go:generate mockgen -destination=mocks/node_finder_mocks.go -package=mocks github.com/dell/karavi-powerflex-metrics/internal/service NodeFinder
+//go:generate mockgen -destination=mocks/node_finder_mocks.go -package=mocks github.com/dell/karavi-metrics-powerflex/internal/service NodeFinder
 type NodeFinder interface {
 	GetNodes() ([]corev1.Node, error)
 }
 
 // StoragePoolStatisticsGetter supports getting storage pool statistics
-//go:generate mockgen -destination=mocks/storage_pool_statistics_getter_mocks.go -package=mocks github.com/dell/karavi-powerflex-metrics/internal/service StoragePoolStatisticsGetter
+//go:generate mockgen -destination=mocks/storage_pool_statistics_getter_mocks.go -package=mocks github.com/dell/karavi-metrics-powerflex/internal/service StoragePoolStatisticsGetter
 type StoragePoolStatisticsGetter interface {
 	GetStatistics() (*types.Statistics, error)
 }
 
 // LeaderElector will elect a leader
-//go:generate mockgen -destination=mocks/leader_elector_mocks.go -package=mocks github.com/dell/karavi-powerflex-metrics/internal/service LeaderElector
+//go:generate mockgen -destination=mocks/leader_elector_mocks.go -package=mocks github.com/dell/karavi-metrics-powerflex/internal/service LeaderElector
 type LeaderElector interface {
 	InitLeaderElection(string, string) error
 	IsLeader() bool

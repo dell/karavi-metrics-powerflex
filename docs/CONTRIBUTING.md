@@ -31,21 +31,21 @@ Become one of the contributors to this project! We thrive to build a welcoming a
 
 ## Become a contributor
 
-You can contribute to Karavi PowerFlex Metrics in several ways. Here are some examples:
+You can contribute to Karavi Metrics for PowerFlex in several ways. Here are some examples:
 
-* Contribute to the Karavi PowerFlex Metrics codebase.
+* Contribute to the codebase.
 * Report and triage bugs.
 * Feature requests
 * Write technical documentation and blog posts, for users and contributors.
-* Help others by answering questions about Karavi PowerFlex Metrics.
+* Help others by answering questions about this project.
 
 ## Report bugs
 
 We aim to track and document everything related to this repo via the Issues page. The code and documentation are released with no warranties or SLAs and are intended to be supported through a community driven process.
 
-Before submitting a new issue, try to make sure someone hasn't already reported the problem. Look through the [existing issues](https://github.com/dell/karavi-powerflex-metrics/issues) for similar issues.
+Before submitting a new issue, try to make sure someone hasn't already reported the problem. Look through the [existing issues](https://github.com/dell/karavi-metrics-powerflex/issues) for similar issues.
 
-Report a bug by submitting a [bug report](https://github.com/dell/karavi-powerflex-metrics/issues/new?labels=type%2Fbug%2C+needs-triage&template=bug_report.md&title=%5BBUG%5D%3A). Make sure that you provide as much information as possible on how to reproduce the bug.
+Report a bug by submitting a [bug report](https://github.com/dell/karavi-metrics-powerflex/issues/new?labels=type%2Fbug%2C+needs-triage&template=bug_report.md&title=%5BBUG%5D%3A). Make sure that you provide as much information as possible on how to reproduce the bug.
 
 When opening a Bug please include the following information to help with debugging:
 
@@ -58,11 +58,11 @@ An Issue __must__ be created before submitting any pull request. Any pull reques
 
 ## Feature request
 
-If you have an idea of how to improve Karavi PowerFlex Metrics, submit a [feature request](https://github.com/dell/karavi-powerflex-metrics/issues/new?labels=type%2Ffeature-request%2C+needs-triage&template=feature_request.md&title=%5BFEATURE%5D%3A).
+If you have an idea of how to improve this project, submit a [feature request](https://github.com/dell/karavi-metrics-powerflex/issues/new?labels=type%2Ffeature-request%2C+needs-triage&template=feature_request.md&title=%5BFEATURE%5D%3A).
 
 ## Answering questions
 
-If you have a question and you can't find the answer in the documentation or issues, the next step is to submit a [question.](https://github.com/dell/karavi-powerflex-metrics/issues/new?labels=type%2Fquestion&template=ask-a-question.md&title=%5BQUESTION%5D%3A)
+If you have a question and you can't find the answer in the documentation or issues, the next step is to submit a [question.](https://github.com/dell/karavi-metrics-powerflex/issues/new?labels=type%2Fquestion&template=ask-a-question.md&title=%5BQUESTION%5D%3A)
 
 We'd love your help answering questions being asked by other Karavi users.
 
@@ -81,10 +81,10 @@ Read more about the ways you can [Triage issues](ISSUE_TRIAGE.md).
 
 ## Your first contribution
 
-Unsure where to begin contributing to Karavi PowerFlex? Start by browsing issues labeled `beginner friendly` or `help wanted`.
+Unsure where to begin contributing? Start by browsing issues labeled `beginner friendly` or `help wanted`.
 
-* [Beginner-friendly](https://github.com/dell/karavi-powerflex-metrics/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22) issues are generally straightforward to complete.
-* [Help wanted](https://github.com/dell/karavi-powerflex-metrics/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) issues are problems we would like the community to help us with regardless of complexity.
+* [Beginner-friendly](https://github.com/dell/karavi-metrics-powerflex/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22) issues are generally straightforward to complete.
+* [Help wanted](https://github.com/dell/karavi-metrics-powerflex/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) issues are problems we would like the community to help us with regardless of complexity.
 
 When you're ready to contribute, it's time to create a pull request.
 
@@ -305,4 +305,4 @@ We don't like TODOs in the code. It is really best if you sort out all issues yo
 
 ## Building, Deploying, and Testing
 
-Please refer to the [Getting Started Guide](./GETTING_STARTED_GUIDE.md) for information on building, deploying, and running tests for Karavi PowerFlex Metrics.
+Please refer to the [Getting Started Guide](./GETTING_STARTED_GUIDE.md) for information on building, deploying, and running tests for this project.

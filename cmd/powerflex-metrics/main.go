@@ -15,10 +15,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dell/karavi-powerflex-metrics/internal/entrypoint"
-	"github.com/dell/karavi-powerflex-metrics/internal/k8s"
-	"github.com/dell/karavi-powerflex-metrics/internal/service"
-	otlexporters "github.com/dell/karavi-powerflex-metrics/opentelemetry/exporters"
+	"github.com/dell/karavi-metrics-powerflex/internal/entrypoint"
+	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
+	"github.com/dell/karavi-metrics-powerflex/internal/service"
+	otlexporters "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters"
 
 	sio "github.com/dell/goscaleio"
 	"go.opentelemetry.io/otel/api/global"

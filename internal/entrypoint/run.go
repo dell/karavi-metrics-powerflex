@@ -16,9 +16,9 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/dell/karavi-powerflex-metrics/internal/service"
-	pflexServices "github.com/dell/karavi-powerflex-metrics/internal/service"
-	otlexporters "github.com/dell/karavi-powerflex-metrics/opentelemetry/exporters"
+	"github.com/dell/karavi-metrics-powerflex/internal/service"
+	pflexServices "github.com/dell/karavi-metrics-powerflex/internal/service"
+	otlexporters "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters"
 	"go.opentelemetry.io/otel/exporters/otlp"
 	"google.golang.org/grpc/credentials"
 
@@ -35,7 +35,7 @@ const (
 	// MinimumVolTickInterval is the minimum allowed interval when querying volume metrics
 	MinimumVolTickInterval = 5 * time.Second
 	// DefaultEndPoint for leader election path
-	DefaultEndPoint = "karavi-powerflex-metrics"
+	DefaultEndPoint = "karavi-metrics-powerflex"
 	// DefaultNameSpace for powerflex pod running metrics collection
 	DefaultNameSpace = "karavi"
 )

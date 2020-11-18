@@ -10,9 +10,10 @@ package k8s_test
 
 import (
 	"errors"
-	"github.com/dell/karavi-powerflex-metrics/internal/k8s"
-	"github.com/dell/karavi-powerflex-metrics/internal/k8s/mocks"
 	"testing"
+
+	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
+	"github.com/dell/karavi-metrics-powerflex/internal/k8s/mocks"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"

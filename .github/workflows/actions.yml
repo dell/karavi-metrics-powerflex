@@ -71,10 +71,10 @@ jobs:
         run: go get github.com/golang/mock/mockgen@v1.4.4
       - name: Get dependencies
         run:  go mod download
-      - name: Build karavi-powerflex-metrics Docker Image
+      - name: Build karavi-metrics-powerflex Docker Image
         run: make clean build docker  
       - name: Image scanner
         uses: Azure/container-scan@v0
         with:
-          image-name: karavi-powerflex-metrics
+          image-name: karavi-metrics-powerflex
           severity-threshold: HIGH

@@ -5,7 +5,7 @@ import (
 )
 
 // StorageClassGetter is an interface for getting a list of storage class information
-//go:generate mockgen -destination=mocks/storage_class_getter_mocks.go -package=mocks github.com/dell/karavi-powerflex-metrics/internal/k8s StorageClassGetter
+//go:generate mockgen -destination=mocks/storage_class_getter_mocks.go -package=mocks github.com/dell/karavi-metrics-powerflex/internal/k8s StorageClassGetter
 type StorageClassGetter interface {
 	GetStorageClasses() (*v1.StorageClassList, error)
 }

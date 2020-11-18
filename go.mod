@@ -1,4 +1,4 @@
-module github.com/dell/karavi-powerflex-metrics
+module github.com/dell/karavi-metrics-powerflex
 
 go 1.14
 
