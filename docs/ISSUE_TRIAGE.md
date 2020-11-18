@@ -31,7 +31,7 @@ The easiest way to find issues that haven't been triaged is to search for issues
 
 ## 2. Ensure the issue contains basic information
 
-Make sure that the issue's author provided the standard issue information. The Karavi PowerFlex Metrics project utilizes [GitHub issue templates](https://help.github.com/en/articles/creating-issue-templates-for-your-repository) to guide contributors to provide standard information that must be included for each type of template or type of issue.
+Make sure that the issue's author provided the standard issue information. The Karavi PowerFlex Metrics project utilizes GitHub issue templates to guide contributors to provide standard information that must be included for each type of template or type of issue.
 
 ### Standard issue information that must be included
 
