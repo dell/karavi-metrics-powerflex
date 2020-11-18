@@ -1,7 +1,9 @@
 # Description
+
 A few sentences describing the overall goals of the pull request's commits.
 
 # Issues
+
 List the issues impacted by this PR:
 
 | Issue ID |
@@ -20,17 +22,8 @@ List the issues impacted by this PR:
 - [ ] I have added tests that prove my fix is effective or that my feature works
 
 # How Has This Been Tested?
+
 Please describe the tests that you ran to verify your changes. Please also list any relevant details for your test configuration
 
 - [ ] Test A
 - [ ] Test B
-
-# Make check output
-Copy and paste the results output from running 'make check':
-
-```insert make check results output here```
-
-# Make test output
-Copy and paste the results output from running 'make test':
-
-```insert make test results output here```
