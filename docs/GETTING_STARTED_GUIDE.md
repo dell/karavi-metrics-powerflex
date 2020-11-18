@@ -10,13 +10,13 @@ You may obtain a copy of the License at
 
 # Getting Started Guide
 
-Karavi Metrics for PowerFlex Metrics telemetry data about storage usage and performance and pushes it to the [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector), so it can be processed, and exported in a format consumable by Prometheus.  Prometheus can then be configured to scrape the OpenTelemetry Collector exporter endpoint to provide metrics so they can be visualized in Grafana.  
+This project captures telemetry data about storage usage and performance and pushes it to the [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector), so it can be processed, and exported in a format consumable by Prometheus.  Prometheus can then be configured to scrape the OpenTelemetry Collector exporter endpoint to provide metrics so they can be visualized in Grafana.  
 
 This document steps through the deployment and configuration of this application.
 
 ## Kubernetes
 
-First and foremost, Karavi Metrics for PowerFlex requires a Kubernetes cluster that aligns with the supported versions listed below.
+First and foremost, the metrics service requires a Kubernetes cluster that aligns with the supported versions listed below.
 
 | Version   |
 | --------- |
@@ -24,12 +24,12 @@ First and foremost, Karavi Metrics for PowerFlex requires a Kubernetes cluster t
 
 ## Required Components
 
-This application requires the following third party components to be deployed in the same Kubernetes cluster as the karavi-metrics-powerflex service:
+The following third party components are required to be deployed in the same Kubernetes cluster as the karavi-metrics-powerflex service:
 
 * Prometheus
 * Grafana
 
-It is the user's responsibility to deploy these components in the same Kubernetes cluster as the karavi-metrics-powerflex service.  These components must be deployed according to the specifications defined below.
+It is the user's responsibility to deploy these components in the same Kubernetes cluster as the metrics service.  These components must be deployed according to the specifications defined below.
 
 The one exception is the OpenTelemetry Collector.  This is deployed and configured as part of this project's deployment.  This is not the user's responsibility.
 
@@ -37,7 +37,7 @@ The one exception is the OpenTelemetry Collector.  This is deployed and configur
 
 The OpenTelemetry Collector is configured to require all communication happen using TLS.  The deployment options listed below will require a signed certificate file and a signed certificate private key file.
 
-The karavi-metrics-powerflex service requires the OpenTelemetry Collector so that metrics can be pushed and later consumed by a backend. The [Karavi Metrics for PowerFlex Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-metrics-powerflex) takes care of deploying the OpenTelemetry Collector and securing communication between karavi-metrics-powerflex and the OpenTelemetry Collector using TLS 1.2 via the user-provided certificate and key files.
+The metrics service requires the OpenTelemetry Collector so that metrics can be pushed and later consumed by a backend. The [Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-metrics-powerflex) takes care of deploying the OpenTelemetry Collector and securing communication between the metrics service and the OpenTelemetry Collector using TLS 1.2 via the user-provided certificate and key files.
 
 **Note**: Although the OpenTelemetry Collector can provide metrics for different backends, we currently only support Prometheus.
 
@@ -47,7 +47,7 @@ The OpenTelemetry Collector endpoint is to be scraped by Prometheus, which must 
 
 The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Prometheus to scrape the metrics data from the Open Telemetry Collector.
 
-The Prometheus service should be running on the same Kubernetes cluster as the karavi-metrics-powerflex service and be configured to scrape the OpenTelemetry Collector.
+The Prometheus service should be running on the same Kubernetes cluster as the metrics service and be configured to scrape the OpenTelemetry Collector.
 
 | Supported Version | Image                   | Helm Chart                                                   |
 | ----------------- | ----------------------- | ------------------------------------------------------------ |
@@ -70,7 +70,7 @@ scrape_configs:
 
 ### Grafana
 
-The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Grafana to be deployed in the same Kubernetes cluster as the karavi-metrics-powerflex service. You must also have Prometheus and the OpenTelemetry Collector deployed (see above).
+The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Grafana to be deployed in the same Kubernetes cluster as the metrics service. You must also have Prometheus and the OpenTelemetry Collector deployed (see above).
 
 | Supported Version | Helm Chart                                                |
 | ----------------- | --------------------------------------------------------- |
@@ -93,9 +93,9 @@ Configure the Grafana Prometheus data source
 | URL     | http://PROMETHEUS_IP:PORT | The IP/PORT of your running Prometheus instance |
 | Access  | Proxy                     |                                                 |
 
-## Building Karavi Metrics for PowerFlex (Linux Only)
+## Building the Service (Linux Only)
 
-If you wish to clone and build karavi-metrics-powerflex, a Linux host is required with the following installed:
+If you wish to clone and build the metrics service, a Linux host is required with the following installed:
 
 | Component       | Version   | Additional Information                                                                                                                     |
 | --------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -109,9 +109,9 @@ If you wish to clone and build karavi-metrics-powerflex, a Linux host is require
 | kubectl         | 1.16-1.17 | Ensure you copy the kubeconfig file from the Kubernetes cluster to the linux host. [kubectl installation](https://kubernetes.io/docs/tasks/tools/install-kubectl/) |
 | Helm            | v.3.3.0   | [Helm installation](https://helm.sh/docs/intro/install/)                                                                                                        |
 
-Once all prerequisites are on the Linux host, follow the steps below to clone and build karavi-metrics-powerflex:
+Once all prerequisites are on the Linux host, follow the steps below to clone and build the metrics service:
 
-1. Clone the karavi-metrics-powerflex repository: `git clone https://github.com/dell/karavi-metrics-powerflex.git`
+1. Clone the repository: `git clone https://github.com/dell/karavi-metrics-powerflex.git`
 1. Set the DOCKER_REPO environment variable to point to the local Docker repository, example: `export DOCKER_REPO=<ip-address>:<port>`
 1. In the karavi-metrics-powerflex directory, run the following to build the Docker image called karavi-metrics-powerflex: `make clean build docker`
 1. To tag (with the "latest" tag) and push the image to the local Docker repository run the following: `make tag push`
@@ -120,13 +120,13 @@ __Note:__ If you are using a local insecure docker registry, ensure you configur
 
 ## Deploying Karavi Metrics for PowerFlex
 
-This project is deployed using Helm.  Usage information and available release versions can be found here: [Karavi Metrics for PowerFlex Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-metrics-powerflex).
+This project is deployed using Helm.  Usage information and available release versions can be found here: [Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-metrics-powerflex).
 
-If you built the Karavi Metrics for PowerFlex Docker image and pushed it to a local registry, you can deploy it using the same Helm chart above.  You simply need to override the helm chart value pointing to where the image lives.  See [Karavi Metrics for PowerFlex Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-metrics-powerflex) for more details.
+If you built the Docker image and pushed it to a local registry, you can deploy it using the same Helm chart above.  You simply need to override the helm chart value pointing to where the image lives.  See [Karavi Metrics for PowerFlex Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-metrics-powerflex) for more details.
 
 ## Testing Karavi Metrics for PowerFlex
 
-From the karavi-metrics-powerflex root directory where the repo was cloned, the unit tests can be executed as follows:
+From the root directory where the repo was cloned, the unit tests can be executed as follows:
 
 ```console
 make test

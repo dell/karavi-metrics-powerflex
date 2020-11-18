@@ -31,7 +31,7 @@ Become one of the contributors to this project! We thrive to build a welcoming a
 
 ## Become a contributor
 
-You can contribute to Karavi Metrics for PowerFlex in several ways. Here are some examples:
+You can contribute to this project in several ways. Here are some examples:
 
 * Contribute to the codebase.
 * Report and triage bugs.
