@@ -55,9 +55,9 @@ The Prometheus service should be running on the same Kubernetes cluster as the k
 
 **Note**: It is the user's responsibility to provide persistent storage for Prometheus if they want to preserve historical data.
 
-Here is a sample minmimal configuration for Prometheus. For more information about Prometheus configuration, see [Prometheus onfiguration](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#configuration).
+Here is a sample minimal configuration for Prometheus. For more information about Prometheus configuration, see [Prometheus configuration](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#configuration).
 
-```
+```yaml
 scrape_configs:
     - job_name: 'karavi-powerflex-metrics'
       scrape_interval: 5s
