@@ -13,8 +13,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/dell/karavi-powerflex-metrics/internal/service"
-	"github.com/dell/karavi-powerflex-metrics/internal/service/mocks"
+	"github.com/dell/karavi-metrics-powerflex/internal/service"
+	"github.com/dell/karavi-metrics-powerflex/internal/service/mocks"
 
 	"github.com/golang/mock/gomock"
 	"go.opentelemetry.io/otel/api/global"

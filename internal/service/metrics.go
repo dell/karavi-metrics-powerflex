@@ -18,7 +18,7 @@ import (
 )
 
 // MetricsRecorder supports recording I/O metrics
-//go:generate mockgen -destination=mocks/metrics_mocks.go -package=mocks github.com/dell/karavi-powerflex-metrics/internal/service MetricsRecorder,Float64UpDownCounterCreater
+//go:generate mockgen -destination=mocks/metrics_mocks.go -package=mocks github.com/dell/karavi-metrics-powerflex/internal/service MetricsRecorder,Float64UpDownCounterCreater
 type MetricsRecorder interface {
 	Record(ctx context.Context, meta interface{},
 		readBW, writeBW,

@@ -15,12 +15,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dell/karavi-powerflex-metrics/internal/entrypoint"
-	pflexServices "github.com/dell/karavi-powerflex-metrics/internal/service"
-	"github.com/dell/karavi-powerflex-metrics/internal/service/mocks"
-	metrics "github.com/dell/karavi-powerflex-metrics/internal/service/mocks"
-	otlexporters "github.com/dell/karavi-powerflex-metrics/opentelemetry/exporters"
-	exportermocks "github.com/dell/karavi-powerflex-metrics/opentelemetry/exporters/mocks"
+	"github.com/dell/karavi-metrics-powerflex/internal/entrypoint"
+	pflexServices "github.com/dell/karavi-metrics-powerflex/internal/service"
+	"github.com/dell/karavi-metrics-powerflex/internal/service/mocks"
+	metrics "github.com/dell/karavi-metrics-powerflex/internal/service/mocks"
+	otlexporters "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters"
+	exportermocks "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters/mocks"
 	"k8s.io/api/storage/v1beta1"
 
 	sio "github.com/dell/goscaleio"
@@ -61,7 +61,7 @@ func Test_Run(t *testing.T) {
 				}, nil)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").Times(1).Return(nil)
+			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
@@ -115,7 +115,7 @@ func Test_Run(t *testing.T) {
 				}, nil)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").Times(1).Return(nil)
+			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
@@ -155,7 +155,7 @@ func Test_Run(t *testing.T) {
 				Return([]corev1.Node{}, errors.New("error"))
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").Times(1).Return(nil)
+			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
@@ -210,7 +210,7 @@ func Test_Run(t *testing.T) {
 				}, nil)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").Times(1).Return(nil)
+			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
@@ -261,7 +261,7 @@ func Test_Run(t *testing.T) {
 				}, nil)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").Times(1).Return(nil)
+			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
@@ -483,7 +483,7 @@ func Test_Run(t *testing.T) {
 			sdcFinder.EXPECT().GetSDCGuids().AnyTimes().Return([]string{"1.2.3.4", "1.2.3.5"}, nil)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").Times(1).Return(nil)
+			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
@@ -520,7 +520,7 @@ func Test_Run(t *testing.T) {
 			sdcFinder := mocks.NewMockSDCFinder(ctrl)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").Times(1).Return(nil)
+			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
@@ -550,7 +550,7 @@ func Test_Run(t *testing.T) {
 			sdcFinder.EXPECT().GetSDCGuids().AnyTimes().Return([]string{"1.2.3.4", "1.2.3.5"}, nil)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").Times(1).Return(nil)
+			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
@@ -588,7 +588,7 @@ func Test_Run(t *testing.T) {
 			sdcFinder.EXPECT().GetSDCGuids().AnyTimes().Return([]string{"1.2.3.4", "1.2.3.5"}, nil)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").Times(1).Return(nil)
+			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
@@ -638,7 +638,7 @@ func Test_Run(t *testing.T) {
 				Return([]v1beta1.StorageClass{sc1}, nil)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").Times(1).Return(nil)
+			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
@@ -704,7 +704,7 @@ func Test_Run(t *testing.T) {
 			sdcFinder.EXPECT().GetSDCGuids().Times(0).Return([]string{"1.2.3.4", "1.2.3.5"}, nil)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").Times(1).Return(nil)
+			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(false)
 
 			config := &entrypoint.Config{
@@ -751,7 +751,7 @@ func Test_Run(t *testing.T) {
 				Return([]v1beta1.StorageClass{sc1}, nil)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").Times(1).Return(nil)
+			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
@@ -783,7 +783,7 @@ func Test_Run(t *testing.T) {
 			sdcFinder := mocks.NewMockSDCFinder(ctrl)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").Times(1).Return(nil)
+			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
@@ -811,7 +811,7 @@ func Test_Run(t *testing.T) {
 			ctrl := gomock.NewController(t)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").Times(1).Return(nil)
+			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
@@ -833,7 +833,7 @@ func Test_Run(t *testing.T) {
 			ctrl := gomock.NewController(t)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().InitLeaderElection("karavi-powerflex-metrics", "karavi").AnyTimes().Return(nil)
+			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").AnyTimes().Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{

@@ -10,10 +10,11 @@ package k8s_test
 
 import (
 	"errors"
-	"github.com/dell/karavi-powerflex-metrics/internal/k8s"
-	"github.com/dell/karavi-powerflex-metrics/internal/k8s/mocks"
 	"testing"
 	"time"
+
+	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
+	"github.com/dell/karavi-metrics-powerflex/internal/k8s/mocks"
 
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"

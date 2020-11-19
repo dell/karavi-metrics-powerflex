@@ -12,7 +12,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/dell/karavi-powerflex-metrics/internal/k8s"
+	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/kubernetes"
@@ -85,7 +85,7 @@ func Test_InitLeaderElection(t *testing.T) {
 				defer func() { k8s.NewLeaderElectorFn = oldLeaderElection }()
 				k8s.NewLeaderElectorFn = leaderelectionFn
 			}
-			err := k8sclient.InitLeaderElection("karavi-powerflex-metrics", "karavi")
+			err := k8sclient.InitLeaderElection("karavi-metrics-powerflex", "karavi")
 			for _, checkFn := range checkFns {
 				checkFn(t, err)
 			}

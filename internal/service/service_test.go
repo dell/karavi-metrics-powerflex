@@ -15,10 +15,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dell/karavi-powerflex-metrics/internal/service"
-	"github.com/dell/karavi-powerflex-metrics/internal/service/mocks"
+	"github.com/dell/karavi-metrics-powerflex/internal/service"
+	"github.com/dell/karavi-metrics-powerflex/internal/service/mocks"
 
-	"github.com/dell/karavi-powerflex-metrics/internal/k8s"
+	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"

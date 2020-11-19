@@ -11,8 +11,9 @@ package k8s_test
 import (
 	"errors"
 	"fmt"
-	"github.com/dell/karavi-powerflex-metrics/internal/k8s"
 	"testing"
+
+	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 
 	"k8s.io/client-go/kubernetes"
 

@@ -18,7 +18,7 @@ In addition to this, there are various security checks that get executed against
 
 ## Reporting a Vulnerability
 
-Have you discovered a security vulnerability in Karavi PowerFlex Metrics?
+Have you discovered a security vulnerability in this project?
 We ask you to alert the maintainers by sending an email, describing the issue, impact, and fix - if applicable.
 
 You can reach the Karavi maintainers at karavi@dell.com.
