@@ -76,8 +76,8 @@ scrape_configs:
 
 ### Grafana
 
-The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Grafana to be deployed in the same Kubernetes cluster as the metrics service. You must also have Prometheus and the OpenTelemetry Collector deployed (see above). To add the metrics dashboard to Grafana, log in and click the + icon in the side menu. Then click
-Import. From here you can upload the JSON file or paste the JSON text directly into the text area.
+The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Grafana to be deployed in the same Kubernetes cluster as the metrics service. You must also have Prometheus and the OpenTelemetry Collector deployed (see above). Configure your Grafana instance after successful deployment of the metrics service.
+To add the metrics dashboard to Grafana, log in and click the + icon in the side menu. Then click Import. From here you can upload the JSON file or paste the JSON text directly into the text area.
 
 | Supported Version | Helm Chart                                                |
 | ----------------- | --------------------------------------------------------- |
