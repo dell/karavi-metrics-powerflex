@@ -18,7 +18,7 @@ The [Grafana reference dashboards](../../../grafana/dashboards/powerflex) for st
 
 ## Available Metrics from the OpenTelemetry Collector
 
-The following metrics are available from the OpenTelemetry collector endpoint.  Please see the [GETTING STARTED GUIDE](../GETTING_STARTED_GUIDE.md) for more information on deploying and configuring the OpenTelemetry collector.
+The following metrics are available from the OpenTelemetry collector endpoint.  Please see the [GETTING STARTED GUIDE](./GETTING_STARTED_GUIDE.md) for more information on deploying and configuring the OpenTelemetry collector.
 
 ### PowerFlex Metrics
 

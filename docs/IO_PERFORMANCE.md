@@ -14,11 +14,11 @@ Storage system I/O performance metrics (IOPS, bandwidth, latency) are available 
 
 To disable these metrics, set the ```sdc_metrics_enabled``` field to false in helm/values.yaml.
 
-The [Grafana reference dashboards](../../../grafana/dashboards/powerflex) for I/O metrics can but uploaded to your Grafana instance.
+The [Grafana reference dashboards](../grafana/dashboards/powerflex) for I/O metrics can but uploaded to your Grafana instance.
 
 ## Available Metrics from the OpenTelemetry Collector
 
-The following metrics are available from the OpenTelemetry collector endpoint.  Please see the [Getting Started Guide](../GETTING_STARTED_GUIDE.md) for more information on deploying and configuring the OpenTelemetry collector.
+The following metrics are available from the OpenTelemetry collector endpoint.  Please see the [Getting Started Guide](./GETTING_STARTED_GUIDE.md) for more information on deploying and configuring the OpenTelemetry collector.
 
 ### PowerFlex Metrics
 
