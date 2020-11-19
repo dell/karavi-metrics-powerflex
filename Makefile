@@ -31,7 +31,7 @@ test:
 
 .PHONY: docker
 docker:
-	SERVICE=cmd/powerflex-metrics docker build -t karavi-metrics-powerflex -f Dockerfile cmd/powerflex-metrics/
+	SERVICE=cmd/metrics-powerflex docker build -t karavi-metrics-powerflex -f Dockerfile cmd/metrics-powerflex/
 
 .PHONY: push
 push:
