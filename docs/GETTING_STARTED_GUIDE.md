@@ -100,7 +100,7 @@ Configure the Grafana Prometheus data source
 | URL     | http://PROMETHEUS_IP:PORT | The IP/PORT of your running Prometheus instance |
 | Access  | Proxy                     |                                                 |
 
-## Building the Service (Linux Only)
+## Building the Service
 
 If you wish to clone and build the metrics service, a Linux host is required with the following installed:
 
@@ -123,7 +123,7 @@ Once all prerequisites are on the Linux host, follow the steps below to clone an
 1. In the karavi-metrics-powerflex directory, run the following to build the Docker image called karavi-metrics-powerflex: `make clean build docker`
 1. To tag (with the "latest" tag) and push the image to the local Docker repository run the following: `make tag push`
 
-__Note:__ If you are using a local insecure docker registry, ensure you configure the insecure registries on each of the Kubernetes worker nodes to allow access to the local docker repository
+__Note:__ Linux support only. If you are using a local insecure docker registry, ensure you configure the insecure registries on each of the Kubernetes worker nodes to allow access to the local docker repository
 
 ## Testing Karavi Metrics for PowerFlex
 
