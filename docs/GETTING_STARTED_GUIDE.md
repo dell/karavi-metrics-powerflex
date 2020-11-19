@@ -22,6 +22,12 @@ First and foremost, the metrics service requires a Kubernetes cluster that align
 | --------- |
 | 1.17-1.19 |
 
+## Deploying Karavi Metrics for PowerFlex
+
+This project is deployed using Helm.  Usage information and available release versions can be found here: [Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-metrics-powerflex).
+
+If you built the Docker image and pushed it to a local registry, you can deploy it using the same Helm chart above.  You simply need to override the helm chart value pointing to where the image lives.  See [Karavi Metrics for PowerFlex Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-metrics-powerflex) for more details.
+
 ## Required Components
 
 The following third party components are required to be deployed in the same Kubernetes cluster as the karavi-metrics-powerflex service:
@@ -70,7 +76,8 @@ scrape_configs:
 
 ### Grafana
 
-The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Grafana to be deployed in the same Kubernetes cluster as the metrics service. You must also have Prometheus and the OpenTelemetry Collector deployed (see above).
+The [Grafana metrics dashboards](../grafana/dashboards/powerflex) require Grafana to be deployed in the same Kubernetes cluster as the metrics service. You must also have Prometheus and the OpenTelemetry Collector deployed (see above). To add the metrics dashboard to Grafana, log in and click the + icon in the side menu. Then click
+Import. From here you can upload the JSON file or paste the JSON text directly into the text area.
 
 | Supported Version | Helm Chart                                                |
 | ----------------- | --------------------------------------------------------- |
@@ -117,12 +124,6 @@ Once all prerequisites are on the Linux host, follow the steps below to clone an
 1. To tag (with the "latest" tag) and push the image to the local Docker repository run the following: `make tag push`
 
 __Note:__ If you are using a local insecure docker registry, ensure you configure the insecure registries on each of the Kubernetes worker nodes to allow access to the local docker repository
-
-## Deploying Karavi Metrics for PowerFlex
-
-This project is deployed using Helm.  Usage information and available release versions can be found here: [Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-metrics-powerflex).
-
-If you built the Docker image and pushed it to a local registry, you can deploy it using the same Helm chart above.  You simply need to override the helm chart value pointing to where the image lives.  See [Karavi Metrics for PowerFlex Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-metrics-powerflex) for more details.
 
 ## Testing Karavi Metrics for PowerFlex
 
