@@ -24,7 +24,7 @@ jobs:
       - name: Run the forbidden words scan
         uses: dell/common-github-actions/code-sanitizer@main
         with:
-          args: .
+          args: /github/workspace
   test:
     name: Run Go unit tests and check package coverage
     runs-on: ubuntu-latest
