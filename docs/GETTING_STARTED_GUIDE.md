@@ -24,11 +24,11 @@ First and foremost, the metrics service requires a Kubernetes cluster that align
 
 ## Dell EMC CSI Driver for PowerFlex
 
-This porject captures telemetry data about Kubernetes storage usage and performance which are provisioned through Dell EMC CSI (Container Storage Interface) Driver for PowerFlex. The metrics service requires CSI Driver for PowerFlex is deployed in Kubenetes cluster.
+This project captures telemetry data about Kubernetes storage usage and performance which are provisioned through Dell EMC CSI (Container Storage Interface) Driver for PowerFlex. The metrics service requires that the CSI Driver for Dell EMC PowerFlex is deployed in the Kubernetes cluster.
 
 | CSI Driver |
 | ---------- |
-| [CSI Driver for PowerFlex v1.1.5, 1.2.0, 1.2.1](https://github.com/dell/csi-vxflexos) |
+| [CSI Driver for Dell EMC PowerFlex v1.1.5, 1.2.0, 1.2.1](https://github.com/dell/csi-vxflexos) |
 
 ## Deploying Karavi Metrics for PowerFlex
 
