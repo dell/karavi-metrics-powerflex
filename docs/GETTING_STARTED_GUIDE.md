@@ -22,7 +22,7 @@ First and foremost, the metrics service requires a Kubernetes cluster that align
 | --------- |
 | 1.17-1.19 |
 
-## Dell EMC CSI Driver for PowerFlex
+## CSI Driver for Dell EMC PowerFlex
 
 This project captures telemetry data about Kubernetes storage usage and performance which are provisioned through Dell EMC CSI (Container Storage Interface) Driver for PowerFlex. The metrics service requires that the CSI Driver for Dell EMC PowerFlex is deployed in the Kubernetes cluster.
 
