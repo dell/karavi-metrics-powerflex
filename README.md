@@ -16,22 +16,22 @@ Karavi Metrics for PowerFlex is part of the Karavi open source suite of Kubernet
 [![License](https://img.shields.io/github/license/dell/karavi-metrics-powerflex)](LICENSE)
 [![Docker Pulls](https://img.shields.io/docker/pulls/dellemc/karavi-metrics-powerflex)](https://hub.docker.com/r/dellemc/karavi-metrics-powerflex)
 [![Go version](https://img.shields.io/github/go-mod/go-version/dell/karavi-metrics-powerflex)](go.mod)
-[![Latest Release](https://img.shields.io/github/v/release/dell/karavi-metrics-powerflex?label=latest&style=flat-square)](https://github.com/dell/karavi-metrics-powerflex/releases)
+[![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/dell/karavi-metrics-powerflex?include_prereleases&label=latest&style=flat-square)](https://github.com/dell/karavi-metrics-powerflex/releases/latest)
 
 Karavi Metrics for PowerFlex is an open source distributed solution that provides standardized approaches to gaining observability into Dell EMC products. This project provides the following metrics:
 
 - **[I/O Performance Metrics](./docs/IO_PERFORMANCE.md)**: Visibility into the I/O performance of a storage system (IOPs, bandwidth, latency) broken down by export node and volume
 - **[Storage Capacity Metrics](./docs/STORAGE_CAPACITY.md)**: Visibility into the total, used, and available capacity for a storage pool/storage class
 
-Karavi Metrics for PowerFlex captures telemetry data about storage usage and performance and pushes it to the OpenTelemetry Collector, so it can be processed, and exported in a format consumable by Prometheus.  Prometheus can then be configured to scrape the OpenTelemetry Collector exporter endpoint to provide metrics so they can be visualized in Grafana. Please see [Getting Started Guide](./docs/GETTING_STARTED_GUIDE.md) for information on requirements, deployment, and usage.
+Karavi Metrics for PowerFlex captures telemetry data about storage usage and performance and pushes it to the OpenTelemetry Collector, so it can be processed, and exported in a format consumable by Prometheus. Prometheus can then be configured to scrape the OpenTelemetry Collector exporter endpoint to provide metrics so they can be visualized in Grafana. Please see [Getting Started Guide](./docs/GETTING_STARTED_GUIDE.md) for information on requirements, deployment, and usage.
 
 ## Supported Dell EMC Products
 
 This project currently supports the following Dell EMC storage systems and associated CSI drivers.
 
-| Dell EMC Storage Product | CSI Driver |
-| ----------------------- | ---------- |
-| PowerFlex v3.0/3.5 | [CSI Driver for PowerFlex v1.1.5, 1.2.0, 1.2.1](https://github.com/dell/csi-vxflexos) |
+| Dell EMC Storage Product | CSI Driver                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------- |
+| PowerFlex v3.0/3.5       | [CSI Driver for PowerFlex v1.1.5, 1.2.0, 1.2.1](https://github.com/dell/csi-vxflexos) |
 
 ## Table of Content
 
