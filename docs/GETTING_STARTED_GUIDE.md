@@ -33,7 +33,7 @@ This project currently supports the following Dell EMC storage systems.
 
 ## CSI Driver for Dell EMC PowerFlex
 
-This project captures telemetry data about Kubernetes storage usage and performance which are provisioned through the CSI (Container Storage Interface) Driver for Dell EMC  PowerFlex. The metrics service requires that the CSI Driver for Dell EMC PowerFlex is deployed in the Kubernetes cluster.
+This project captures telemetry data about Kubernetes storage usage and performance which are provisioned through the CSI (Container Storage Interface) Driver for Dell EMC PowerFlex. The metrics service requires that the CSI Driver for Dell EMC PowerFlex is deployed in the Kubernetes cluster.
 
 | CSI Driver |
 | ---------- |
