@@ -25,14 +25,6 @@ Karavi Metrics for PowerFlex is an open source distributed solution that provide
 
 Karavi Metrics for PowerFlex captures telemetry data of storage usage and performance obtained through the CSI Driver for Dell EMC PowerFlex. The Metrics service then  pushes it to the OpenTelemetry Collector, so it can be processed, and exported in a format consumable by Prometheus.  Prometheus can then be configured to scrape the OpenTelemetry Collector exporter endpoint to provide metrics so they can be visualized in Grafana. Please see [Getting Started Guide](./docs/GETTING_STARTED_GUIDE.md) for information on requirements, deployment, and usage.
 
-## Supported Dell EMC Products
-
-This project currently supports the following Dell EMC storage systems and associated CSI drivers.
-
-| Dell EMC Storage Product | CSI Driver |
-| ----------------------- | ---------- |
-| PowerFlex v3.0/3.5 | [CSI Driver for Dell EMC PowerFlex v1.1.5, 1.2.0, 1.2.1](https://github.com/dell/csi-vxflexos) |
-
 ## Table of Content
 
 - [Code of Conduct](./docs/CODE_OF_CONDUCT.md)
