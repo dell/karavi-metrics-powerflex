@@ -22,6 +22,23 @@ First and foremost, the metrics service requires a Kubernetes cluster that align
 | --------- |
 | 1.17-1.19 |
 
+## Supported Dell EMC Products
+
+This project currently supports the following versions of Dell EMC PowerFlex.
+
+| Version |
+| ---------- |
+| v3.0, v3.5 |
+
+
+## CSI Driver for Dell EMC PowerFlex
+
+This project captures telemetry data about Kubernetes storage usage and performance as it relates the CSI (Container Storage Interface) Driver for Dell EMC PowerFlex. The metrics service requires that the CSI Driver for Dell EMC PowerFlex is deployed in the Kubernetes cluster.
+
+| CSI Driver |
+| ---------- |
+| [CSI Driver for Dell EMC PowerFlex v1.1.5, 1.2.0, 1.2.1](https://github.com/dell/csi-vxflexos) |
+
 ## Deploying Karavi Metrics for PowerFlex
 
 This project is deployed using Helm.  Usage information and available release versions can be found here: [Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-metrics-powerflex).
