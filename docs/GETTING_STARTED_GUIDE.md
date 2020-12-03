@@ -24,16 +24,16 @@ First and foremost, the metrics service requires a Kubernetes cluster that align
 
 ## Supported Dell EMC Products
 
-This project currently supports the following Dell EMC storage systems.
+This project currently supports the following versions of Dell EMC PowerFlex.
 
-| Dell EMC Storage Product |
-| ----------------------- |
-| PowerFlex v3.0/3.5 |
+| Version |
+| ---------- |
+| v3.0, v3.5 |
 
 
 ## CSI Driver for Dell EMC PowerFlex
 
-This project captures telemetry data about Kubernetes storage usage and performance which are provisioned through the CSI (Container Storage Interface) Driver for Dell EMC PowerFlex. The metrics service requires that the CSI Driver for Dell EMC PowerFlex is deployed in the Kubernetes cluster.
+This project captures telemetry data about Kubernetes storage usage and performance as it relates the CSI (Container Storage Interface) Driver for Dell EMC PowerFlex. The metrics service requires that the CSI Driver for Dell EMC PowerFlex is deployed in the Kubernetes cluster.
 
 | CSI Driver |
 | ---------- |

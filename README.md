@@ -18,12 +18,12 @@ Karavi Metrics for PowerFlex is part of the Karavi open source suite of Kubernet
 [![Go version](https://img.shields.io/github/go-mod/go-version/dell/karavi-metrics-powerflex)](go.mod)
 [![Latest Release](https://img.shields.io/github/v/release/dell/karavi-metrics-powerflex?label=latest&style=flat-square)](https://github.com/dell/karavi-metrics-powerflex/releases)
 
-Karavi Metrics for PowerFlex is an open source distributed solution that provides standardized approaches to gain observability into Dell EMC PowerFlex. This project provides the following metrics:
+Karavi Metrics for PowerFlex is an open source distributed solution that provides insight into storage usage and performance as it relates to the CSI (Container Storage Interface) Driver for Dell EMC PowerFlex. This project provides the following metrics:
 
 - **[I/O Performance Metrics](./docs/IO_PERFORMANCE.md)**: Visibility into the I/O performance of a storage system (IOPs, bandwidth, latency) broken down by export node and volume
 - **[Storage Capacity Metrics](./docs/STORAGE_CAPACITY.md)**: Visibility into the total, used, and available capacity for a storage pool/storage class
 
-Karavi Metrics for PowerFlex captures telemetry data of storage usage and performance obtained through the CSI Driver for Dell EMC PowerFlex. The Metrics service then  pushes it to the OpenTelemetry Collector, so it can be processed, and exported in a format consumable by Prometheus.  Prometheus can then be configured to scrape the OpenTelemetry Collector exporter endpoint to provide metrics so they can be visualized in Grafana. Please see [Getting Started Guide](./docs/GETTING_STARTED_GUIDE.md) for information on requirements, deployment, and usage.
+Karavi Metrics for PowerFlex captures telemetry data of storage usage and performance obtained through the CSI Driver for Dell EMC PowerFlex. The Metrics service then  pushes it to the OpenTelemetry Collector, so it can be processed, and exported in a format consumable by Prometheus. Prometheus can then be configured to scrape the OpenTelemetry Collector exporter endpoint to provide metrics so they can be visualized in Grafana. Please see [Getting Started Guide](./docs/GETTING_STARTED_GUIDE.md) for information on requirements, deployment, and usage.
 
 ## Table of Content
 
