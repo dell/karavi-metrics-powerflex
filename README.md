@@ -10,13 +10,13 @@ You may obtain a copy of the License at
 
 # Karavi Metrics for PowerFlex
 
-Karavi Metrics for PowerFlex is part of the Karavi open source suite of Kubernetes storage enablers for Dell EMC products.
-
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](docs/CODE_OF_CONDUCT.md)
 [![License](https://img.shields.io/github/license/dell/karavi-metrics-powerflex)](LICENSE)
 [![Docker Pulls](https://img.shields.io/docker/pulls/dellemc/karavi-metrics-powerflex)](https://hub.docker.com/r/dellemc/karavi-metrics-powerflex)
 [![Go version](https://img.shields.io/github/go-mod/go-version/dell/karavi-metrics-powerflex)](go.mod)
 [![Latest Release](https://img.shields.io/github/v/release/dell/karavi-metrics-powerflex?label=latest&style=flat-square)](https://github.com/dell/karavi-metrics-powerflex/releases)
+
+Karavi Metrics for PowerFlex is part of the Karavi open source suite of Kubernetes storage enablers for Dell EMC products.
 
 Karavi Metrics for PowerFlex is an open source distributed solution that provides insight into storage usage and performance as it relates to the CSI (Container Storage Interface) Driver for Dell EMC PowerFlex. This project provides the following metrics:
 
