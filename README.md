@@ -29,9 +29,9 @@ Karavi Metrics for PowerFlex captures telemetry data about storage usage and per
 
 This project currently supports the following Dell EMC storage systems and associated CSI drivers.
 
-| Dell EMC Storage Product | CSI Driver                                                                            |
-| ------------------------ | ------------------------------------------------------------------------------------- |
-| PowerFlex v3.0/3.5       | [CSI Driver for PowerFlex v1.1.5, 1.2.0, 1.2.1](https://github.com/dell/csi-vxflexos) |
+| Dell EMC Storage Product | CSI Driver                                                                                     |
+| ------------------------ | ---------------------------------------------------------------------------------------------- |
+| PowerFlex v3.0/3.5       | [CSI Driver for Dell EMC PowerFlex v1.1.5, 1.2.0, 1.2.1](https://github.com/dell/csi-vxflexos) |
 
 ## Table of Content
 
