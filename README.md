@@ -14,7 +14,7 @@ You may obtain a copy of the License at
 [![License](https://img.shields.io/github/license/dell/karavi-metrics-powerflex)](LICENSE)
 [![Docker Pulls](https://img.shields.io/docker/pulls/dellemc/karavi-metrics-powerflex)](https://hub.docker.com/r/dellemc/karavi-metrics-powerflex)
 [![Go version](https://img.shields.io/github/go-mod/go-version/dell/karavi-metrics-powerflex)](go.mod)
-[![Latest Release](https://img.shields.io/github/v/release/dell/karavi-metrics-powerflex?label=latest&style=flat-square)](https://github.com/dell/karavi-metrics-powerflex/releases)
+[![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/dell/karavi-metrics-powerflex?include_prereleases&label=latest&style=flat-square)](https://github.com/dell/karavi-metrics-powerflex/releases/latest)
 
 Karavi Metrics for PowerFlex is part of the Karavi open source suite of Kubernetes storage enablers for Dell EMC products.
 
