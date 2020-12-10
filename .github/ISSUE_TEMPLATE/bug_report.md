@@ -29,6 +29,13 @@ If applicable, submit logs or stack traces from the affected services
 **System Information (please complete the following information):**
  - OS/Version: [e.g. RHEL 7.6]
  - Kubernetes Version [e.g. 1.18]
+ - karavi-metrics-powerflex Version: [e.g. 0.1.0-pre-release]
+ - Prometheus Version: [e.g. 2.22.0]
+ - Grafana Version: [e.g. 7.3.2]
+ - Grafana Dashboard Title: [e.g. Storage Pool and Storage Class Capacity]
+ - Grafana Datatable Panel plugin configuration (can be provided as a screenshot)
+ - Grafana Prometheus Datasource configuration (can be provided as a screenshot)
+ - Grafana Pie Chart Panel plugin configuration (can be provided as a screenshot)
  - Additional Information...
 
 **Additional context**
