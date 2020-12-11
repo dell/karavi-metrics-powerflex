@@ -22,6 +22,14 @@ First and foremost, the metrics service requires a Kubernetes cluster that align
 | --------- |
 | 1.17-1.19 |
 
+## Openshift
+
+For Openshift, the metrics service requires the cluster to align with these supported versions. 
+
+| Version |
+| ------- |
+| 4.5,4.6 |
+
 ## Supported Dell EMC Products
 
 This project currently supports the following versions of Dell EMC PowerFlex.
