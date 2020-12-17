@@ -49,9 +49,9 @@ This project captures telemetry data about Kubernetes storage usage and performa
 
 ## Deploying Karavi Metrics for PowerFlex
 
-This project is deployed using Helm.  Usage information and available release versions can be found here: [Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-metrics-powerflex).
+This project is deployed using Helm.  Usage information and available release versions can be found here: [Karavi Observability Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-observability).
 
-If you built the Docker image and pushed it to a local registry, you can deploy it using the same Helm chart above.  You simply need to override the helm chart value pointing to where the image lives.  See [Karavi Metrics for PowerFlex Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-metrics-powerflex) for more details.
+If you built the Docker image and pushed it to a local registry, you can deploy it using the same Helm chart above.  You simply need to override the helm chart value pointing to where the image lives.  See [Karavi Observability Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-observability) for more details.
 
 ## Required Components
 
@@ -68,7 +68,7 @@ The one exception is the OpenTelemetry Collector.  This is deployed and configur
 
 The OpenTelemetry Collector is configured to require all communication happen using TLS.  The deployment options listed below will require a signed certificate file and a signed certificate private key file.
 
-The metrics service requires the OpenTelemetry Collector so that metrics can be pushed and later consumed by a backend. The [Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-metrics-powerflex) takes care of deploying the OpenTelemetry Collector and securing communication between the metrics service and the OpenTelemetry Collector using TLS 1.2 via the user-provided certificate and key files.
+The metrics service requires the OpenTelemetry Collector so that metrics can be pushed and later consumed by a backend. The [Karavi Observability Helm chart](https://github.com/dell/helm-charts/tree/main/charts/karavi-observability) takes care of deploying the OpenTelemetry Collector and securing communication between the metrics service and the OpenTelemetry Collector using TLS 1.2 via the user-provided certificate and key files.
 
 **Note**: Although the OpenTelemetry Collector can provide metrics for different backends, we currently only support Prometheus.
 
