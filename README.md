@@ -25,7 +25,7 @@ Karavi Metrics for PowerFlex is an open source distributed solution that provide
 
 Karavi Metrics for PowerFlex captures telemetry data of storage usage and performance obtained through the CSI Driver for Dell EMC PowerFlex. The Metrics service then  pushes it to the OpenTelemetry Collector, so it can be processed, and exported in a format consumable by Prometheus. Prometheus can then be configured to scrape the OpenTelemetry Collector exporter endpoint to provide metrics so they can be visualized in Grafana. Please see [Getting Started Guide](https://github.com/dell/karavi-observability/docs/GETTING_STARTED_GUIDE.md) for information on requirements, deployment, and usage.
 
-## Table of Content
+## Table of Contents
 
 - [Code of Conduct](./docs/CODE_OF_CONDUCT.md)
 - Guides
@@ -38,6 +38,41 @@ Karavi Metrics for PowerFlex captures telemetry data of storage usage and perfor
 - [Support](./docs/SUPPORT.md)
 - [Security](./docs/SECURITY.md)
 - [About](#about)
+
+## Building the Services
+
+If you wish to clone and build the Karavi Metrics for Powerflex service, a Linux host is required with the following installed:
+
+| Component       | Version   | Additional Information                                                                                                                     |
+| --------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Docker          | v19+      | [Docker installation](https://docs.docker.com/engine/install/)                                                                                                    |
+| Docker Registry |           | Access to a local/corporate [Docker registry](https://docs.docker.com/registry/)                                                           |
+| Golang          | v1.14+    | [Golang installation](https://github.com/travis-ci/gimme)                                                                                                         |
+| gosec           |           | [gosec](https://github.com/securego/gosec)                                                                                                          |
+| gomock          | v.1.4.3   | [Go Mock](https://github.com/golang/mock)                                                                                                             |
+| git             | latest    | [Git installation](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)                                                                              |
+| gcc             |           | Run ```sudo apt install build-essential```                                                                                                 |
+| kubectl         | 1.17-1.19 | Ensure you copy the kubeconfig file from the Kubernetes cluster to the linux host. [kubectl installation](https://kubernetes.io/docs/tasks/tools/install-kubectl/) |
+| Helm            | v.3.3.0   | [Helm installation](https://helm.sh/docs/intro/install/)                                                                                                        |
+
+Once all prerequisites are on the Linux host, follow the steps below to clone and build the metrics service:
+
+1. Clone the repository: `git clone https://github.com/dell/karavi-metrics-powerflex.git`
+1. Set the DOCKER_REPO environment variable to point to the local Docker repository, example: `export DOCKER_REPO=<ip-address>:<port>`
+1. In the karavi-metrics-powerflex directory, run the following to build the Docker image called karavi-metrics-powerflex: `make clean build docker`
+1. To tag (with the "latest" tag) and push the image to the local Docker repository run the following: `make tag push`
+
+__Note:__ Linux support only. If you are using a local insecure docker registry, ensure you configure the insecure registries on each of the Kubernetes worker nodes to allow access to the local docker repository
+
+## Testing Karavi Metrics for Powerflex
+
+From the root directory where the repo was cloned, the unit tests can be executed as follows:
+
+```console
+make test
+```
+
+This will also provide code coverage statistics for the various Go packages.
 
 ## Support
 
