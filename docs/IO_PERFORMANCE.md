@@ -18,7 +18,7 @@ The [Grafana reference dashboards](../grafana/dashboards/powerflex) for I/O metr
 
 ## Available Metrics from the OpenTelemetry Collector
 
-The following metrics are available from the OpenTelemetry collector endpoint.  Please see the [Getting Started Guide](./GETTING_STARTED_GUIDE.md) for more information on deploying and configuring the OpenTelemetry collector.
+The following metrics are available from the OpenTelemetry collector endpoint.  Please see the [Getting Started Guide](https://github.com/dell/karavi-observability/docs/GETTING_STARTED_GUIDE.md) for more information on deploying and configuring the OpenTelemetry collector.
 
 ### PowerFlex Metrics
 

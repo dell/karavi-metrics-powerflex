@@ -305,4 +305,4 @@ We don't like TODOs in the code. It is really best if you sort out all issues yo
 
 ## Building, Deploying, and Testing
 
-Please refer to the [Getting Started Guide](./GETTING_STARTED_GUIDE.md) for information on building, deploying, and running tests for this project.
+Please refer to the [Getting Started Guide](https://github.com/dell/karavi-observability/docs/GETTING_STARTED_GUIDE.md) for information on building, deploying, and running tests for this project.
