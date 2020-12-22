@@ -29,7 +29,7 @@ Karavi Metrics for PowerFlex captures telemetry data of storage usage and perfor
 
 - [Code of Conduct](https://github.com/dell/karavi-observability/blob/main/docs/CODE_OF_CONDUCT.md)
 - Guides
-  - [Maintainer Guide](https://github.com/dell/karavi-observability/blob/main/docs/COMMITTER_GUIDE.md)
+  - [Maintainer Guide](https://github.com/dell/karavi-observability/blob/main/docs/MAINTAINER_GUIDE.md)
   - [Committer Guide](https://github.com/dell/karavi-observability/blob/main/docs/COMMITTER_GUIDE.md)
   - [Contributing Guide](https://github.com/dell/karavi-observability/blob/main/docs/CONTRIBUTING.md)
   - [Getting Started Guide](https://github.com/dell/karavi-observability/blob/main/docs/GETTING_STARTED_GUIDE.md)
