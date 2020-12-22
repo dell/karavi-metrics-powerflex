@@ -27,21 +27,22 @@ Karavi Metrics for PowerFlex captures telemetry data of storage usage and perfor
 
 ## Table of Contents
 
-- [Code of Conduct](./docs/CODE_OF_CONDUCT.md)
+- [Code of Conduct](https://github.com/dell/karavi-observability/blob/main/docs/CODE_OF_CONDUCT.md)
 - Guides
-  - [Maintainer Guide](./docs/MAINTAINER_GUIDE.md)
-  - [Committer Guide](./docs/COMMITTER_GUIDE.md)
-  - [Contributing Guide](./docs/CONTRIBUTING.md)
-  - [Getting Started Guide](https://github.com/dell/karavi-observability/docs/GETTING_STARTED_GUIDE.md)
-- [List of Adopters](./ADOPTERS.md)
+  - [Maintainer Guide](https://github.com/dell/karavi-observability/blob/main/docs/MAINTAINER_GUIDE.md)
+  - [Committer Guide](https://github.com/dell/karavi-observability/blob/main/docs/COMMITTER_GUIDE.md)
+  - [Contributing Guide](https://github.com/dell/karavi-observability/blob/main/docs/CONTRIBUTING.md)
+  - [Getting Started Guide](https://github.com/dell/karavi-observability/blob/main/docs/GETTING_STARTED_GUIDE.md)
+  - [Branching Strategy](./docs/BRANCHING.md)
+- [List of Adopters](https://github.com/dell/karavi-observability/blob/main/ADOPTERS.md)
 - [Maintainers](./docs/MAINTAINERS.md)
-- [Support](./docs/SUPPORT.md)
+- [Support](https://github.com/dell/karavi-observability/blob/main/docs/SUPPORT.md)
 - [Security](./docs/SECURITY.md)
 - [About](#about)
 
 ## Building the Service
 
-If you wish to clone and build the Karavi Metrics for Powerflex service, a Linux host is required with the following installed:
+If you wish to clone and build the Karavi Metrics for PowerFlex service, a Linux host is required with the following installed:
 
 | Component       | Version   | Additional Information                                                                                                                     |
 | --------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -64,7 +65,7 @@ Once all prerequisites are on the Linux host, follow the steps below to clone an
 
 __Note:__ Linux support only. If you are using a local insecure docker registry, ensure you configure the insecure registries on each of the Kubernetes worker nodes to allow access to the local docker repository
 
-## Testing Karavi Metrics for Powerflex
+## Testing Karavi Metrics for PowerFlex
 
 From the root directory where the repo was cloned, the unit tests can be executed as follows:
 
@@ -76,8 +77,8 @@ This will also provide code coverage statistics for the various Go packages.
 
 ## Support
 
-Don’t hesitate to ask! Contact the team and community on [our support page](./docs/SUPPORT.md).
-Open an issue if you found a bug on [Github Issues](https://github.com/dell/karavi-metrics-powerflex/issues).
+Don’t hesitate to ask! Contact the team and community on [our support page](https://github.com/dell/karavi-observability/blob/main/docs/SUPPORT.md).
+Open an issue if you found a bug on [Github Issues](https://github.com/dell/karavi-observability/issues).
 
 ## Versioning
 
