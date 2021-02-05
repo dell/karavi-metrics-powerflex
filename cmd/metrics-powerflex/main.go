@@ -11,7 +11,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -31,17 +30,17 @@ import (
 
 const (
 	defaultTickInterval = 5 * time.Second
+	defaultConfigFile   = "/etc/config/karavi-metrics-powerflex.yaml"
 )
 
 func main() {
 
-	viper.SetConfigName("karavi-metrics-powerflex") // config file name without extension
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath("/config-maps/") // config file path
+	viper.SetConfigFile(defaultConfigFile)
+
 	err := viper.ReadInConfig()
+	// if unable to read configuration file, proceed in case we use environment variables
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "unable to read config file: %v", err)
-		os.Exit(1)
+		fmt.Fprintf(os.Stderr, "unable to read Config file: %v", err)
 	}
 
 	powerFlexEndpoint := os.Getenv("POWERFLEX_ENDPOINT")
@@ -82,6 +81,8 @@ func main() {
 		API: &k8s.API{},
 	}
 
+	updateProvisionerNames(sdcFinder, storageClassFinder, volumeFinder)
+
 	client, err := sio.NewClientWithArgs(powerFlexEndpoint, "", true, false)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
@@ -116,15 +117,9 @@ func main() {
 	}
 
 	updateCollectorAddress(config, exporter)
-	updateProvisionerNames(sdcFinder, storageClassFinder, volumeFinder)
 	updateMetricsEnabled(config)
 	updateTickIntervals(config)
 	updateService(pflexSvc)
-
-	if err := entrypoint.Run(context.Background(), config, exporter, pflexSvc); err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
-	}
 
 	viper.WatchConfig()
 	viper.OnConfigChange(func(e fsnotify.Event) {
@@ -135,6 +130,10 @@ func main() {
 		updateService(pflexSvc)
 	})
 
+	if err := entrypoint.Run(context.Background(), config, exporter, pflexSvc); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
 }
 
 func updateCollectorAddress(config *entrypoint.Config, exporter *otlexporters.OtlCollectorExporter) {
@@ -145,7 +144,6 @@ func updateCollectorAddress(config *entrypoint.Config, exporter *otlexporters.Ot
 	}
 	config.CollectorAddress = collectorAddress
 	exporter.CollectorAddr = collectorAddress
-	log.Printf("Updated collectorAddress")
 }
 
 func updateProvisionerNames(sdcFinder *k8s.SDCFinder, storageClassFinder *k8s.StorageClassFinder, volumeFinder *k8s.VolumeFinder) {
