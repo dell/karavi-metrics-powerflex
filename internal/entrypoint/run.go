@@ -106,9 +106,13 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	sdcTicker := time.NewTicker(config.SDCTickInterval)
-	volumeTicker := time.NewTicker(config.VolumeTickInterval)
-	storagePoolTicker := time.NewTicker(config.StoragePoolTickInterval)
+	//set initial tick intervals
+	SDCTickInterval := config.SDCTickInterval
+	VolumeTickInterval := config.VolumeTickInterval
+	StoragePoolTickInterval := config.StoragePoolTickInterval
+	sdcTicker := time.NewTicker(SDCTickInterval)
+	volumeTicker := time.NewTicker(VolumeTickInterval)
+	storagePoolTicker := time.NewTicker(StoragePoolTickInterval)
 	for {
 		select {
 		case <-sdcTicker.C:
@@ -197,6 +201,20 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 			return err
 		case <-ctx.Done():
 			return nil
+		}
+
+		//check if tick interval config settings have changed
+		if SDCTickInterval != config.SDCTickInterval {
+			SDCTickInterval = config.SDCTickInterval
+			sdcTicker = time.NewTicker(SDCTickInterval)
+		}
+		if VolumeTickInterval != config.VolumeTickInterval {
+			VolumeTickInterval = config.VolumeTickInterval
+			volumeTicker = time.NewTicker(VolumeTickInterval)
+		}
+		if StoragePoolTickInterval != config.StoragePoolTickInterval {
+			StoragePoolTickInterval = config.StoragePoolTickInterval
+			storagePoolTicker = time.NewTicker(StoragePoolTickInterval)
 		}
 	}
 }
