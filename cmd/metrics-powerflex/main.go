@@ -23,14 +23,25 @@ import (
 	sio "github.com/dell/goscaleio"
 	"go.opentelemetry.io/otel/api/global"
 
+	"github.com/fsnotify/fsnotify"
+	"github.com/spf13/viper"
 	"os"
 )
 
 const (
 	defaultTickInterval = 5 * time.Second
+	defaultConfigFile   = "/etc/config/karavi-metrics-powerflex.yaml"
 )
 
 func main() {
+
+	viper.SetConfigFile(defaultConfigFile)
+
+	err := viper.ReadInConfig()
+	// if unable to read configuration file, proceed in case we use environment variables
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "unable to read Config file: %v", err)
+	}
 
 	powerFlexEndpoint := os.Getenv("POWERFLEX_ENDPOINT")
 	if powerFlexEndpoint == "" {
@@ -50,46 +61,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	collectorAddress := os.Getenv("COLLECTOR_ADDR")
-	if collectorAddress == "" {
-		fmt.Printf("COLLECTOR_ADDR is required")
-		os.Exit(1)
-	}
-
-	provisionerNamesValue := os.Getenv("PROVISIONER_NAMES")
-	if provisionerNamesValue == "" {
-		fmt.Printf("PROVISIONER_NAMES is required")
-		os.Exit(1)
-	}
-
-	powerflexSdcMetricsEnabled := true
-	powerflexSdcMetricsEnabledValue := os.Getenv("POWERFLEX_SDC_METRICS_ENABLED")
-	if powerflexSdcMetricsEnabledValue == "false" {
-		powerflexSdcMetricsEnabled = false
-	}
-
-	powerflexVolumeMetricsEnabled := true
-	powerflexVolumeMetricsEnabledValue := os.Getenv("POWERFLEX_VOLUME_METRICS_ENABLED")
-	if powerflexVolumeMetricsEnabledValue == "false" {
-		powerflexVolumeMetricsEnabled = false
-	}
-
-	storagePoolMetricsEnabled := true
-	storagePoolMetricsEnabledValue := os.Getenv("POWERFLEX_STORAGE_POOL_METRICS_ENABLED")
-	if storagePoolMetricsEnabledValue == "false" {
-		storagePoolMetricsEnabled = false
-	}
-
-	provisionerNames := strings.Split(provisionerNamesValue, ",")
-
 	sdcFinder := &k8s.SDCFinder{
-		API:         &k8s.API{},
-		DriverNames: provisionerNames,
+		API: &k8s.API{},
 	}
 
 	storageClassFinder := &k8s.StorageClassFinder{
-		API:         &k8s.API{},
-		DriverNames: provisionerNames,
+		API: &k8s.API{},
 	}
 
 	leaderElectorGetter := &k8s.LeaderElector{
@@ -97,65 +74,19 @@ func main() {
 	}
 
 	volumeFinder := &k8s.VolumeFinder{
-		API:         &k8s.API{},
-		DriverNames: provisionerNames,
+		API: &k8s.API{},
 	}
 
 	nodeFinder := &k8s.NodeFinder{
 		API: &k8s.API{},
 	}
 
+	updateProvisionerNames(sdcFinder, storageClassFinder, volumeFinder)
+
 	client, err := sio.NewClientWithArgs(powerFlexEndpoint, "", true, false)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
-	}
-
-	sdcTickInterval := defaultTickInterval
-	sdcIoPollFrequencySeconds := os.Getenv("POWERFLEX_SDC_IO_POLL_FREQUENCY")
-	if sdcIoPollFrequencySeconds != "" {
-		numSeconds, err := strconv.Atoi(sdcIoPollFrequencySeconds)
-		if err != nil {
-			fmt.Printf("POWERFLEX_SDC_IO_POLL_FREQUENCY was not set to a valid number")
-			os.Exit(1)
-		}
-		sdcTickInterval = time.Duration(numSeconds) * time.Second
-	}
-
-	volumeTickInterval := defaultTickInterval
-	volIoPollFrequencySeconds := os.Getenv("POWERFLEX_VOLUME_IO_POLL_FREQUENCY")
-	if volIoPollFrequencySeconds != "" {
-		numSeconds, err := strconv.Atoi(volIoPollFrequencySeconds)
-		if err != nil {
-			fmt.Printf("POWERFLEX_VOLUME_IO_POLL_FREQUENCY was not set to a valid number")
-			os.Exit(1)
-		}
-		volumeTickInterval = time.Duration(numSeconds) * time.Second
-	}
-
-	storagePoolTickInterval := defaultTickInterval
-	storagePoolPollFrequencySeconds := os.Getenv("POWERFLEX_STORAGE_POOL_POLL_FREQUENCY")
-	if storagePoolPollFrequencySeconds != "" {
-		numSeconds, err := strconv.Atoi(storagePoolPollFrequencySeconds)
-		if err != nil {
-			fmt.Printf("POWERFLEX_STORAGE_POOL_POLL_FREQUENCY was not set to a valid number")
-			os.Exit(1)
-		}
-		storagePoolTickInterval = time.Duration(numSeconds) * time.Second
-	}
-
-	maxPowerFlexConcurrentRequests := service.DefaultMaxPowerFlexConnections
-	maxPowerFlexConcurrentRequestsVar := os.Getenv("POWERFLEX_MAX_CONCURRENT_QUERIES")
-	if maxPowerFlexConcurrentRequestsVar != "" {
-		maxPowerFlexConcurrentRequests, err = strconv.Atoi(maxPowerFlexConcurrentRequestsVar)
-		if err != nil {
-			fmt.Printf("POWERFLEX_MAX_CONCURRENT_QUERIES was not set to a valid number: '%s'", maxPowerFlexConcurrentRequestsVar)
-			os.Exit(1)
-		}
-		if maxPowerFlexConcurrentRequests <= 0 {
-			fmt.Printf("POWERFLEX_MAX_CONCURRENT_QUERIES value was invalid (<= 0)")
-			os.Exit(1)
-		}
 	}
 
 	var collectorCertPath string
@@ -167,34 +98,141 @@ func main() {
 	}
 
 	config := &entrypoint.Config{
-		SDCTickInterval:           sdcTickInterval,
-		VolumeTickInterval:        volumeTickInterval,
-		StoragePoolTickInterval:   storagePoolTickInterval,
-		PowerFlexClient:           client,
-		PowerFlexConfig:           sio.ConfigConnect{Username: powerFlexGatewayUser, Password: powerFlexGatewayPassword},
-		SDCFinder:                 sdcFinder,
-		StorageClassFinder:        storageClassFinder,
-		LeaderElector:             leaderElectorGetter,
-		VolumeFinder:              volumeFinder,
-		NodeFinder:                nodeFinder,
-		SDCMetricsEnabled:         powerflexSdcMetricsEnabled,
-		VolumeMetricsEnabled:      powerflexVolumeMetricsEnabled,
-		StoragePoolMetricsEnabled: storagePoolMetricsEnabled,
-		CollectorAddress:          collectorAddress,
-		CollectorCertPath:         collectorCertPath,
+		PowerFlexClient:    client,
+		PowerFlexConfig:    sio.ConfigConnect{Username: powerFlexGatewayUser, Password: powerFlexGatewayPassword},
+		SDCFinder:          sdcFinder,
+		StorageClassFinder: storageClassFinder,
+		LeaderElector:      leaderElectorGetter,
+		VolumeFinder:       volumeFinder,
+		NodeFinder:         nodeFinder,
+		CollectorCertPath:  collectorCertPath,
 	}
 
-	exporter := &otlexporters.OtlCollectorExporter{CollectorAddr: collectorAddress}
+	exporter := &otlexporters.OtlCollectorExporter{}
 
 	pflexSvc := &service.PowerFlexService{
 		MetricsWrapper: &service.MetricsWrapper{
 			Meter: global.Meter("powerflex/sdc"),
 		},
-		MaxPowerFlexConnections: maxPowerFlexConcurrentRequests,
 	}
+
+	updateCollectorAddress(config, exporter)
+	updateMetricsEnabled(config)
+	updateTickIntervals(config)
+	updateService(pflexSvc)
+
+	viper.WatchConfig()
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		updateCollectorAddress(config, exporter)
+		updateProvisionerNames(sdcFinder, storageClassFinder, volumeFinder)
+		updateMetricsEnabled(config)
+		updateTickIntervals(config)
+		updateService(pflexSvc)
+	})
 
 	if err := entrypoint.Run(context.Background(), config, exporter, pflexSvc); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
+}
+
+func updateCollectorAddress(config *entrypoint.Config, exporter *otlexporters.OtlCollectorExporter) {
+	collectorAddress := viper.GetString("COLLECTOR_ADDR")
+	if collectorAddress == "" {
+		fmt.Printf("COLLECTOR_ADDR is required")
+		os.Exit(1)
+	}
+	config.CollectorAddress = collectorAddress
+	exporter.CollectorAddr = collectorAddress
+}
+
+func updateProvisionerNames(sdcFinder *k8s.SDCFinder, storageClassFinder *k8s.StorageClassFinder, volumeFinder *k8s.VolumeFinder) {
+	provisionerNamesValue := viper.GetString("provisioner_names")
+	if provisionerNamesValue == "" {
+		fmt.Printf("PROVISIONER_NAMES is required")
+		os.Exit(1)
+	}
+	provisionerNames := strings.Split(provisionerNamesValue, ",")
+	sdcFinder.DriverNames = provisionerNames
+	storageClassFinder.DriverNames = provisionerNames
+	volumeFinder.DriverNames = provisionerNames
+}
+
+func updateMetricsEnabled(config *entrypoint.Config) {
+	powerflexSdcMetricsEnabled := true
+	powerflexSdcMetricsEnabledValue := viper.GetString("POWERFLEX_SDC_METRICS_ENABLED")
+	if powerflexSdcMetricsEnabledValue == "false" {
+		powerflexSdcMetricsEnabled = false
+	}
+
+	powerflexVolumeMetricsEnabled := true
+	powerflexVolumeMetricsEnabledValue := viper.GetString("POWERFLEX_VOLUME_METRICS_ENABLED")
+	if powerflexVolumeMetricsEnabledValue == "false" {
+		powerflexVolumeMetricsEnabled = false
+	}
+
+	storagePoolMetricsEnabled := true
+	storagePoolMetricsEnabledValue := viper.GetString("POWERFLEX_STORAGE_POOL_METRICS_ENABLED")
+	if storagePoolMetricsEnabledValue == "false" {
+		storagePoolMetricsEnabled = false
+	}
+	config.SDCMetricsEnabled = powerflexSdcMetricsEnabled
+	config.VolumeMetricsEnabled = powerflexVolumeMetricsEnabled
+	config.StoragePoolMetricsEnabled = storagePoolMetricsEnabled
+}
+
+func updateTickIntervals(config *entrypoint.Config) {
+	sdcTickInterval := defaultTickInterval
+	sdcIoPollFrequencySeconds := viper.GetString("POWERFLEX_SDC_IO_POLL_FREQUENCY")
+	if sdcIoPollFrequencySeconds != "" {
+		numSeconds, err := strconv.Atoi(sdcIoPollFrequencySeconds)
+		if err != nil {
+			fmt.Printf("POWERFLEX_SDC_IO_POLL_FREQUENCY was not set to a valid number")
+			os.Exit(1)
+		}
+		sdcTickInterval = time.Duration(numSeconds) * time.Second
+	}
+
+	volumeTickInterval := defaultTickInterval
+	volIoPollFrequencySeconds := viper.GetString("POWERFLEX_VOLUME_IO_POLL_FREQUENCY")
+	if volIoPollFrequencySeconds != "" {
+		numSeconds, err := strconv.Atoi(volIoPollFrequencySeconds)
+		if err != nil {
+			fmt.Printf("POWERFLEX_VOLUME_IO_POLL_FREQUENCY was not set to a valid number")
+			os.Exit(1)
+		}
+		volumeTickInterval = time.Duration(numSeconds) * time.Second
+	}
+
+	storagePoolTickInterval := defaultTickInterval
+	storagePoolPollFrequencySeconds := viper.GetString("POWERFLEX_STORAGE_POOL_POLL_FREQUENCY")
+	if storagePoolPollFrequencySeconds != "" {
+		numSeconds, err := strconv.Atoi(storagePoolPollFrequencySeconds)
+		if err != nil {
+			fmt.Printf("POWERFLEX_STORAGE_POOL_POLL_FREQUENCY was not set to a valid number")
+			os.Exit(1)
+		}
+		storagePoolTickInterval = time.Duration(numSeconds) * time.Second
+	}
+
+	config.SDCTickInterval = sdcTickInterval
+	config.VolumeTickInterval = volumeTickInterval
+	config.StoragePoolTickInterval = storagePoolTickInterval
+}
+
+func updateService(pflexSvc *service.PowerFlexService) {
+	maxPowerFlexConcurrentRequests := service.DefaultMaxPowerFlexConnections
+	maxPowerFlexConcurrentRequestsVar := viper.GetString("POWERFLEX_MAX_CONCURRENT_QUERIES")
+	if maxPowerFlexConcurrentRequestsVar != "" {
+		maxPowerFlexConcurrentRequests, err := strconv.Atoi(maxPowerFlexConcurrentRequestsVar)
+		if err != nil {
+			fmt.Printf("POWERFLEX_MAX_CONCURRENT_QUERIES was not set to a valid number: '%s'", maxPowerFlexConcurrentRequestsVar)
+			os.Exit(1)
+		}
+		if maxPowerFlexConcurrentRequests <= 0 {
+			fmt.Printf("POWERFLEX_MAX_CONCURRENT_QUERIES value was invalid (<= 0)")
+			os.Exit(1)
+		}
+	}
+	pflexSvc.MaxPowerFlexConnections = maxPowerFlexConcurrentRequests
 }
