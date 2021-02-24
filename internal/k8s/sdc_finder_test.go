@@ -1,12 +1,12 @@
-package k8s_test
-
-// Copyright (c) 2020 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2021 Dell Inc., or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
 //  http://www.apache.org/licenses/LICENSE-2.0
+
+package k8s_test
 
 import (
 	"errors"
@@ -55,8 +55,9 @@ func Test_K8sSDCFinder(t *testing.T) {
 						Spec: v1.CSINodeSpec{
 							Drivers: []v1.CSINodeDriver{
 								{
-									Name:   "csi-vxflexos.dellemc.com",
-									NodeID: "node-1",
+									Name:         "csi-vxflexos.dellemc.com",
+									NodeID:       "node-1",
+									TopologyKeys: []string{"csi-vxflexos.dellemc.com/storage-system-id-1"},
 								},
 							},
 						},
@@ -75,8 +76,20 @@ func Test_K8sSDCFinder(t *testing.T) {
 						Spec: v1.CSINodeSpec{
 							Drivers: []v1.CSINodeDriver{
 								{
-									Name:   "csi-vxflexos.dellemc.com",
-									NodeID: "node-3",
+									Name:         "csi-vxflexos.dellemc.com",
+									NodeID:       "node-3",
+									TopologyKeys: []string{"csi-vxflexos.dellemc.com/storage-system-id-1"},
+								},
+							},
+						},
+					},
+					{
+						Spec: v1.CSINodeSpec{
+							Drivers: []v1.CSINodeDriver{
+								{
+									Name:         "csi-vxflexos.dellemc.com",
+									NodeID:       "node-4",
+									TopologyKeys: []string{"csi-vxflexos.dellemc.com/storage-system-id-2"},
 								},
 							},
 						},
@@ -85,7 +98,7 @@ func Test_K8sSDCFinder(t *testing.T) {
 			}
 			api.EXPECT().GetCSINodes().Times(1).Return(nodes, nil)
 
-			finder := k8s.SDCFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com"}}
+			finder := k8s.SDCFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com"}, StorageSystemID: "storage-system-id-1"}
 			return finder, check(hasNoError, checkExpectedOutput([]string{"node-1", "node-3"})), ctrl
 		},
 		"success with multiple driver names": func(*testing.T) (k8s.SDCFinder, []checkFn, *gomock.Controller) {
@@ -99,8 +112,9 @@ func Test_K8sSDCFinder(t *testing.T) {
 						Spec: v1.CSINodeSpec{
 							Drivers: []v1.CSINodeDriver{
 								{
-									Name:   "csi-vxflexos.dellemc.com",
-									NodeID: "node-1",
+									Name:         "csi-vxflexos.dellemc.com",
+									NodeID:       "node-1",
+									TopologyKeys: []string{"csi-vxflexos.dellemc.com/storage-system-id-1"},
 								},
 							},
 						},
@@ -109,8 +123,9 @@ func Test_K8sSDCFinder(t *testing.T) {
 						Spec: v1.CSINodeSpec{
 							Drivers: []v1.CSINodeDriver{
 								{
-									Name:   "other-driver-name",
-									NodeID: "node-2",
+									Name:         "other-driver-name",
+									NodeID:       "node-2",
+									TopologyKeys: []string{"other-driver-name/storage-system-id-1"},
 								},
 							},
 						},
@@ -119,8 +134,9 @@ func Test_K8sSDCFinder(t *testing.T) {
 						Spec: v1.CSINodeSpec{
 							Drivers: []v1.CSINodeDriver{
 								{
-									Name:   "csi-vxflexos.dellemc.com",
-									NodeID: "node-3",
+									Name:         "csi-vxflexos.dellemc.com",
+									NodeID:       "node-3",
+									TopologyKeys: []string{"csi-vxflexos.dellemc.com/storage-system-id-1"},
 								},
 							},
 						},
@@ -129,7 +145,7 @@ func Test_K8sSDCFinder(t *testing.T) {
 			}
 			api.EXPECT().GetCSINodes().Times(1).Return(nodes, nil)
 
-			finder := k8s.SDCFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com", "other-driver-name"}}
+			finder := k8s.SDCFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com", "other-driver-name"}, StorageSystemID: "storage-system-id-1"}
 			return finder, check(hasNoError, checkExpectedOutput([]string{"node-1", "node-2", "node-3"})), ctrl
 		},
 		"error calling k8s": func(*testing.T) (k8s.SDCFinder, []checkFn, *gomock.Controller) {

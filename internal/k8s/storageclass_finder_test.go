@@ -1,3 +1,11 @@
+// Copyright (c) 2021 Dell Inc., or its subsidiaries. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  http://www.apache.org/licenses/LICENSE-2.0
+
 package k8s_test
 
 import (
@@ -50,6 +58,7 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 						Provisioner: "csi-vxflexos.dellemc.com",
 						Parameters: map[string]string{
 							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
 						},
 					},
 					{
@@ -59,6 +68,7 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 						Provisioner: "csi-vxflexos.dellemc.com",
 						Parameters: map[string]string{
 							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
 						},
 					},
 				},
@@ -66,7 +76,7 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 
 			api.EXPECT().GetStorageClasses().Times(1).Return(storageClasses, nil)
 
-			finder := k8s.StorageClassFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com"}}
+			finder := k8s.StorageClassFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com"}, StorageSystemID: "storage-system-id-1"}
 			return finder, check(hasNoError, checkExpectedOutput(storageClasses.Items)), ctrl
 		},
 		"success selecting storage classes matching multiple driver names": func(*testing.T) (k8s.StorageClassFinder, []checkFn, *gomock.Controller) {
@@ -83,6 +93,7 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 						Provisioner: "csi-vxflexos.dellemc.com",
 						Parameters: map[string]string{
 							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
 						},
 					},
 					{
@@ -92,6 +103,7 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 						Provisioner: "csi-vxflexos.dellemc.com",
 						Parameters: map[string]string{
 							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
 						},
 					},
 					{
@@ -101,6 +113,7 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 						Provisioner: "another-csi-driver.dellemc.com",
 						Parameters: map[string]string{
 							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
 						},
 					},
 					{
@@ -110,6 +123,7 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 						Provisioner: "another-csi-driver.dellemc.com",
 						Parameters: map[string]string{
 							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
 						},
 					},
 				},
@@ -117,7 +131,7 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 
 			api.EXPECT().GetStorageClasses().Times(1).Return(storageClasses, nil)
 
-			finder := k8s.StorageClassFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com", "another-csi-driver.dellemc.com"}}
+			finder := k8s.StorageClassFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com", "another-csi-driver.dellemc.com"}, StorageSystemID: "storage-system-id-1"}
 			return finder, check(hasNoError, checkExpectedOutput(storageClasses.Items)), ctrl
 		},
 		"success selecting storage classes matching one of two driver names": func(*testing.T) (k8s.StorageClassFinder, []checkFn, *gomock.Controller) {
@@ -134,6 +148,7 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 						Provisioner: "csi-vxflexos.dellemc.com",
 						Parameters: map[string]string{
 							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
 						},
 					},
 					{
@@ -143,6 +158,7 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 						Provisioner: "csi-vxflexos.dellemc.com",
 						Parameters: map[string]string{
 							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
 						},
 					},
 					{
@@ -152,6 +168,7 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 						Provisioner: "another-vxflexos.dellemc.com",
 						Parameters: map[string]string{
 							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
 						},
 					},
 					{
@@ -161,6 +178,7 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 						Provisioner: "another-vxflexos.dellemc.com",
 						Parameters: map[string]string{
 							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
 						},
 					},
 				},
@@ -168,7 +186,7 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 
 			api.EXPECT().GetStorageClasses().Times(1).Return(storageClasses, nil)
 
-			finder := k8s.StorageClassFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com"}}
+			finder := k8s.StorageClassFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com"}, StorageSystemID: "storage-system-id-1"}
 			return finder, check(hasNoError, checkExpectedOutput([]v1.StorageClass{
 				{
 					ObjectMeta: metav1.ObjectMeta{
@@ -177,6 +195,7 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 					Provisioner: "csi-vxflexos.dellemc.com",
 					Parameters: map[string]string{
 						"storagepool": "mypool",
+						"systemID":    "storage-system-id-1",
 					},
 				},
 				{
@@ -186,6 +205,7 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 					Provisioner: "csi-vxflexos.dellemc.com",
 					Parameters: map[string]string{
 						"storagepool": "mypool",
+						"systemID":    "storage-system-id-1",
 					},
 				},
 			},
@@ -221,6 +241,7 @@ func Test_GetStoragePools(t *testing.T) {
 			Provisioner: "csi-vxflexos.dellemc.com",
 			Parameters: map[string]string{
 				"storagepool": "mypool",
+				"systemID":    "storage-system-id-1",
 			},
 		}
 
