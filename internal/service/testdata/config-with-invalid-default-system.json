@@ -5,7 +5,7 @@
         "systemID": "ID1",
         "endpoint": "http://127.0.0.1",
         "insecure": true,
-        "mdm": "10.0.0.1,10.0.0.2"
+        "mdm": "mdm1,mdm2"
     },
     {
         "isDefault": true

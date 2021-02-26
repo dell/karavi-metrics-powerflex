@@ -5,7 +5,7 @@
         "systemID": "ID1",
         "endpoint": "http://127.0.0.1",
         "insecure": true,
-        "mdm": "10.0.0.1,10.0.0.2"
+        "mdm": "mdm1,mdm2"
     },
     {
         "username": "admin",
@@ -14,7 +14,7 @@
         "endpoint": "https://127.0.0.2",
         "insecure": true,
         "isDefault": true,
-        "mdm": "10.0.0.3,10.0.0.4"
+        "mdm": "mdm3,mdm4"
     },
     {
         "username": "admin",
@@ -22,6 +22,6 @@
         "systemID": "ID3",
         "endpoint": "https://127.0.0.3",
         "insecure": true,
-        "mdm": "10.0.0.5,10.0.0.6"
+        "mdm": "mdm5,mdm6"
     }
 ]
