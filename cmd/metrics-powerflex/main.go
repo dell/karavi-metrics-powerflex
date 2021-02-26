@@ -124,31 +124,31 @@ func main() {
 func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFinder, storageClassFinder *k8s.StorageClassFinder, volumeFinder *k8s.VolumeFinder) {
 	configReader := service.ConfigurationReader{}
 
-	defaultStorageSystem, err := configReader.GetStorageSystemConfiguration(defaultStorageSystemConfigFile)
+	storageSystem, err := configReader.GetStorageSystemConfiguration(defaultStorageSystemConfigFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 
-	powerFlexEndpoint := defaultStorageSystem.Endpoint
+	powerFlexEndpoint := storageSystem.Endpoint
 	if powerFlexEndpoint == "" {
 		fmt.Printf("PowerFlex endpoint was empty")
 		os.Exit(1)
 	}
 
-	powerFlexGatewayUser := defaultStorageSystem.Username
+	powerFlexGatewayUser := storageSystem.Username
 	if powerFlexGatewayUser == "" {
 		fmt.Printf("PowerFlex username was empty")
 		os.Exit(1)
 	}
 
-	powerFlexGatewayPassword := defaultStorageSystem.Password
+	powerFlexGatewayPassword := storageSystem.Password
 	if powerFlexGatewayPassword == "" {
 		fmt.Printf("PowerFlex password was empty")
 		os.Exit(1)
 	}
 
-	powerFlexSystemID := defaultStorageSystem.SystemID
+	powerFlexSystemID := storageSystem.SystemID
 	if powerFlexSystemID == "" {
 		fmt.Printf("PowerFlex system ID was empty")
 		os.Exit(1)
@@ -156,6 +156,7 @@ func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFind
 
 	sdcFinder.StorageSystemID = powerFlexSystemID
 	storageClassFinder.StorageSystemID = powerFlexSystemID
+	storageClassFinder.IsDefaultStorageSystem = storageSystem.IsDefault
 	volumeFinder.StorageSystemID = powerFlexSystemID
 
 	client, err := sio.NewClientWithArgs(powerFlexEndpoint, "", true, false)
