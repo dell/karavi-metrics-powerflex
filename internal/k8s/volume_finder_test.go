@@ -1,12 +1,12 @@
-package k8s_test
-
-// Copyright (c) 2020 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2021 Dell Inc., or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
 //  http://www.apache.org/licenses/LICENSE-2.0
+
+package k8s_test
 
 import (
 	"errors"
@@ -74,6 +74,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 										"Name":            "storage-system-volume-name",
 										"StoragePoolName": "storage-pool-name",
 									},
+									VolumeHandle: "storagesystemid1-volumeid1",
 								},
 							},
 							ClaimRef: &corev1.ObjectReference{
@@ -103,6 +104,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 										"Name":            "storage-system-volume-name",
 										"StoragePoolName": "storage-pool-name",
 									},
+									VolumeHandle: "storagesystemid1-volumeid1",
 								},
 							},
 							ClaimRef: &corev1.ObjectReference{
@@ -121,7 +123,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 
 			api.EXPECT().GetPersistentVolumes().Times(1).Return(volumes, nil)
 
-			finder := k8s.VolumeFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com"}}
+			finder := k8s.VolumeFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com"}, StorageSystemID: "storagesystemid1"}
 			return finder, check(hasNoError, checkExpectedOutput([]k8s.VolumeInfo{
 				{
 					Namespace:               "namespace-1",
@@ -164,6 +166,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 										"Name":            "storage-system-volume-name",
 										"StoragePoolName": "storage-pool-name",
 									},
+									VolumeHandle: "storagesystemid1-volumeid1",
 								},
 							},
 							ClaimRef: &corev1.ObjectReference{
@@ -193,6 +196,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 										"Name":            "storage-system-volume-name-2",
 										"StoragePoolName": "storage-pool-name-2",
 									},
+									VolumeHandle: "storagesystemid1-volumeid1",
 								},
 							},
 							ClaimRef: &corev1.ObjectReference{
@@ -211,7 +215,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 
 			api.EXPECT().GetPersistentVolumes().Times(1).Return(volumes, nil)
 
-			finder := k8s.VolumeFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com", "another-csi-driver.dellemc.com"}}
+			finder := k8s.VolumeFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com", "another-csi-driver.dellemc.com"}, StorageSystemID: "storagesystemid1"}
 			return finder, check(hasNoError, checkExpectedOutput([]k8s.VolumeInfo{
 				{
 					Namespace:               "namespace-1",

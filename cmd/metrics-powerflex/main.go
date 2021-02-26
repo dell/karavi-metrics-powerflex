@@ -1,12 +1,12 @@
-package main
-
-// Copyright (c) 2020 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2021 Dell Inc., or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
 //  http://www.apache.org/licenses/LICENSE-2.0
+
+package main
 
 import (
 	"context"
@@ -23,14 +23,16 @@ import (
 	sio "github.com/dell/goscaleio"
 	"go.opentelemetry.io/otel/api/global"
 
+	"os"
+
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
-	"os"
 )
 
 const (
-	defaultTickInterval = 5 * time.Second
-	defaultConfigFile   = "/etc/config/karavi-metrics-powerflex.yaml"
+	defaultTickInterval            = 5 * time.Second
+	defaultConfigFile              = "/etc/config/karavi-metrics-powerflex.yaml"
+	defaultStorageSystemConfigFile = "/vxflexos-config/config"
 )
 
 func main() {
@@ -43,23 +45,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "unable to read Config file: %v", err)
 	}
 
-	powerFlexEndpoint := os.Getenv("POWERFLEX_ENDPOINT")
-	if powerFlexEndpoint == "" {
-		fmt.Printf("POWERFLEX_ENDPOINT is required")
-		os.Exit(1)
-	}
-
-	powerFlexGatewayUser := os.Getenv("POWERFLEX_USER")
-	if powerFlexGatewayUser == "" {
-		fmt.Printf("POWERFLEX_USER is required")
-		os.Exit(1)
-	}
-
-	powerFlexGatewayPassword := os.Getenv("POWERFLEX_PASSWORD")
-	if powerFlexGatewayPassword == "" {
-		fmt.Printf("POWERFLEX_PASSWORD is required")
-		os.Exit(1)
-	}
+	configFileListener := viper.New()
+	configFileListener.SetConfigFile(defaultStorageSystemConfigFile)
 
 	sdcFinder := &k8s.SDCFinder{
 		API: &k8s.API{},
@@ -83,12 +70,6 @@ func main() {
 
 	updateProvisionerNames(sdcFinder, storageClassFinder, volumeFinder)
 
-	client, err := sio.NewClientWithArgs(powerFlexEndpoint, "", true, false)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
-	}
-
 	var collectorCertPath string
 	if tls := os.Getenv("TLS_ENABLED"); tls == "true" {
 		collectorCertPath = os.Getenv("COLLECTOR_CERT_PATH")
@@ -98,8 +79,6 @@ func main() {
 	}
 
 	config := &entrypoint.Config{
-		PowerFlexClient:    client,
-		PowerFlexConfig:    sio.ConfigConnect{Username: powerFlexGatewayUser, Password: powerFlexGatewayPassword},
 		SDCFinder:          sdcFinder,
 		StorageClassFinder: storageClassFinder,
 		LeaderElector:      leaderElectorGetter,
@@ -116,6 +95,7 @@ func main() {
 		},
 	}
 
+	updatePowerFlexConnection(config, sdcFinder, storageClassFinder, volumeFinder)
 	updateCollectorAddress(config, exporter)
 	updateMetricsEnabled(config)
 	updateTickIntervals(config)
@@ -130,10 +110,65 @@ func main() {
 		updateService(pflexSvc)
 	})
 
+	configFileListener.WatchConfig()
+	configFileListener.OnConfigChange(func(e fsnotify.Event) {
+		updatePowerFlexConnection(config, sdcFinder, storageClassFinder, volumeFinder)
+	})
+
 	if err := entrypoint.Run(context.Background(), config, exporter, pflexSvc); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
+}
+
+func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFinder, storageClassFinder *k8s.StorageClassFinder, volumeFinder *k8s.VolumeFinder) {
+	configReader := service.ConfigurationReader{}
+
+	storageSystem, err := configReader.GetStorageSystemConfiguration(defaultStorageSystemConfigFile)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
+
+	powerFlexEndpoint := storageSystem.Endpoint
+	if powerFlexEndpoint == "" {
+		fmt.Printf("PowerFlex endpoint was empty")
+		os.Exit(1)
+	}
+
+	powerFlexGatewayUser := storageSystem.Username
+	if powerFlexGatewayUser == "" {
+		fmt.Printf("PowerFlex username was empty")
+		os.Exit(1)
+	}
+
+	powerFlexGatewayPassword := storageSystem.Password
+	if powerFlexGatewayPassword == "" {
+		fmt.Printf("PowerFlex password was empty")
+		os.Exit(1)
+	}
+
+	powerFlexSystemID := storageSystem.SystemID
+	if powerFlexSystemID == "" {
+		fmt.Printf("PowerFlex system ID was empty")
+		os.Exit(1)
+	}
+
+	sdcFinder.StorageSystemID = powerFlexSystemID
+	storageClassFinder.StorageSystemID = powerFlexSystemID
+	storageClassFinder.IsDefaultStorageSystem = storageSystem.IsDefault
+	volumeFinder.StorageSystemID = powerFlexSystemID
+
+	client, err := sio.NewClientWithArgs(powerFlexEndpoint, "", true, false)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
+	config.PowerFlexClient = client
+
+	config.PowerFlexConfig = sio.ConfigConnect{Username: powerFlexGatewayUser, Password: powerFlexGatewayPassword}
+
+	fmt.Printf("Set storage system to %s\n", powerFlexSystemID)
 }
 
 func updateCollectorAddress(config *entrypoint.Config, exporter *otlexporters.OtlCollectorExporter) {

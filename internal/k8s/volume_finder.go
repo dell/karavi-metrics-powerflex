@@ -1,6 +1,4 @@
-package k8s
-
-// Copyright (c) 2020 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2021 Dell Inc., or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -8,7 +6,11 @@ package k8s
 //
 //  http://www.apache.org/licenses/LICENSE-2.0
 
+package k8s
+
 import (
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 )
@@ -19,10 +21,11 @@ type VolumeGetter interface {
 	GetPersistentVolumes() (*corev1.PersistentVolumeList, error)
 }
 
-// VolumeFinder is a volume finder that will query the Kubernetes API for Persistent Volumes created by a matching DriverName
+// VolumeFinder is a volume finder that will query the Kubernetes API for Persistent Volumes created by a matching DriverName and StorageSystemID
 type VolumeFinder struct {
-	API         VolumeGetter
-	DriverNames []string
+	API             VolumeGetter
+	DriverNames     []string
+	StorageSystemID string
 }
 
 // VolumeInfo contains information about mapping a Persistent Volume to the volume created on a storage system
@@ -50,8 +53,7 @@ func (f VolumeFinder) GetPersistentVolumes() ([]VolumeInfo, error) {
 	}
 
 	for _, volume := range volumes.Items {
-
-		if Contains(f.DriverNames, volume.Spec.CSI.Driver) {
+		if f.isMatch(volume) {
 			capacity := volume.Spec.Capacity[v1.ResourceStorage]
 			claim := volume.Spec.ClaimRef
 			status := volume.Status
@@ -73,4 +75,15 @@ func (f VolumeFinder) GetPersistentVolumes() ([]VolumeInfo, error) {
 		}
 	}
 	return volumeInfo, nil
+}
+
+func (f *VolumeFinder) isMatch(volume v1.PersistentVolume) bool {
+	// volumeHandle is storageSystemID-volumeID
+	split := strings.Split(volume.Spec.CSI.VolumeHandle, "-")
+	if len(split) == 2 {
+		if split[0] == f.StorageSystemID && Contains(f.DriverNames, volume.Spec.CSI.Driver) {
+			return true
+		}
+	}
+	return false
 }

@@ -1,0 +1,27 @@
+[
+    {
+        "username": "admin",
+        "password": "password",
+        "systemID": "ID1",
+        "endpoint": "http://127.0.0.1",
+        "insecure": true,
+        "mdm": "10.0.0.1,10.0.0.2"
+    },
+    {
+        "username": "admin",
+        "password": "password",
+        "systemID": "ID2",
+        "endpoint": "https://127.0.0.2",
+        "insecure": true,
+        "isDefault": true,
+        "mdm": "10.0.0.3,10.0.0.4"
+    },
+    {
+        "username": "admin",
+        "password": "password",
+        "systemID": "ID3",
+        "endpoint": "https://127.0.0.3",
+        "insecure": true,
+        "mdm": "10.0.0.5,10.0.0.6"
+    }
+]

@@ -1,6 +1,4 @@
-package k8s
-
-// Copyright (c) 2020 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2021 Dell Inc., or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -8,7 +6,11 @@ package k8s
 //
 //  http://www.apache.org/licenses/LICENSE-2.0
 
+package k8s
+
 import (
+	"strings"
+
 	v1 "k8s.io/api/storage/v1beta1"
 )
 
@@ -18,10 +20,11 @@ type KubernetesAPI interface {
 	GetCSINodes() (*v1.CSINodeList, error)
 }
 
-// SDCFinder is an SDC finder that will query the Kubernetes API for CSI-Nodes that have a matching DriverName
+// SDCFinder is an SDC finder that will query the Kubernetes API for CSI-Nodes that have a matching DriverName and Storage System ID
 type SDCFinder struct {
-	API         KubernetesAPI
-	DriverNames []string
+	API             KubernetesAPI
+	DriverNames     []string
+	StorageSystemID string
 }
 
 // GetSDCGuids will return a list of SDC GUIDs that match the given DriverName in Kubernetes
@@ -35,12 +38,24 @@ func (f *SDCFinder) GetSDCGuids() ([]string, error) {
 
 	for _, node := range nodes.Items {
 		for _, driver := range node.Spec.Drivers {
-			if Contains(f.DriverNames, driver.Name) {
+			if f.isMatch(driver) {
 				sdcGUIDS = append(sdcGUIDS, driver.NodeID)
 			}
 		}
 	}
 	return sdcGUIDS, nil
+}
+
+func (f *SDCFinder) isMatch(driver v1.CSINodeDriver) bool {
+	for _, topologyKey := range driver.TopologyKeys {
+		split := strings.Split(topologyKey, "/")
+		if len(split) == 2 {
+			if split[1] == f.StorageSystemID && Contains(f.DriverNames, split[0]) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // Contains will return true if the slice contains the given value
