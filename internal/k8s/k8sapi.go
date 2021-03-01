@@ -9,6 +9,7 @@ package k8s
 //  http://www.apache.org/licenses/LICENSE-2.0
 
 import (
+	"context"
 	"sync"
 
 	corev1 "k8s.io/api/core/v1"
@@ -35,7 +36,7 @@ func (api *API) GetCSINodes() (*v1.CSINodeList, error) {
 			return nil, err
 		}
 	}
-	return api.Client.StorageV1beta1().CSINodes().List(metav1.ListOptions{})
+	return api.Client.StorageV1beta1().CSINodes().List(context.Background(), metav1.ListOptions{})
 }
 
 // GetPersistentVolumes will return a list of persistent volumes in the kubernetes cluster
@@ -48,7 +49,7 @@ func (api *API) GetPersistentVolumes() (*corev1.PersistentVolumeList, error) {
 			return nil, err
 		}
 	}
-	return api.Client.CoreV1().PersistentVolumes().List(metav1.ListOptions{})
+	return api.Client.CoreV1().PersistentVolumes().List(context.Background(), metav1.ListOptions{})
 }
 
 // GetStorageClasses will return a list of storage classes in the kubernetes clusteer
@@ -61,7 +62,7 @@ func (api *API) GetStorageClasses() (*v1.StorageClassList, error) {
 			return nil, err
 		}
 	}
-	return api.Client.StorageV1beta1().StorageClasses().List(metav1.ListOptions{})
+	return api.Client.StorageV1beta1().StorageClasses().List(context.Background(), metav1.ListOptions{})
 }
 
 // GetNodes will return the list of nodes in the kubernetes cluster
@@ -75,7 +76,7 @@ func (api *API) GetNodes() (*corev1.NodeList, error) {
 		}
 	}
 
-	return api.Client.CoreV1().Nodes().List(metav1.ListOptions{})
+	return api.Client.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
 }
 
 // ConnectFn will connect the client to the k8s API
