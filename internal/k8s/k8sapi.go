@@ -13,7 +13,7 @@ import (
 	"sync"
 
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/storage/v1beta1"
+	v1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/client-go/kubernetes"
@@ -36,7 +36,7 @@ func (api *API) GetCSINodes() (*v1.CSINodeList, error) {
 			return nil, err
 		}
 	}
-	return api.Client.StorageV1beta1().CSINodes().List(context.Background(), metav1.ListOptions{})
+	return api.Client.StorageV1().CSINodes().List(context.Background(), metav1.ListOptions{})
 }
 
 // GetPersistentVolumes will return a list of persistent volumes in the kubernetes cluster
@@ -62,7 +62,7 @@ func (api *API) GetStorageClasses() (*v1.StorageClassList, error) {
 			return nil, err
 		}
 	}
-	return api.Client.StorageV1beta1().StorageClasses().List(context.Background(), metav1.ListOptions{})
+	return api.Client.StorageV1().StorageClasses().List(context.Background(), metav1.ListOptions{})
 }
 
 // GetNodes will return the list of nodes in the kubernetes cluster

@@ -11,7 +11,7 @@ package k8s
 import (
 	"strings"
 
-	v1 "k8s.io/api/storage/v1beta1"
+	v1 "k8s.io/api/storage/v1"
 )
 
 // KubernetesAPI is an interface for accessing the Kubernetes API
