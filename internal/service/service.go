@@ -20,7 +20,7 @@ import (
 	sio "github.com/dell/goscaleio"
 	types "github.com/dell/goscaleio/types/v1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/storage/v1beta1"
+	v1 "k8s.io/api/storage/v1"
 )
 
 var _ Service = (*PowerFlexService)(nil)

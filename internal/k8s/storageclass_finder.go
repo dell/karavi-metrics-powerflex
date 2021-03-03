@@ -9,7 +9,7 @@
 package k8s
 
 import (
-	v1 "k8s.io/api/storage/v1beta1"
+	v1 "k8s.io/api/storage/v1"
 )
 
 // StorageClassGetter is an interface for getting a list of storage class information

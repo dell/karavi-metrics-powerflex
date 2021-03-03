@@ -15,7 +15,7 @@ import (
 	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 	"github.com/dell/karavi-metrics-powerflex/internal/k8s/mocks"
 
-	v1 "k8s.io/api/storage/v1beta1"
+	v1 "k8s.io/api/storage/v1"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"

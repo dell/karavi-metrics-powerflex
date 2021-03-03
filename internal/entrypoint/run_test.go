@@ -21,11 +21,11 @@ import (
 	metrics "github.com/dell/karavi-metrics-powerflex/internal/service/mocks"
 	otlexporters "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters"
 	exportermocks "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters/mocks"
-	"k8s.io/api/storage/v1beta1"
 
 	sio "github.com/dell/goscaleio"
 	"github.com/golang/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -623,7 +623,7 @@ func Test_Run(t *testing.T) {
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)
 			pfClient.EXPECT().Authenticate(gomock.Any()).AnyTimes().Return(sio.Cluster{}, nil)
 
-			sc1 := v1beta1.StorageClass{}
+			sc1 := v1.StorageClass{}
 			sc1.Provisioner = "csi-vxflexos.dellemc.com"
 			sc1.ObjectMeta = metav1.ObjectMeta{
 				UID:  "123",
@@ -635,7 +635,7 @@ func Test_Run(t *testing.T) {
 
 			storageClassFinder := mocks.NewMockStorageClassFinder(ctrl)
 			storageClassFinder.EXPECT().GetStorageClasses().AnyTimes().
-				Return([]v1beta1.StorageClass{sc1}, nil)
+				Return([]v1.StorageClass{sc1}, nil)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
@@ -736,7 +736,7 @@ func Test_Run(t *testing.T) {
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)
 			pfClient.EXPECT().Authenticate(gomock.Any()).AnyTimes().Return(sio.Cluster{}, nil)
 
-			sc1 := v1beta1.StorageClass{}
+			sc1 := v1.StorageClass{}
 			sc1.Provisioner = "csi-vxflexos.dellemc.com"
 			sc1.ObjectMeta = metav1.ObjectMeta{
 				UID:  "123",
@@ -748,7 +748,7 @@ func Test_Run(t *testing.T) {
 
 			storageClassFinder := mocks.NewMockStorageClassFinder(ctrl)
 			storageClassFinder.EXPECT().GetStorageClasses().AnyTimes().
-				Return([]v1beta1.StorageClass{sc1}, nil)
+				Return([]v1.StorageClass{sc1}, nil)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
