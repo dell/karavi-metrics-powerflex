@@ -159,7 +159,7 @@ func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFind
 	storageClassFinder.IsDefaultStorageSystem = storageSystem.IsDefault
 	volumeFinder.StorageSystemID = powerFlexSystemID
 
-	client, err := sio.NewClientWithArgs(powerFlexEndpoint, "", true, false)
+	client, err := sio.NewClientWithArgs(powerFlexEndpoint, "", storageSystem.Insecure, true)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
