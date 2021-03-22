@@ -31,15 +31,15 @@ test:
 
 .PHONY: docker
 docker:
-	SERVICE=cmd/metrics-powerflex docker build -t karavi-metrics-powerflex -f Dockerfile cmd/metrics-powerflex/
+	SERVICE=cmd/metrics-powerflex docker build -t csm-metrics-powerflex -f Dockerfile cmd/metrics-powerflex/
 
 .PHONY: push
 push:
-	docker push ${DOCKER_REPO}/karavi-metrics-powerflex\:latest
+	docker push ${DOCKER_REPO}/csm-metrics-powerflex\:latest
 
 .PHONY: tag
 tag:
-	docker tag karavi-metrics-powerflex\:latest ${DOCKER_REPO}/karavi-metrics-powerflex\:latest
+	docker tag csm-metrics-powerflex\:latest ${DOCKER_REPO}/csm-metrics-powerflex\:latest
 
 .PHONY: check
 check:
