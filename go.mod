@@ -6,7 +6,7 @@ require (
 	github.com/dell/goscaleio v1.2.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/golang/mock v1.4.3
-	github.com/sirupsen/logrus v1.4.2 // indirect
+	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.6.1
 	go.opentelemetry.io/otel v0.7.0

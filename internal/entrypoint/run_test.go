@@ -1,6 +1,4 @@
-package entrypoint_test
-
-// Copyright (c) 2020 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2021 Dell Inc., or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -8,12 +6,16 @@ package entrypoint_test
 //
 //  http://www.apache.org/licenses/LICENSE-2.0
 
+package entrypoint_test
+
 import (
 	"context"
 	"errors"
 	"fmt"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/dell/karavi-metrics-powerflex/internal/entrypoint"
 	pflexServices "github.com/dell/karavi-metrics-powerflex/internal/service"
@@ -858,12 +860,15 @@ func Test_Run(t *testing.T) {
 			expectError, config, exporter, svc, prevConfValidation, ctrl, validateConfig := test(t)
 			ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
 			defer cancel()
-			if config != nil && !validateConfig {
-				// The configuration is not nil and the test is not attempting to validate the configuration.
-				// In this case, we can use smaller intervals for testing purposes.
-				config.SDCTickInterval = 100 * time.Millisecond
-				config.VolumeTickInterval = 100 * time.Millisecond
-				config.StoragePoolTickInterval = 100 * time.Millisecond
+			if config != nil {
+				config.Logger = logrus.New()
+				if !validateConfig {
+					// The configuration is not nil and the test is not attempting to validate the configuration.
+					// In this case, we can use smaller intervals for testing purposes.
+					config.SDCTickInterval = 100 * time.Millisecond
+					config.VolumeTickInterval = 100 * time.Millisecond
+					config.StoragePoolTickInterval = 100 * time.Millisecond
+				}
 			}
 			err := entrypoint.Run(ctx, config, exporter, svc)
 			errorOccurred := err != nil

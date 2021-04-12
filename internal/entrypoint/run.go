@@ -1,6 +1,4 @@
-package entrypoint
-
-// Copyright (c) 2020 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2021 Dell Inc., or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -8,10 +6,11 @@ package entrypoint
 //
 //  http://www.apache.org/licenses/LICENSE-2.0
 
+package entrypoint
+
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"runtime"
 	"time"
@@ -19,6 +18,7 @@ import (
 	"github.com/dell/karavi-metrics-powerflex/internal/service"
 	pflexServices "github.com/dell/karavi-metrics-powerflex/internal/service"
 	otlexporters "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters"
+	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/exporters/otlp"
 	"google.golang.org/grpc/credentials"
 
@@ -62,6 +62,7 @@ type Config struct {
 	StoragePoolMetricsEnabled bool
 	CollectorAddress          string
 	CollectorCertPath         string
+	Logger                    *logrus.Logger
 }
 
 // Run is the entry point for starting the service
@@ -70,6 +71,7 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 	if err != nil {
 		return err
 	}
+	logger := config.Logger
 
 	errCh := make(chan error, 1)
 	go func() {
@@ -117,27 +119,27 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 		select {
 		case <-sdcTicker.C:
 			if !config.LeaderElector.IsLeader() {
-				log.Printf("Not leader pod to collect metrics")
+				logger.Info("not leader pod to collect metrics")
 				continue
 			}
 			if !config.SDCMetricsEnabled {
-				log.Printf("PowerFlex SDC metrics collection is disabled")
+				logger.Info("powerflex SDC metrics collection is disabled")
 				continue
 			}
 			_, err := config.PowerFlexClient.Authenticate(&config.PowerFlexConfig)
 			if err != nil {
-				log.Printf("Failed to authenticate with PowerFlex: %v. Retrying on next tick...", err)
+				logger.WithError(err).Error("failed to authenticate with PowerFlex. retrying on next tick...")
 				continue
 			}
 			sdcs, err := pflexSvc.GetSDCs(ctx, config.PowerFlexClient, config.SDCFinder)
 			if err != nil {
-				log.Printf("error getting SDCs: %v", err)
+				logger.WithError(err).Error("getting SDCs")
 				continue
 			}
 
 			nodes, err := config.NodeFinder.GetNodes()
 			if err != nil {
-				log.Printf("error getting Kubernetes nodes: %v", err)
+				logger.WithError(err).Error("getting kubernetes nodes")
 				continue
 			}
 
@@ -145,50 +147,50 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 
 		case <-volumeTicker.C:
 			if !config.LeaderElector.IsLeader() {
-				log.Printf("Not leader pod to collect metrics")
+				logger.Info("not leader pod to collect metrics")
 				continue
 			}
 			if !config.VolumeMetricsEnabled {
-				log.Printf("PowerFlex SDC metrics collection is disabled")
+				logger.Info("powerflex volume metrics collection is disabled")
 				continue
 			}
 			_, err := config.PowerFlexClient.Authenticate(&config.PowerFlexConfig)
 			if err != nil {
-				log.Printf("Failed to authenticate with PowerFlex: %v. Retrying on next tick...", err)
+				logger.WithError(err).Error("failed to authenticate with PowerFlex. retrying on next tick...", err)
 				continue
 			}
 			sdcs, err := pflexSvc.GetSDCs(ctx, config.PowerFlexClient, config.SDCFinder)
 			if err != nil {
-				log.Printf("error getting SDCs: %v", err)
+				logger.WithError(err).Error("getting SDCs")
 				continue
 			}
 
 			volumes, err := pflexSvc.GetVolumes(ctx, sdcs)
 			if err != nil {
-				log.Printf("error getting Volumes: %v", err)
+				logger.WithError(err).Error("getting volumes")
 				continue
 			}
 			pflexSvc.ExportVolumeStatistics(ctx, volumes, config.VolumeFinder)
 
 		case <-storagePoolTicker.C:
 			if !config.LeaderElector.IsLeader() {
-				log.Printf("Not leader pod to collect metrics")
+				logger.Info("not leader pod to collect metrics")
 				continue
 			}
 			if !config.StoragePoolMetricsEnabled {
-				log.Printf("PowerFlex Storage Pool metrics collection is disabled")
+				logger.Info("powerflex storage pool metrics collection is disabled")
 				continue
 			}
 
 			_, err := config.PowerFlexClient.Authenticate(&config.PowerFlexConfig)
 			if err != nil {
-				log.Printf("Failed to authenticate with PowerFlex: %v. Retrying on next tick...", err)
+				logger.WithError(err).Error("failed to authenticate with PowerFlex. Retrying on next tick...", err)
 				continue
 			}
 
 			storageClassMetas, err := pflexSvc.GetStorageClasses(ctx, config.PowerFlexClient, config.StorageClassFinder)
 			if err != nil {
-				log.Printf("error getting storage class and storage pool information: %v", err)
+				logger.WithError(err).Error("getting storage class and storage pool information")
 				continue
 			}
 

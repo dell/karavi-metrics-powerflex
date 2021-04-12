@@ -1,12 +1,12 @@
-package service_test
-
-// Copyright (c) 2020 Dell Inc., or its subsidiaries. All Rights Reserved.
+// Copyright (c) 2021 Dell Inc., or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
 //  http://www.apache.org/licenses/LICENSE-2.0
+
+package service_test
 
 import (
 	"context"
@@ -17,6 +17,7 @@ import (
 
 	"github.com/dell/karavi-metrics-powerflex/internal/service"
 	"github.com/dell/karavi-metrics-powerflex/internal/service/mocks"
+	"github.com/sirupsen/logrus"
 
 	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 
@@ -135,6 +136,7 @@ func Test_GetSDCStatistics(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			setup, sdcs, ctrl := tc(t)
+			setup.Service.Logger = logrus.New()
 			setup.Service.GetSDCStatistics(context.Background(), nil, sdcs)
 			ctrl.Finish()
 		})
@@ -401,6 +403,7 @@ func Test_GetSDCs(t *testing.T) {
 				MetricsWrapper: &service.MetricsWrapper{
 					Meter: global.Meter("powerflex/sdc"),
 				},
+				Logger: logrus.New(),
 			}
 			sdcsList, err := svc.GetSDCs(context.Background(), powerflexClient, sdcFinder)
 			// powerflexClient, sdcFinder, checkFns, ctrl := tc(t)
@@ -738,6 +741,7 @@ func Test_GetStorageClasses(t *testing.T) {
 				MetricsWrapper: &service.MetricsWrapper{
 					Meter: global.Meter("powerflex/sdc"),
 				},
+				Logger: logrus.New(),
 			}
 			classToPools, err := svc.GetStorageClasses(context.Background(), powerflexClient, storageClassFinder)
 			for _, checkFn := range checkFns {
@@ -851,6 +855,7 @@ func Test_GetStoragePoolStatistics(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			setup, storageClassMetas, ctrl := tc(t)
+			setup.Service.Logger = logrus.New()
 			setup.Service.GetStoragePoolStatistics(context.Background(), storageClassMetas)
 			ctrl.Finish()
 		})
@@ -978,6 +983,7 @@ func Test_GetVolumes(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			setup, sdcs, checkFns, ctrl := tc(t)
+			setup.Service.Logger = logrus.New()
 			volumes, err := setup.Service.GetVolumes(context.Background(), sdcs)
 			for _, checkFn := range checkFns {
 				checkFn(t, volumes, err)
@@ -1106,6 +1112,7 @@ func Test_ExportVolumeStatistics(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			setup, vols, volFinder, ctrl := tc(t)
+			setup.Service.Logger = logrus.New()
 			setup.Service.ExportVolumeStatistics(context.Background(), vols, volFinder)
 			ctrl.Finish()
 		})
@@ -1137,7 +1144,7 @@ func Benchmark_ExportVolumeStatistics(b *testing.B) {
 		volumes = append(volumes, tmp_vol)
 	}
 
-	service := service.PowerFlexService{MetricsWrapper: metrics}
+	service := service.PowerFlexService{MetricsWrapper: metrics, Logger: logrus.New()}
 	metrics.EXPECT().Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(b.N * numOfVolumes)
 	volFinder.EXPECT().GetPersistentVolumes().Return([]k8s.VolumeInfo{}, nil)
 
