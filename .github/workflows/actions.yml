@@ -43,8 +43,6 @@ jobs:
         uses: actions/checkout@v2
       - name: Run Go Security
         uses: securego/gosec@master
-        with:
-          args: -quiet ./... 
   malware_security_scan:
     name: Malware Scanner
     runs-on: ubuntu-latest
@@ -71,10 +69,10 @@ jobs:
         run: go get github.com/golang/mock/mockgen@v1.4.4
       - name: Get dependencies
         run:  go mod download
-      - name: Build karavi-metrics-powerflex Docker Image
+      - name: Build csm-metrics-powerflex Docker Image
         run: make clean build docker  
       - name: Image scanner
         uses: Azure/container-scan@v0
         with:
-          image-name: karavi-metrics-powerflex
+          image-name: csm-metrics-powerflex
           severity-threshold: HIGH

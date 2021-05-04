@@ -6,7 +6,7 @@ package mocks
 
 import (
 	gomock "github.com/golang/mock/gomock"
-	v1beta1 "k8s.io/api/storage/v1beta1"
+	v1 "k8s.io/api/storage/v1"
 	reflect "reflect"
 )
 
@@ -34,10 +34,10 @@ func (m *MockStorageClassGetter) EXPECT() *MockStorageClassGetterMockRecorder {
 }
 
 // GetStorageClasses mocks base method
-func (m *MockStorageClassGetter) GetStorageClasses() (*v1beta1.StorageClassList, error) {
+func (m *MockStorageClassGetter) GetStorageClasses() (*v1.StorageClassList, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetStorageClasses")
-	ret0, _ := ret[0].(*v1beta1.StorageClassList)
+	ret0, _ := ret[0].(*v1.StorageClassList)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

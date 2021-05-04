@@ -1,5 +1,3 @@
-package service
-
 // Copyright (c) 2020 Dell Inc., or its subsidiaries. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -8,19 +6,21 @@ package service
 //
 //  http://www.apache.org/licenses/LICENSE-2.0
 
+package service
+
 import (
 	"context"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
 	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
+	"github.com/sirupsen/logrus"
 
 	sio "github.com/dell/goscaleio"
 	types "github.com/dell/goscaleio/types/v1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/storage/v1beta1"
+	v1 "k8s.io/api/storage/v1"
 )
 
 var _ Service = (*PowerFlexService)(nil)
@@ -74,6 +74,7 @@ type PowerFlexSystem interface {
 type PowerFlexService struct {
 	MetricsWrapper          MetricsRecorder
 	MaxPowerFlexConnections int
+	Logger                  *logrus.Logger
 }
 
 // SDCFinder is used to find SDC GUIDs
@@ -120,6 +121,7 @@ func (s *PowerFlexService) GetSDCs(ctx context.Context, client PowerFlexClient, 
 	if err != nil {
 		return nil, err
 	}
+	s.Logger.WithField("sdc_guids", sdcGUIDs).Debug("get sdc guids")
 	if len(sdcGUIDs) == 0 {
 		return sdcs, nil
 	}
@@ -128,16 +130,18 @@ func (s *PowerFlexService) GetSDCs(ctx context.Context, client PowerFlexClient, 
 		return nil, err
 	}
 	for _, system := range systems {
-		log.Printf("Looking up system ID %s Name %s", system.ID, system.Name)
+		s.Logger.WithFields(logrus.Fields{"system_id": system.ID, "system_name": system.Name}).Debug("looking up system")
 		sys, err := SystemFinder(client, system.ID, system.Name, "")
 		if err != nil {
 			return nil, err
 		}
+		s.Logger.WithFields(logrus.Fields{"system": sys}).Debug("found system")
 		for _, sdcGUID := range sdcGUIDs {
 			sdc, err := sys.FindSdc("SdcGuid", sdcGUID)
 			if err != nil {
-				log.Printf("unable to find SDC with GUID %s", sdcGUID)
+				s.Logger.WithField("sdc_guid", sdcGUID).Warn("unable to find SDC with GUID")
 			} else {
+				s.Logger.WithFields(logrus.Fields{"sdc_guid": sdcGUID}).Debug("found sdc")
 				sdcs = append(sdcs, sdc)
 			}
 		}
@@ -196,15 +200,15 @@ type VolumeMetricsRecord struct {
 // GetSDCStatistics records I/O statistics for the given list of SDCs
 func (s *PowerFlexService) GetSDCStatistics(ctx context.Context, nodes []corev1.Node, sdcs []StatisticsGetter) {
 	start := time.Now()
-	defer timeSince(start, "GetSDCStatistics")
+	defer s.timeSince(start, "GetSDCStatistics")
 
 	if s.MetricsWrapper == nil {
-		log.Printf("no MetricsWrapper provided for getting SDCStatistics")
+		s.Logger.Warn("no MetricsWrapper provided for getting SDCStatistics")
 		return
 	}
 
 	if s.MaxPowerFlexConnections == 0 {
-		log.Printf("Using DefaultMaxPowerFlexConnections")
+		s.Logger.Debug("using DefaultMaxPowerFlexConnections")
 		s.MaxPowerFlexConnections = DefaultMaxPowerFlexConnections
 	}
 
@@ -227,7 +231,7 @@ func (s *PowerFlexService) sdcServer(sdcs []StatisticsGetter) <-chan StatisticsG
 // gatherSDCMetrics will collect, in parallel, stats against each SDC referenced by 'statGetters'
 func (s *PowerFlexService) gatherSDCMetrics(ctx context.Context, nodes []corev1.Node, sdcs <-chan StatisticsGetter) <-chan *SDCMetricsRecord {
 	start := time.Now()
-	defer timeSince(start, "gatherMetrics")
+	defer s.timeSince(start, "gatherMetrics")
 
 	ch := make(chan *SDCMetricsRecord)
 	var wg sync.WaitGroup
@@ -247,13 +251,22 @@ func (s *PowerFlexService) gatherSDCMetrics(ctx context.Context, nodes []corev1.
 
 				stats, err := sdc.GetStatistics()
 				if err != nil {
-					log.Printf("error getting statistics for sdc %s: %v", sdcMeta.ID, err)
+					s.Logger.WithError(err).WithField("sdc", sdcMeta.ID).Error("getting statistics for sdc")
 					return
 				}
 
 				readBW, writeBW := GetSDCBandwidth(stats)
 				readIOPS, writeIOPS := GetSDCIOPS(stats)
 				readLatency, writeLatency := GetSDCLatency(stats)
+				s.Logger.WithFields(logrus.Fields{
+					"sdc_meta":        sdcMeta,
+					"read_bandwidth":  readBW,
+					"write_bandwidth": writeBW,
+					"read_iops":       readIOPS,
+					"write_iops":      writeIOPS,
+					"read_latency":    readLatency,
+					"write_latency":   writeLatency,
+				}).Debug("sdc metrics")
 
 				ch <- &SDCMetricsRecord{
 					sdcMeta: sdcMeta,
@@ -273,7 +286,7 @@ func (s *PowerFlexService) gatherSDCMetrics(ctx context.Context, nodes []corev1.
 // pushSDCMetrics will, in parallel, record stats in 'metrics' using the s.MetricsWrapper
 func (s *PowerFlexService) pushSDCMetrics(ctx context.Context, sdcMetrics <-chan *SDCMetricsRecord) <-chan string {
 	start := time.Now()
-	defer timeSince(start, "pushMetrics")
+	defer s.timeSince(start, "pushMetrics")
 
 	var wg sync.WaitGroup
 	ch := make(chan string)
@@ -284,7 +297,7 @@ func (s *PowerFlexService) pushSDCMetrics(ctx context.Context, sdcMetrics <-chan
 			go func(mr *SDCMetricsRecord) {
 				defer wg.Done()
 				if mr == nil {
-					log.Printf("Empty statistics for a sdc")
+					s.Logger.WithField("sdc", mr.sdcMeta.ID).Warn("empty statistics for sdc")
 					return
 				}
 
@@ -296,7 +309,7 @@ func (s *PowerFlexService) pushSDCMetrics(ctx context.Context, sdcMetrics <-chan
 				)
 
 				if err != nil {
-					log.Printf("error recording statistics for sdc %s: %v", mr.sdcMeta.ID, err)
+					s.Logger.WithError(err).WithField("sdc", mr.sdcMeta.ID).Error("recording statistics for sdc")
 				} else {
 					ch <- fmt.Sprintf(mr.sdcMeta.ID)
 				}
@@ -345,6 +358,7 @@ func (s *PowerFlexService) GetVolumes(ctx context.Context, sdcs []StatisticsGett
 		for _, v := range vols {
 			volumeMeta := getVolumeMeta(v)
 			if !visited[volumeMeta.ID] {
+				s.Logger.WithField("volume_id", volumeMeta.ID).Debug("found volume")
 				uniqueVolumes = append(uniqueVolumes, v)
 				visited[volumeMeta.ID] = true
 			}
@@ -357,15 +371,15 @@ func (s *PowerFlexService) GetVolumes(ctx context.Context, sdcs []StatisticsGett
 // ExportVolumeStatistics records I/O statistics for the given list of Volumes
 func (s *PowerFlexService) ExportVolumeStatistics(ctx context.Context, volumes []VolumeStatisticsGetter, volumeFinder VolumeFinder) {
 	start := time.Now()
-	defer timeSince(start, "ExportVolumeStatistics")
+	defer s.timeSince(start, "ExportVolumeStatistics")
 
 	if s.MetricsWrapper == nil {
-		log.Printf("no MetricsWrapper provided for getting ExportVolumeStatistics")
+		s.Logger.Warn("no MetricsWrapper provided for getting ExportVolumeStatistics")
 		return
 	}
 
 	if s.MaxPowerFlexConnections == 0 {
-		log.Printf("Using DefaultMaxPowerFlexConnections")
+		s.Logger.Debug("Using DefaultMaxPowerFlexConnections")
 		s.MaxPowerFlexConnections = DefaultMaxPowerFlexConnections
 	}
 
@@ -389,7 +403,7 @@ func (s *PowerFlexService) volumeServer(volumes []VolumeStatisticsGetter) <-chan
 // gatherVolumeMetrics will return a channel of volume metrics based on the input of volumes
 func (s *PowerFlexService) gatherVolumeMetrics(ctx context.Context, volumeFinder VolumeFinder, volumes <-chan VolumeStatisticsGetter) <-chan *VolumeMetricsRecord {
 	start := time.Now()
-	defer timeSince(start, "gatherVolumeMetrics")
+	defer s.timeSince(start, "gatherVolumeMetrics")
 
 	ch := make(chan *VolumeMetricsRecord)
 	var wg sync.WaitGroup
@@ -399,7 +413,7 @@ func (s *PowerFlexService) gatherVolumeMetrics(ctx context.Context, volumeFinder
 		persistentVolumes := make(map[string]k8s.VolumeInfo)
 		pvs, err := volumeFinder.GetPersistentVolumes()
 		if err != nil {
-			log.Printf("error getting persistent volumes: %v", err)
+			s.Logger.WithError(err).Error("getting persistent volumes")
 			return
 		}
 		for _, v := range pvs {
@@ -420,17 +434,27 @@ func (s *PowerFlexService) gatherVolumeMetrics(ctx context.Context, volumeFinder
 				if pv, ok := persistentVolumes[volumeMeta.Name]; ok {
 					volumeMeta.PersistentVolumeName = pv.PersistentVolume
 				} else {
-					log.Printf("could not find a Persistent Volume that maps to storage system volume ID %v", volumeMeta.ID)
+					s.Logger.WithField("volume_id", volumeMeta.ID).Error("could not find a Persistent Volume that maps to storage system volume ID")
 				}
 
 				stats, err := volume.GetVolumeStatistics()
 				if err != nil {
-					log.Printf("error getting statistics for volume %s: %v", volumeMeta.ID, err)
+					s.Logger.WithError(err).WithField("volume_id", volumeMeta.ID).Error("getting statistics for volume")
 					return
 				}
 				readBW, writeBW := GetVolumeBandwidth(stats)
 				readIOPS, writeIOPS := GetVolumeIOPS(stats)
 				readLatency, writeLatency := GetVolumeLatency(stats)
+
+				s.Logger.WithFields(logrus.Fields{
+					"volume_meta":     volumeMeta,
+					"read_bandwidth":  readBW,
+					"write_bandwidth": writeBW,
+					"read_iops":       readIOPS,
+					"write_iops":      writeIOPS,
+					"read_latency":    readLatency,
+					"write_latency":   writeLatency,
+				}).Debug("volume metrics")
 
 				ch <- &VolumeMetricsRecord{
 					volumeMeta: volumeMeta,
@@ -462,7 +486,7 @@ func (s *PowerFlexService) gatherVolumeMetrics(ctx context.Context, volumeFinder
 // pushVolumeMetrics will push the provided channel of volume metrics to a data collector
 func (s *PowerFlexService) pushVolumeMetrics(ctx context.Context, volumeMetrics <-chan *VolumeMetricsRecord) <-chan string {
 	start := time.Now()
-	defer timeSince(start, "pushVolumeMetrics")
+	defer s.timeSince(start, "pushVolumeMetrics")
 	var wg sync.WaitGroup
 
 	ch := make(chan string)
@@ -478,7 +502,7 @@ func (s *PowerFlexService) pushVolumeMetrics(ctx context.Context, volumeMetrics 
 					metrics.readLatency, metrics.writeLatency,
 				)
 				if err != nil {
-					log.Printf("error recording statistics for volume: %v", err)
+					s.Logger.WithError(err).WithField("volume_id", metrics.volumeMeta.ID).Error("recording statistics for volume")
 				} else {
 					ch <- fmt.Sprintf(metrics.volumeMeta.ID)
 				}
@@ -518,6 +542,7 @@ func (s *PowerFlexService) GetStorageClasses(ctx context.Context, client PowerFl
 			Driver:       class.Provisioner,
 			StoragePools: k8s.GetStoragePools(class),
 		}
+		s.Logger.WithField("storage_class_info", storageClassInfo).Debug("found storage class")
 		storageClassInfos = append(storageClassInfos, storageClassInfo)
 	}
 
@@ -574,14 +599,14 @@ type IDedPoolStatisticGetter struct {
 // GetStoragePoolStatistics records the capacity metrics for a slice of StorageClassMeta
 func (s *PowerFlexService) GetStoragePoolStatistics(ctx context.Context, storageClassMetas []StorageClassMeta) {
 	start := time.Now()
-	defer timeSince(start, "GetStoragePoolStatistics")
+	defer s.timeSince(start, "GetStoragePoolStatistics")
 
 	if s.MetricsWrapper == nil {
-		log.Printf("no MetricsWrapper provided for getting Storage Pool statistics")
+		s.Logger.Warn("no MetricsWrapper provided for getting Storage Pool statistics")
 		return
 	}
 	if s.MaxPowerFlexConnections == 0 {
-		log.Printf("Using DefaultMaxPowerFlexConnections")
+		s.Logger.Debug("using DefaultMaxPowerFlexConnections")
 		s.MaxPowerFlexConnections = DefaultMaxPowerFlexConnections
 	}
 
@@ -605,7 +630,7 @@ func (s *PowerFlexService) storagePoolServer(pools map[string]StoragePoolStatist
 
 func (s *PowerFlexService) gatherPoolStatistics(ctx context.Context, scMeta *StorageClassMeta, pool <-chan IDedPoolStatisticGetter) <-chan *storagePoolMetricsRecord {
 	start := time.Now()
-	defer timeSince(start, "gatherPoolStatistics")
+	defer s.timeSince(start, "gatherPoolStatistics")
 
 	ch := make(chan *storagePoolMetricsRecord)
 	var wg sync.WaitGroup
@@ -622,16 +647,31 @@ func (s *PowerFlexService) gatherPoolStatistics(ctx context.Context, scMeta *Sto
 				}()
 				stats, err := pl.Getter.GetStatistics()
 				if err != nil {
-					log.Printf("error getting statistics for pool: %v", err)
+					s.Logger.WithError(err).WithField("pool_id", pl.ID).Error("getting statistics pool")
 					return
 				}
+
+				totalLogicalCapacity := GetTotalLogicalCapacity(stats)
+				logicalCapacityAvailable := GetLogicalCapacityAvailable(stats)
+				logicalCapacityInUse := GetLogicalCapacityInUse(stats)
+				logicalProvisioned := GetLogicalProvisioned(stats)
+
+				s.Logger.WithFields(logrus.Fields{
+					"pool_id":                    pl.ID,
+					"storage_class_meta":         scMeta,
+					"total_logical_capacity":     totalLogicalCapacity,
+					"logical_capacity_available": logicalCapacityAvailable,
+					"logical_capacity_in_use":    logicalCapacityInUse,
+					"logical_provisioned":        logicalProvisioned,
+				}).Debug("pool statistics")
+
 				ch <- &storagePoolMetricsRecord{
 					ID:                       pl.ID,
 					storageClassMeta:         scMeta,
-					TotalLogicalCapacity:     GetTotalLogicalCapacity(stats),
-					LogicalCapacityAvailable: GetLogicalCapacityAvailable(stats),
-					LogicalCapacityInUse:     GetLogicalCapacityInUse(stats),
-					LogicalProvisioned:       GetLogicalProvisioned(stats),
+					TotalLogicalCapacity:     totalLogicalCapacity,
+					LogicalCapacityAvailable: logicalCapacityAvailable,
+					LogicalCapacityInUse:     logicalCapacityInUse,
+					LogicalProvisioned:       logicalProvisioned,
 				}
 
 			}(pl)
@@ -645,7 +685,7 @@ func (s *PowerFlexService) gatherPoolStatistics(ctx context.Context, scMeta *Sto
 
 func (s *PowerFlexService) pushPoolStatistics(ctx context.Context, spMetricRecord <-chan *storagePoolMetricsRecord) <-chan *storagePoolMetricsRecord {
 	start := time.Now()
-	defer timeSince(start, "pushPoolStatistics")
+	defer s.timeSince(start, "pushPoolStatistics")
 	var wg sync.WaitGroup
 
 	ch := make(chan *storagePoolMetricsRecord)
@@ -656,7 +696,7 @@ func (s *PowerFlexService) pushPoolStatistics(ctx context.Context, spMetricRecor
 				defer wg.Done()
 				err := s.MetricsWrapper.RecordCapacity(ctx, *(i.storageClassMeta), i.TotalLogicalCapacity, i.LogicalCapacityAvailable, i.LogicalCapacityInUse, i.LogicalProvisioned)
 				if err != nil {
-					log.Printf("error recording statistics for storage pool: %v", err)
+					s.Logger.WithError(err).Error("recording statistics for storage pool")
 				}
 				ch <- i
 			}(i)
@@ -837,6 +877,9 @@ func contains(slice []string, value string) bool {
 	return false
 }
 
-func timeSince(start time.Time, fName string) {
-	log.Printf("%s took %v", fName, time.Since(start))
+func (s *PowerFlexService) timeSince(start time.Time, fName string) {
+	s.Logger.WithFields(logrus.Fields{
+		"duration": fmt.Sprintf("%v", time.Since(start)),
+		"function": fName,
+	}).Info("function duration")
 }

@@ -1,0 +1,13 @@
+[
+    {
+        "username": "admin",
+        "password": "password",
+        "systemID": "ID1",
+        "endpoint": "http://127.0.0.1",
+        "insecure": true,
+        "mdm": "mdm1,mdm2"
+    },
+    {
+        "isDefault": true
+    }
+]
