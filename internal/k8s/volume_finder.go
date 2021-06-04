@@ -78,6 +78,9 @@ func (f VolumeFinder) GetPersistentVolumes() ([]VolumeInfo, error) {
 }
 
 func (f *VolumeFinder) isMatch(volume v1.PersistentVolume) bool {
+	if volume.Spec.CSI == nil {
+		return false
+	}
 	// volumeHandle is storageSystemID-volumeID
 	split := strings.Split(volume.Spec.CSI.VolumeHandle, "-")
 	if len(split) == 2 {

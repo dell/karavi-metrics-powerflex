@@ -252,6 +252,125 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 			finder := k8s.VolumeFinder{API: api}
 			return finder, check(hasError), ctrl
 		},
+		"isMatch do not fail if CSI is nil": func(*testing.T) (k8s.VolumeFinder, []checkFn, *gomock.Controller) {
+			fsType := "ext4"
+
+			ctrl := gomock.NewController(t)
+			api := mocks.NewMockVolumeGetter(ctrl)
+
+			t1, err := time.Parse(time.RFC3339, "2020-07-28T20:00:00+00:00")
+			assert.Nil(t, err)
+
+			volumes := &corev1.PersistentVolumeList{
+				Items: []corev1.PersistentVolume{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:              "persistent-volume-name",
+							CreationTimestamp: metav1.Time{Time: t1},
+						},
+						Spec: corev1.PersistentVolumeSpec{
+							Capacity: map[corev1.ResourceName]resource.Quantity{
+								v1.ResourceStorage: resource.MustParse("16Gi"),
+							},
+							PersistentVolumeSource: corev1.PersistentVolumeSource{
+								CSI: &corev1.CSIPersistentVolumeSource{
+									Driver: "csi-vxflexos.dellemc.com",
+									VolumeAttributes: map[string]string{
+										"Name":            "storage-system-volume-name",
+										"StoragePoolName": "storage-pool-name",
+									},
+									VolumeHandle: "storagesystemid1-volumeid1",
+								},
+							},
+							ClaimRef: &corev1.ObjectReference{
+								Name:      "pvc-name",
+								Namespace: "namespace-1",
+								UID:       "pvc-uid",
+							},
+							StorageClassName: "storage-class-name",
+						},
+						Status: corev1.PersistentVolumeStatus{
+							Phase: "Bound",
+						},
+					},
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:              "persistent-volume-name",
+							CreationTimestamp: metav1.Time{Time: t1},
+						},
+						Spec: corev1.PersistentVolumeSpec{
+							Capacity: map[corev1.ResourceName]resource.Quantity{
+								v1.ResourceStorage: resource.MustParse("16Gi"),
+							},
+							PersistentVolumeSource: corev1.PersistentVolumeSource{
+								CSI: &corev1.CSIPersistentVolumeSource{
+									Driver: "another-csi-driver.dellemc.com",
+									VolumeAttributes: map[string]string{
+										"Name":            "storage-system-volume-name",
+										"StoragePoolName": "storage-pool-name",
+									},
+									VolumeHandle: "storagesystemid1-volumeid1",
+								},
+							},
+							ClaimRef: &corev1.ObjectReference{
+								Name:      "pvc-name",
+								Namespace: "namespace-1",
+								UID:       "pvc-uid",
+							},
+							StorageClassName: "storage-class-name",
+						},
+						Status: corev1.PersistentVolumeStatus{
+							Phase: "Bound",
+						},
+					},
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:              "persistent-volume-name",
+							CreationTimestamp: metav1.Time{Time: t1},
+						},
+						Spec: corev1.PersistentVolumeSpec{
+							Capacity: map[corev1.ResourceName]resource.Quantity{
+								v1.ResourceStorage: resource.MustParse("16Gi"),
+							},
+							PersistentVolumeSource: corev1.PersistentVolumeSource{
+								Local: &corev1.LocalVolumeSource{
+									Path:   "/some/path",
+									FSType: &fsType,
+								},
+							},
+							ClaimRef: &corev1.ObjectReference{
+								Name:      "pvc-name",
+								Namespace: "namespace-1",
+								UID:       "pvc-uid",
+							},
+							StorageClassName: "storage-class-name",
+						},
+						Status: corev1.PersistentVolumeStatus{
+							Phase: "Bound",
+						},
+					},
+				},
+			}
+
+			api.EXPECT().GetPersistentVolumes().Times(1).Return(volumes, nil)
+
+			finder := k8s.VolumeFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com"}, StorageSystemID: "storagesystemid1"}
+			return finder, check(hasNoError, checkExpectedOutput([]k8s.VolumeInfo{
+				{
+					Namespace:               "namespace-1",
+					PersistentVolumeClaim:   "pvc-uid",
+					PersistentVolumeStatus:  "Bound",
+					VolumeClaimName:         "pvc-name",
+					PersistentVolume:        "persistent-volume-name",
+					StorageClass:            "storage-class-name",
+					Driver:                  "csi-vxflexos.dellemc.com",
+					ProvisionedSize:         "16Gi",
+					StorageSystemVolumeName: "storage-system-volume-name",
+					StoragePoolName:         "storage-pool-name",
+					CreatedTime:             t1.String(),
+				},
+			})), ctrl
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
