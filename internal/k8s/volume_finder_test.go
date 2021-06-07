@@ -123,7 +123,10 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 
 			api.EXPECT().GetPersistentVolumes().Times(1).Return(volumes, nil)
 
-			finder := k8s.VolumeFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com"}, StorageSystemID: "storagesystemid1"}
+			ids := make([]k8s.StorageSystemID, 1)
+			ids[0] = k8s.StorageSystemID{ID: "storagesystemid1", DriverNames: []string{"csi-vxflexos.dellemc.com"}}
+
+			finder := k8s.VolumeFinder{API: api, StorageSystemID: ids}
 			return finder, check(hasNoError, checkExpectedOutput([]k8s.VolumeInfo{
 				{
 					Namespace:               "namespace-1",
@@ -215,7 +218,10 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 
 			api.EXPECT().GetPersistentVolumes().Times(1).Return(volumes, nil)
 
-			finder := k8s.VolumeFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com", "another-csi-driver.dellemc.com"}, StorageSystemID: "storagesystemid1"}
+			ids := make([]k8s.StorageSystemID, 1)
+			ids[0] = k8s.StorageSystemID{ID: "storagesystemid1", DriverNames: []string{"csi-vxflexos.dellemc.com", "another-csi-driver.dellemc.com"}}
+
+			finder := k8s.VolumeFinder{API: api, StorageSystemID: ids}
 			return finder, check(hasNoError, checkExpectedOutput([]k8s.VolumeInfo{
 				{
 					Namespace:               "namespace-1",
@@ -354,7 +360,10 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 
 			api.EXPECT().GetPersistentVolumes().Times(1).Return(volumes, nil)
 
-			finder := k8s.VolumeFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com"}, StorageSystemID: "storagesystemid1"}
+			ids := make([]k8s.StorageSystemID, 1)
+			ids[0] = k8s.StorageSystemID{ID: "storagesystemid1", DriverNames: []string{"csi-vxflexos.dellemc.com"}}
+
+			finder := k8s.VolumeFinder{API: api, StorageSystemID: ids}
 			return finder, check(hasNoError, checkExpectedOutput([]k8s.VolumeInfo{
 				{
 					Namespace:               "namespace-1",

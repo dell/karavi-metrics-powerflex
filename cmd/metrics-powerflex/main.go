@@ -18,6 +18,7 @@ import (
 	"github.com/dell/karavi-metrics-powerflex/internal/entrypoint"
 	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 	"github.com/dell/karavi-metrics-powerflex/internal/service"
+	pflexServices "github.com/dell/karavi-metrics-powerflex/internal/service"
 	otlexporters "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters"
 	"github.com/sirupsen/logrus"
 
@@ -89,7 +90,6 @@ func main() {
 	}
 
 	updateLoggingSettings(logger)
-	updateProvisionerNames(sdcFinder, storageClassFinder, volumeFinder, logger)
 
 	var collectorCertPath string
 	if tls := os.Getenv("TLS_ENABLED"); tls == "true" {
@@ -119,6 +119,8 @@ func main() {
 	}
 
 	updatePowerFlexConnection(config, sdcFinder, storageClassFinder, volumeFinder, logger)
+	// has to be after updatePowerFlexConnection because array is already initialized
+	updateProvisionerNames(sdcFinder, storageClassFinder, volumeFinder, logger)
 	updateCollectorAddress(config, exporter, logger)
 	updateMetricsEnabled(config)
 	updateTickIntervals(config, logger)
@@ -147,45 +149,56 @@ func main() {
 func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFinder, storageClassFinder *k8s.StorageClassFinder, volumeFinder *k8s.VolumeFinder, logger *logrus.Logger) {
 	configReader := service.ConfigurationReader{}
 
-	storageSystem, err := configReader.GetStorageSystemConfiguration(defaultStorageSystemConfigFile)
+	storageSystemArray, err := configReader.GetStorageSystemConfiguration(defaultStorageSystemConfigFile)
 	if err != nil {
 		logger.WithError(err).Fatal("getting storage system configuration")
 	}
 
-	powerFlexEndpoint := storageSystem.Endpoint
-	if powerFlexEndpoint == "" {
-		logger.WithError(err).Fatal("powerflex endpoint was empty")
+	volumeFinder.StorageSystemID = make([]k8s.StorageSystemID, len(storageSystemArray))
+	sdcFinder.StorageSystemID = make([]k8s.StorageSystemID, len(storageSystemArray))
+	storageClassFinder.StorageSystemID = make([]k8s.StorageSystemID, len(storageSystemArray))
+
+	config.PowerFlexClient = make(map[string]pflexServices.PowerFlexClient)
+	config.PowerFlexConfig = make(map[string]sio.ConfigConnect)
+	for i, storageSystem := range storageSystemArray {
+		powerFlexEndpoint := storageSystem.Endpoint
+		if powerFlexEndpoint == "" {
+			logger.WithError(err).Fatal("powerflex endpoint was empty")
+		}
+
+		powerFlexGatewayUser := storageSystem.Username
+		if powerFlexGatewayUser == "" {
+			logger.WithError(err).Fatal("powerflex username was empty")
+		}
+
+		powerFlexGatewayPassword := storageSystem.Password
+		if powerFlexGatewayPassword == "" {
+			logger.WithError(err).Fatal("powerflex password was empty")
+		}
+
+		powerFlexSystemID := storageSystem.SystemID
+		if powerFlexSystemID == "" {
+			logger.WithError(err).Fatal("powerflex system ID was empty")
+		}
+		var storageID = k8s.StorageSystemID{
+			ID:        powerFlexSystemID,
+			IsDefault: storageSystem.IsDefault,
+		}
+		sdcFinder.StorageSystemID[i] = storageID
+		storageClassFinder.StorageSystemID[i] = storageID
+		volumeFinder.StorageSystemID[i] = storageID
+
+		client, err := sio.NewClientWithArgs(powerFlexEndpoint, "", storageSystem.Insecure, true)
+		if err != nil {
+			logger.WithError(err).Fatal("creating powerflex client")
+		}
+		config.PowerFlexClient[powerFlexSystemID] = client
+
+		config.PowerFlexConfig[powerFlexSystemID] = sio.ConfigConnect{Username: powerFlexGatewayUser, Password: powerFlexGatewayPassword}
+
+		logger.WithField("storage_system_id", powerFlexSystemID).Info("set powerflex system ID")
 	}
 
-	powerFlexGatewayUser := storageSystem.Username
-	if powerFlexGatewayUser == "" {
-		logger.WithError(err).Fatal("powerflex username was empty")
-	}
-
-	powerFlexGatewayPassword := storageSystem.Password
-	if powerFlexGatewayPassword == "" {
-		logger.WithError(err).Fatal("powerflex password was empty")
-	}
-
-	powerFlexSystemID := storageSystem.SystemID
-	if powerFlexSystemID == "" {
-		logger.WithError(err).Fatal("powerflex system ID was empty")
-	}
-
-	sdcFinder.StorageSystemID = powerFlexSystemID
-	storageClassFinder.StorageSystemID = powerFlexSystemID
-	storageClassFinder.IsDefaultStorageSystem = storageSystem.IsDefault
-	volumeFinder.StorageSystemID = powerFlexSystemID
-
-	client, err := sio.NewClientWithArgs(powerFlexEndpoint, "", storageSystem.Insecure, true)
-	if err != nil {
-		logger.WithError(err).Fatal("creating powerflex client")
-	}
-	config.PowerFlexClient = client
-
-	config.PowerFlexConfig = sio.ConfigConnect{Username: powerFlexGatewayUser, Password: powerFlexGatewayPassword}
-
-	logger.WithField("storage_system_id", powerFlexSystemID).Info("set powerflex system ID")
 }
 
 func updateCollectorAddress(config *entrypoint.Config, exporter *otlexporters.OtlCollectorExporter, logger *logrus.Logger) {
@@ -203,9 +216,18 @@ func updateProvisionerNames(sdcFinder *k8s.SDCFinder, storageClassFinder *k8s.St
 		logger.Fatal("PROVISIONER_NAMES is required")
 	}
 	provisionerNames := strings.Split(provisionerNamesValue, ",")
-	sdcFinder.DriverNames = provisionerNames
-	storageClassFinder.DriverNames = provisionerNames
-	volumeFinder.DriverNames = provisionerNames
+
+	for i := range sdcFinder.StorageSystemID {
+		sdcFinder.StorageSystemID[i].DriverNames = provisionerNames
+	}
+
+	for i := range storageClassFinder.StorageSystemID {
+		storageClassFinder.StorageSystemID[i].DriverNames = provisionerNames
+	}
+
+	for i := range volumeFinder.StorageSystemID {
+		volumeFinder.StorageSystemID[i].DriverNames = provisionerNames
+	}
 }
 
 func updateMetricsEnabled(config *entrypoint.Config) {

@@ -31,7 +31,7 @@ type ConfigurationReader struct{}
 
 // GetStorageSystemConfiguration returns a storage system from the configuration file
 // If no default system is supplied, the first system in the list is returned
-func (c *ConfigurationReader) GetStorageSystemConfiguration(file string) (*ArrayConnectionData, error) {
+func (c *ConfigurationReader) GetStorageSystemConfiguration(file string) ([]ArrayConnectionData, error) {
 	if _, err := os.Stat(file); os.IsNotExist(err) {
 		return nil, fmt.Errorf(fmt.Sprintf("File %s does not exist", file))
 	}
@@ -41,41 +41,29 @@ func (c *ConfigurationReader) GetStorageSystemConfiguration(file string) (*Array
 		return nil, fmt.Errorf(fmt.Sprintf("File %s errors: %v", file, err))
 	}
 
-	var storageSystem ArrayConnectionData
-
 	if string(config) == "" {
 		return nil, fmt.Errorf("arrays details are not provided in vxflexos-config secret")
 
 	}
 
-	jsonCreds := make([]ArrayConnectionData, 0)
-	err = json.Unmarshal(config, &jsonCreds)
+	connectionData := make([]ArrayConnectionData, 0)
+	err = json.Unmarshal(config, &connectionData)
 	if err != nil {
 		return nil, fmt.Errorf(fmt.Sprintf("Unable to parse the credentials: %v", err))
 	}
 
-	if len(jsonCreds) == 0 {
+	if len(connectionData) == 0 {
 		return nil, fmt.Errorf("no arrays are provided in vxflexos-config secret")
 	}
 
-	err = validateStorageSystem(jsonCreds[0], 0)
-	if err != nil {
-		return nil, err
-	}
-
-	storageSystem = jsonCreds[0]
-
-	for i, c := range jsonCreds {
-		if c.IsDefault {
-			err := validateStorageSystem(c, i)
-			if err != nil {
-				return nil, err
-			}
-			storageSystem = c
+	for i, c := range connectionData {
+		err := validateStorageSystem(c, i)
+		if err != nil {
+			return nil, err
 		}
 	}
 
-	return &storageSystem, nil
+	return connectionData, nil
 }
 
 func validateStorageSystem(system ArrayConnectionData, i int) error {

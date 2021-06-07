@@ -23,8 +23,7 @@ type KubernetesAPI interface {
 // SDCFinder is an SDC finder that will query the Kubernetes API for CSI-Nodes that have a matching DriverName and Storage System ID
 type SDCFinder struct {
 	API             KubernetesAPI
-	DriverNames     []string
-	StorageSystemID string
+	StorageSystemID []StorageSystemID
 }
 
 // GetSDCGuids will return a list of SDC GUIDs that match the given DriverName in Kubernetes
@@ -50,9 +49,12 @@ func (f *SDCFinder) isMatch(driver v1.CSINodeDriver) bool {
 	for _, topologyKey := range driver.TopologyKeys {
 		split := strings.Split(topologyKey, "/")
 		if len(split) == 2 {
-			if split[1] == f.StorageSystemID && Contains(f.DriverNames, split[0]) {
-				return true
+			for _, storage := range f.StorageSystemID {
+				if split[1] == storage.ID && Contains(storage.DriverNames, split[0]) {
+					return true
+				}
 			}
+
 		}
 	}
 	return false

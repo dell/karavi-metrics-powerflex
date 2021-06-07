@@ -24,8 +24,7 @@ type VolumeGetter interface {
 // VolumeFinder is a volume finder that will query the Kubernetes API for Persistent Volumes created by a matching DriverName and StorageSystemID
 type VolumeFinder struct {
 	API             VolumeGetter
-	DriverNames     []string
-	StorageSystemID string
+	StorageSystemID []StorageSystemID
 }
 
 // VolumeInfo contains information about mapping a Persistent Volume to the volume created on a storage system
@@ -84,8 +83,10 @@ func (f *VolumeFinder) isMatch(volume v1.PersistentVolume) bool {
 	// volumeHandle is storageSystemID-volumeID
 	split := strings.Split(volume.Spec.CSI.VolumeHandle, "-")
 	if len(split) == 2 {
-		if split[0] == f.StorageSystemID && Contains(f.DriverNames, volume.Spec.CSI.Driver) {
-			return true
+		for _, storageSystemID := range f.StorageSystemID {
+			if split[0] == storageSystemID.ID && Contains(storageSystemID.DriverNames, volume.Spec.CSI.Driver) {
+				return true
+			}
 		}
 	}
 	return false

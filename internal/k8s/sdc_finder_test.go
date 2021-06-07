@@ -98,7 +98,10 @@ func Test_K8sSDCFinder(t *testing.T) {
 			}
 			api.EXPECT().GetCSINodes().Times(1).Return(nodes, nil)
 
-			finder := k8s.SDCFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com"}, StorageSystemID: "storage-system-id-1"}
+			ids := make([]k8s.StorageSystemID, 1)
+			ids[0] = k8s.StorageSystemID{ID: "storage-system-id-1", DriverNames: []string{"csi-vxflexos.dellemc.com"}}
+
+			finder := k8s.SDCFinder{API: api, StorageSystemID: ids}
 			return finder, check(hasNoError, checkExpectedOutput([]string{"node-1", "node-3"})), ctrl
 		},
 		"success with multiple driver names": func(*testing.T) (k8s.SDCFinder, []checkFn, *gomock.Controller) {
@@ -145,7 +148,11 @@ func Test_K8sSDCFinder(t *testing.T) {
 			}
 			api.EXPECT().GetCSINodes().Times(1).Return(nodes, nil)
 
-			finder := k8s.SDCFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com", "other-driver-name"}, StorageSystemID: "storage-system-id-1"}
+			ids := make([]k8s.StorageSystemID, 1)
+			ids[0] = k8s.StorageSystemID{ID: "storage-system-id-1", DriverNames: []string{"csi-vxflexos.dellemc.com", "other-driver-name"}}
+
+			finder := k8s.SDCFinder{API: api, StorageSystemID: ids}
+
 			return finder, check(hasNoError, checkExpectedOutput([]string{"node-1", "node-2", "node-3"})), ctrl
 		},
 		"error calling k8s": func(*testing.T) (k8s.SDCFinder, []checkFn, *gomock.Controller) {

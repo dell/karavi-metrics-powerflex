@@ -75,8 +75,10 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 			}
 
 			api.EXPECT().GetStorageClasses().Times(1).Return(storageClasses, nil)
+			ids := make([]k8s.StorageSystemID, 1)
+			ids[0] = k8s.StorageSystemID{ID: "storage-system-id-1", DriverNames: []string{"csi-vxflexos.dellemc.com"}, IsDefault: false}
 
-			finder := k8s.StorageClassFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com"}, StorageSystemID: "storage-system-id-1", IsDefaultStorageSystem: false}
+			finder := k8s.StorageClassFinder{API: api, StorageSystemID: ids}
 			return finder, check(hasNoError, checkExpectedOutput(storageClasses.Items)), ctrl
 		},
 		"success selecting storage classes matching multiple driver names": func(*testing.T) (k8s.StorageClassFinder, []checkFn, *gomock.Controller) {
@@ -130,8 +132,11 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 			}
 
 			api.EXPECT().GetStorageClasses().Times(1).Return(storageClasses, nil)
+			ids := make([]k8s.StorageSystemID, 1)
+			ids[0] = k8s.StorageSystemID{ID: "storage-system-id-1", DriverNames: []string{"csi-vxflexos.dellemc.com", "another-csi-driver.dellemc.com"}, IsDefault: false}
 
-			finder := k8s.StorageClassFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com", "another-csi-driver.dellemc.com"}, StorageSystemID: "storage-system-id-1", IsDefaultStorageSystem: false}
+			finder := k8s.StorageClassFinder{API: api, StorageSystemID: ids}
+
 			return finder, check(hasNoError, checkExpectedOutput(storageClasses.Items)), ctrl
 		},
 		"success matching storage classes without systemID based on a default system being used": func(*testing.T) (k8s.StorageClassFinder, []checkFn, *gomock.Controller) {
@@ -175,7 +180,11 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 
 			api.EXPECT().GetStorageClasses().Times(1).Return(storageClasses, nil)
 
-			finder := k8s.StorageClassFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com", "another-csi-driver.dellemc.com"}, StorageSystemID: "storage-system-id-1", IsDefaultStorageSystem: true}
+			ids := make([]k8s.StorageSystemID, 1)
+			ids[0] = k8s.StorageSystemID{ID: "storage-system-id-1", DriverNames: []string{"csi-vxflexos.dellemc.com", "another-csi-driver.dellemc.com"}, IsDefault: true}
+
+			finder := k8s.StorageClassFinder{API: api, StorageSystemID: ids}
+
 			return finder, check(hasNoError, checkExpectedOutput([]v1.StorageClass{
 				{
 					ObjectMeta: metav1.ObjectMeta{
@@ -251,7 +260,11 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 
 			api.EXPECT().GetStorageClasses().Times(1).Return(storageClasses, nil)
 
-			finder := k8s.StorageClassFinder{API: api, DriverNames: []string{"csi-vxflexos.dellemc.com"}, StorageSystemID: "storage-system-id-1"}
+			ids := make([]k8s.StorageSystemID, 1)
+			ids[0] = k8s.StorageSystemID{ID: "storage-system-id-1", DriverNames: []string{"csi-vxflexos.dellemc.com"}}
+
+			finder := k8s.StorageClassFinder{API: api, StorageSystemID: ids}
+
 			return finder, check(hasNoError, checkExpectedOutput([]v1.StorageClass{
 				{
 					ObjectMeta: metav1.ObjectMeta{

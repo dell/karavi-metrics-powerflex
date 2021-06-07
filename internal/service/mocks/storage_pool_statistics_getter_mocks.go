@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	goscaleio "github.com/dell/goscaleio/types/v1"
+	v1 "github.com/dell/goscaleio/types/v1"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )
@@ -34,10 +34,10 @@ func (m *MockStoragePoolStatisticsGetter) EXPECT() *MockStoragePoolStatisticsGet
 }
 
 // GetStatistics mocks base method
-func (m *MockStoragePoolStatisticsGetter) GetStatistics() (*goscaleio.Statistics, error) {
+func (m *MockStoragePoolStatisticsGetter) GetStatistics() (*v1.Statistics, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetStatistics")
-	ret0, _ := ret[0].(*goscaleio.Statistics)
+	ret0, _ := ret[0].(*v1.Statistics)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -16,57 +16,51 @@ import (
 )
 
 func Test_ConfigurationReader(t *testing.T) {
-	type checkFn func(*testing.T, *service.ArrayConnectionData, error)
+	type checkFn func(*testing.T, []service.ArrayConnectionData, error)
 	check := func(fns ...checkFn) []checkFn { return fns }
 
-	hasNoError := func(t *testing.T, result *service.ArrayConnectionData, err error) {
+	hasNoError := func(t *testing.T, result []service.ArrayConnectionData, err error) {
 		if err != nil {
 			t.Fatalf("expected no error")
 		}
 	}
 
-	checkExpectedOutput := func(expectedOutput *service.ArrayConnectionData) func(t *testing.T, result *service.ArrayConnectionData, err error) {
-		return func(t *testing.T, result *service.ArrayConnectionData, err error) {
+	checkExpectedOutput := func(expectedOutput []service.ArrayConnectionData) func(t *testing.T, result []service.ArrayConnectionData, err error) {
+		return func(t *testing.T, result []service.ArrayConnectionData, err error) {
 			assert.Equal(t, expectedOutput, result)
 		}
 	}
 
-	hasError := func(t *testing.T, result *service.ArrayConnectionData, err error) {
+	hasError := func(t *testing.T, result []service.ArrayConnectionData, err error) {
 		if err == nil {
 			t.Fatalf("expected error")
 		}
 	}
 
 	tests := map[string]func(t *testing.T) (service.ConfigurationReader, string, []checkFn){
-		"success with default system in config": func(*testing.T) (service.ConfigurationReader, string, []checkFn) {
-			file := "testdata/config-with-default.json"
-			configReader := service.ConfigurationReader{}
-
-			expectedResult := service.ArrayConnectionData{
-				Username:  "admin",
-				Password:  "password",
-				SystemID:  "ID2",
-				Endpoint:  "https://127.0.0.2",
-				Insecure:  true,
-				IsDefault: true,
-			}
-
-			return configReader, file, check(hasNoError, checkExpectedOutput(&expectedResult))
-		},
 		"success with no default system in config": func(*testing.T) (service.ConfigurationReader, string, []checkFn) {
 			file := "testdata/config-with-no-default.json"
 			configReader := service.ConfigurationReader{}
 
-			expectedResult := service.ArrayConnectionData{
-				Username:  "admin",
-				Password:  "password",
-				SystemID:  "ID1",
-				Endpoint:  "http://127.0.0.1",
-				Insecure:  true,
-				IsDefault: false,
+			expectedResult := []service.ArrayConnectionData{
+				{
+					Username:  "admin",
+					Password:  "password",
+					SystemID:  "ID1",
+					Endpoint:  "http://127.0.0.1",
+					Insecure:  true,
+					IsDefault: false,
+				},
+				{
+					Username: "admin",
+					Password: "password",
+					SystemID: "ID2",
+					Endpoint: "https://127.0.0.2",
+					Insecure: true,
+				},
 			}
 
-			return configReader, file, check(hasNoError, checkExpectedOutput(&expectedResult))
+			return configReader, file, check(hasNoError, checkExpectedOutput(expectedResult))
 		},
 		"error when file doesn't exist": func(*testing.T) (service.ConfigurationReader, string, []checkFn) {
 			file := "testdata/non-existant-file.json"
