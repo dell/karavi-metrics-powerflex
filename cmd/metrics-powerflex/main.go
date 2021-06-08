@@ -119,8 +119,6 @@ func main() {
 	}
 
 	updatePowerFlexConnection(config, sdcFinder, storageClassFinder, volumeFinder, logger)
-	// has to be after updatePowerFlexConnection because array is already initialized
-	updateProvisionerNames(sdcFinder, storageClassFinder, volumeFinder, logger)
 	updateCollectorAddress(config, exporter, logger)
 	updateMetricsEnabled(config)
 	updateTickIntervals(config, logger)
@@ -199,6 +197,8 @@ func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFind
 		logger.WithField("storage_system_id", powerFlexSystemID).Info("set powerflex system ID")
 	}
 
+	// we need to add DriverNames explicitly here because if onConfigChange is called DriverNames would be empty
+	updateProvisionerNames(sdcFinder, storageClassFinder, volumeFinder, logger)
 }
 
 func updateCollectorAddress(config *entrypoint.Config, exporter *otlexporters.OtlCollectorExporter, logger *logrus.Logger) {
