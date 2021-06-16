@@ -562,6 +562,7 @@ func Test_GetStorageClasses(t *testing.T) {
 			}
 			sc1.Parameters = map[string]string{
 				"storagepool": "pool-1",
+				"systemID":    "1234",
 			}
 
 			sc2 := v1.StorageClass{}
@@ -572,6 +573,7 @@ func Test_GetStorageClasses(t *testing.T) {
 			}
 			sc2.Parameters = map[string]string{
 				"storagepool": "pool-1",
+				"systemID":    "5678",
 			}
 
 			storageClassFinder.EXPECT().GetStorageClasses().Times(1).

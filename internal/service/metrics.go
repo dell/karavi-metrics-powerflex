@@ -170,6 +170,7 @@ func (mw *MetricsWrapper) Record(ctx context.Context, meta interface{},
 		labels = []kv.KeyValue{
 			kv.String("VolumeID", v.ID),
 			kv.String("VolumeName", v.Name),
+			kv.String("StorageSystemID", v.StorageSystemID),
 			kv.String("PersistentVolumeName", v.PersistentVolumeName),
 			kv.String("MappedNodeIDs", mappedSDCIDs),
 			kv.String("MappedNodeIPs", mappedSDCIPs),
@@ -254,7 +255,7 @@ func (mw *MetricsWrapper) RecordCapacity(ctx context.Context, meta interface{},
 					kv.String("StorageClass", v.Name),
 					kv.String("Driver", v.Driver),
 					kv.String("StoragePool", pool),
-					kv.String("StorageSystemName", v.StorageSystemName),
+					kv.String("StorageSystemID", v.StorageSystemID),
 				}
 
 				metricsMapValue, ok := mw.CapacityMetrics.Load(metaID)

@@ -127,13 +127,17 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 				continue
 			}
 
+			logger.WithField("number of PowerFlexClient", len(config.PowerFlexClient)).Debug("PowerFlexClient")
+
 			for key, client := range config.PowerFlexClient {
+				logger.WithField("storage system id", key).Debug("storage system id")
 				sioConfig := config.PowerFlexConfig[key]
 				_, err := client.Authenticate(&sioConfig)
 				if err != nil {
 					logger.WithError(err).Error("failed to authenticate with PowerFlex. retrying on next tick...")
 					continue
 				}
+
 				sdcs, err := pflexSvc.GetSDCs(ctx, client, config.SDCFinder)
 				if err != nil {
 					logger.WithError(err).Error("getting SDCs")
@@ -159,12 +163,16 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 				continue
 			}
 
+			logger.WithField("number of PowerFlexClient", len(config.PowerFlexClient)).Debug("PowerFlexClient")
+
 			for key, client := range config.PowerFlexClient {
+				logger.WithField("storage system id", key).Debug("storage system id")
 				sioConfig := config.PowerFlexConfig[key]
 				_, err := client.Authenticate(&sioConfig)
 				if err != nil {
 					logger.WithError(err).Error("failed to authenticate with PowerFlex. retrying on next tick...")
 					continue
+					logger.WithField("number of PowerFlexClient", len(config.PowerFlexClient)).Debug("PowerFlexClient")
 				}
 				sdcs, err := pflexSvc.GetSDCs(ctx, client, config.SDCFinder)
 				if err != nil {
@@ -189,7 +197,12 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 				logger.Info("powerflex storage pool metrics collection is disabled")
 				continue
 			}
+
+			logger.WithField("number of PowerFlexClient", len(config.PowerFlexClient)).Debug("PowerFlexClient")
+
 			for key, client := range config.PowerFlexClient {
+				logger.WithField("storage system id", key).Debug("storage system id")
+
 				sioConfig := config.PowerFlexConfig[key]
 				_, err := client.Authenticate(&sioConfig)
 
@@ -204,6 +217,7 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 					continue
 				}
 
+				logger.WithField("storageClassMetas", storageClassMetas).Debug("storageClassMetas")
 				pflexSvc.GetStoragePoolStatistics(ctx, storageClassMetas)
 			}
 

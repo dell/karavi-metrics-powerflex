@@ -65,7 +65,8 @@ func main() {
 	}
 
 	volumeFinder := &k8s.VolumeFinder{
-		API: &k8s.API{},
+		API:    &k8s.API{},
+		Logger: logger,
 	}
 
 	nodeFinder := &k8s.NodeFinder{

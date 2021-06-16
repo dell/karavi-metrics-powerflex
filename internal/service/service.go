@@ -433,6 +433,7 @@ func (s *PowerFlexService) gatherVolumeMetrics(ctx context.Context, volumeFinder
 				volumeMeta := getVolumeMeta(volume)
 				if pv, ok := persistentVolumes[volumeMeta.Name]; ok {
 					volumeMeta.PersistentVolumeName = pv.PersistentVolume
+					volumeMeta.StorageSystemID = pv.StorageSystemID
 				} else {
 					s.Logger.WithField("volume_id", volumeMeta.ID).Error("could not find a Persistent Volume that maps to storage system volume ID")
 				}
@@ -529,21 +530,11 @@ func (s *PowerFlexService) GetStorageClasses(ctx context.Context, client PowerFl
 	}
 
 	storageClassMetas := []StorageClassMeta{}
+	storageClassInfos := []StorageClassInfo{}
 
 	storageClasses, err := storageClassFinder.GetStorageClasses()
 	if err != nil {
 		return nil, err
-	}
-	storageClassInfos := []StorageClassInfo{}
-	for _, class := range storageClasses {
-		storageClassInfo := StorageClassInfo{
-			ID:           string(class.UID),
-			Name:         class.Name,
-			Driver:       class.Provisioner,
-			StoragePools: k8s.GetStoragePools(class),
-		}
-		s.Logger.WithField("storage_class_info", storageClassInfo).Debug("found storage class")
-		storageClassInfos = append(storageClassInfos, storageClassInfo)
 	}
 
 	systems, err := client.GetInstance("")
@@ -555,6 +546,26 @@ func (s *PowerFlexService) GetStorageClasses(ctx context.Context, client PowerFl
 		return nil, fmt.Errorf("no systems found")
 	}
 
+	s.Logger.WithField("systems", len(systems)).Debug("systems log")
+	for _, system := range systems {
+		s.Logger.WithField("system", system.ID).Debug("systems log")
+		for _, class := range storageClasses {
+			systemid := class.Parameters["systemID"]
+			s.Logger.WithField("class.Parameters", systemid).Debug("systems log")
+			if system.ID == systemid {
+				storageClassInfo := StorageClassInfo{
+					ID:              string(class.UID),
+					Name:            class.Name,
+					Driver:          class.Provisioner,
+					StorageSystemID: systemid,
+					StoragePools:    k8s.GetStoragePools(class),
+				}
+				s.Logger.WithField("storage_class_info", storageClassInfo).Debug("found storage class")
+				storageClassInfos = append(storageClassInfos, storageClassInfo)
+			}
+		}
+	}
+
 	systemStoragePools, err := client.GetStoragePool("")
 	if err != nil {
 		return nil, err
@@ -562,11 +573,11 @@ func (s *PowerFlexService) GetStorageClasses(ctx context.Context, client PowerFl
 
 	for _, class := range storageClassInfos {
 		storageClassMeta := StorageClassMeta{
-			ID:                class.ID,
-			Name:              class.Name,
-			Driver:            class.Driver,
-			StorageSystemName: systems[0].ID, // only supports one powerflex system
-			StoragePools:      make(map[string]StoragePoolStatisticsGetter),
+			ID:              class.ID,
+			Name:            class.Name,
+			Driver:          class.Driver,
+			StorageSystemID: class.StorageSystemID,
+			StoragePools:    make(map[string]StoragePoolStatisticsGetter),
 		}
 
 		for _, systemPool := range systemStoragePools {
