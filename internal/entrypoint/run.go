@@ -172,7 +172,6 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 				if err != nil {
 					logger.WithError(err).Error("failed to authenticate with PowerFlex. retrying on next tick...")
 					continue
-					logger.WithField("number of PowerFlexClient", len(config.PowerFlexClient)).Debug("PowerFlexClient")
 				}
 				sdcs, err := pflexSvc.GetSDCs(ctx, client, config.SDCFinder)
 				if err != nil {

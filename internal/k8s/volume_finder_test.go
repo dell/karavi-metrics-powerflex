@@ -72,7 +72,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 									Driver: "csi-vxflexos.dellemc.com",
 									VolumeAttributes: map[string]string{
 										"Name":            "storage-system-volume-name",
-										"StoragePoolName": "storage-pool-name",
+										"StorageSystemID": "storagesystemid1",
 									},
 									VolumeHandle: "storagesystemid1-volumeid1",
 								},
@@ -102,7 +102,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 									Driver: "another-csi-driver.dellemc.com",
 									VolumeAttributes: map[string]string{
 										"Name":            "storage-system-volume-name",
-										"StoragePoolName": "storage-pool-name",
+										"StorageSystemID": "storagesystemid1",
 									},
 									VolumeHandle: "storagesystemid1-volumeid1",
 								},
@@ -138,7 +138,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 					Driver:                  "csi-vxflexos.dellemc.com",
 					ProvisionedSize:         "16Gi",
 					StorageSystemVolumeName: "storage-system-volume-name",
-					StoragePoolName:         "storage-pool-name",
+					StorageSystemID:         "storagesystemid1",
 					CreatedTime:             t1.String(),
 				},
 			})), ctrl
@@ -166,8 +166,8 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 								CSI: &corev1.CSIPersistentVolumeSource{
 									Driver: "csi-vxflexos.dellemc.com",
 									VolumeAttributes: map[string]string{
-										"Name":            "storage-system-volume-name",
-										"StoragePoolName": "storage-pool-name",
+										"Name":     "storage-system-volume-name",
+										"systemId": "storagesystemid1",
 									},
 									VolumeHandle: "storagesystemid1-volumeid1",
 								},
@@ -196,8 +196,8 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 								CSI: &corev1.CSIPersistentVolumeSource{
 									Driver: "another-csi-driver.dellemc.com",
 									VolumeAttributes: map[string]string{
-										"Name":            "storage-system-volume-name-2",
-										"StoragePoolName": "storage-pool-name-2",
+										"Name":     "storage-system-volume-name-2",
+										"systemId": "storagesystemid1",
 									},
 									VolumeHandle: "storagesystemid1-volumeid1",
 								},
@@ -233,7 +233,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 					Driver:                  "csi-vxflexos.dellemc.com",
 					ProvisionedSize:         "16Gi",
 					StorageSystemVolumeName: "storage-system-volume-name",
-					StoragePoolName:         "storage-pool-name",
+					StorageSystemID:         "storagesystemid1",
 					CreatedTime:             t1.String(),
 				},
 				{
@@ -246,7 +246,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 					Driver:                  "another-csi-driver.dellemc.com",
 					ProvisionedSize:         "8Gi",
 					StorageSystemVolumeName: "storage-system-volume-name-2",
-					StoragePoolName:         "storage-pool-name-2",
+					StorageSystemID:         "storagesystemid1",
 					CreatedTime:             t1.String(),
 				},
 			})), ctrl
@@ -283,7 +283,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 									Driver: "csi-vxflexos.dellemc.com",
 									VolumeAttributes: map[string]string{
 										"Name":            "storage-system-volume-name",
-										"StoragePoolName": "storage-pool-name",
+										"StorageSystemID": "storagesystemid1",
 									},
 									VolumeHandle: "storagesystemid1-volumeid1",
 								},
@@ -313,7 +313,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 									Driver: "another-csi-driver.dellemc.com",
 									VolumeAttributes: map[string]string{
 										"Name":            "storage-system-volume-name",
-										"StoragePoolName": "storage-pool-name",
+										"StorageSystemID": "storagesystemid1",
 									},
 									VolumeHandle: "storagesystemid1-volumeid1",
 								},
@@ -375,7 +375,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 					Driver:                  "csi-vxflexos.dellemc.com",
 					ProvisionedSize:         "16Gi",
 					StorageSystemVolumeName: "storage-system-volume-name",
-					StoragePoolName:         "storage-pool-name",
+					StorageSystemID:         "storagesystemid1",
 					CreatedTime:             t1.String(),
 				},
 			})), ctrl
