@@ -131,16 +131,20 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 
 			for key, client := range config.PowerFlexClient {
 				logger.WithField("storage system id", key).Debug("storage system id")
-				sioConfig := config.PowerFlexConfig[key]
+				sioConfig, ok := config.PowerFlexConfig[key]
+				if !ok {
+					logger.WithError(err).WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
+					continue
+				}
 				_, err := client.Authenticate(&sioConfig)
 				if err != nil {
-					logger.WithError(err).Error("failed to authenticate with PowerFlex. retrying on next tick...")
+					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("failed to authenticate with PowerFlex. retrying on next tick...")
 					continue
 				}
 
 				sdcs, err := pflexSvc.GetSDCs(ctx, client, config.SDCFinder)
 				if err != nil {
-					logger.WithError(err).Error("getting SDCs")
+					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("getting SDCs")
 					continue
 				}
 
@@ -167,15 +171,19 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 
 			for key, client := range config.PowerFlexClient {
 				logger.WithField("storage system id", key).Debug("storage system id")
-				sioConfig := config.PowerFlexConfig[key]
+				sioConfig, ok := config.PowerFlexConfig[key]
+				if !ok {
+					logger.WithError(err).WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
+					continue
+				}
 				_, err := client.Authenticate(&sioConfig)
 				if err != nil {
-					logger.WithError(err).Error("failed to authenticate with PowerFlex. retrying on next tick...")
+					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("failed to authenticate with PowerFlex. retrying on next tick...")
 					continue
 				}
 				sdcs, err := pflexSvc.GetSDCs(ctx, client, config.SDCFinder)
 				if err != nil {
-					logger.WithError(err).Error("getting SDCs")
+					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("getting SDCs")
 					continue
 				}
 
@@ -202,17 +210,20 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 			for key, client := range config.PowerFlexClient {
 				logger.WithField("storage system id", key).Debug("storage system id")
 
-				sioConfig := config.PowerFlexConfig[key]
+				sioConfig, ok := config.PowerFlexConfig[key]
+				if !ok {
+					logger.WithError(err).WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
+					continue
+				}
 				_, err := client.Authenticate(&sioConfig)
-
 				if err != nil {
-					logger.WithError(err).Error("failed to authenticate with PowerFlex. Retrying on next tick...", err)
+					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("failed to authenticate with PowerFlex. retrying on next tick...")
 					continue
 				}
 
 				storageClassMetas, err := pflexSvc.GetStorageClasses(ctx, client, config.StorageClassFinder)
 				if err != nil {
-					logger.WithError(err).Error("getting storage class and storage pool information")
+					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("getting storage class and storage pool information")
 					continue
 				}
 
