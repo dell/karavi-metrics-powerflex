@@ -6,7 +6,7 @@ package mocks
 
 import (
 	goscaleio "github.com/dell/goscaleio"
-	goscaleio0 "github.com/dell/goscaleio/types/v1"
+	v1 "github.com/dell/goscaleio/types/v1"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )
@@ -50,10 +50,10 @@ func (mr *MockStatisticsGetterMockRecorder) FindVolumes() *gomock.Call {
 }
 
 // GetStatistics mocks base method
-func (m *MockStatisticsGetter) GetStatistics() (*goscaleio0.SdcStatistics, error) {
+func (m *MockStatisticsGetter) GetStatistics() (*v1.SdcStatistics, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetStatistics")
-	ret0, _ := ret[0].(*goscaleio0.SdcStatistics)
+	ret0, _ := ret[0].(*v1.SdcStatistics)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -65,10 +65,10 @@ func (mr *MockStatisticsGetterMockRecorder) GetStatistics() *gomock.Call {
 }
 
 // GetVolume mocks base method
-func (m *MockStatisticsGetter) GetVolume() ([]*goscaleio0.Volume, error) {
+func (m *MockStatisticsGetter) GetVolume() ([]*v1.Volume, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVolume")
-	ret0, _ := ret[0].([]*goscaleio0.Volume)
+	ret0, _ := ret[0].([]*v1.Volume)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

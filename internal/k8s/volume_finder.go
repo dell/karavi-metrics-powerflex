@@ -9,8 +9,10 @@
 package k8s
 
 import (
+	"errors"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 )
@@ -24,8 +26,8 @@ type VolumeGetter interface {
 // VolumeFinder is a volume finder that will query the Kubernetes API for Persistent Volumes created by a matching DriverName and StorageSystemID
 type VolumeFinder struct {
 	API             VolumeGetter
-	DriverNames     []string
-	StorageSystemID string
+	StorageSystemID []StorageSystemID
+	Logger          *logrus.Logger
 }
 
 // VolumeInfo contains information about mapping a Persistent Volume to the volume created on a storage system
@@ -40,6 +42,7 @@ type VolumeInfo struct {
 	ProvisionedSize         string `json:"provisioned_size"`
 	StorageSystemVolumeName string `json:"storage_system_volume_name"`
 	StoragePoolName         string `json:"storage_pool_name"`
+	StorageSystemID         string `json:"storage_system_id"`
 	CreatedTime             string `json:"created_time"`
 }
 
@@ -57,6 +60,11 @@ func (f VolumeFinder) GetPersistentVolumes() ([]VolumeInfo, error) {
 			capacity := volume.Spec.Capacity[v1.ResourceStorage]
 			claim := volume.Spec.ClaimRef
 			status := volume.Status
+			storageystemid, err := f.getStorageID(volume)
+			if err != nil {
+				f.Logger.WithField("volume name", volume.Name).Warn("no storage system id found")
+				continue
+			}
 
 			info := VolumeInfo{
 				Namespace:               claim.Namespace,
@@ -69,6 +77,7 @@ func (f VolumeFinder) GetPersistentVolumes() ([]VolumeInfo, error) {
 				ProvisionedSize:         capacity.String(),
 				StorageSystemVolumeName: volume.Spec.CSI.VolumeAttributes["Name"],
 				StoragePoolName:         volume.Spec.CSI.VolumeAttributes["StoragePoolName"],
+				StorageSystemID:         storageystemid,
 				CreatedTime:             volume.CreationTimestamp.String(),
 			}
 			volumeInfo = append(volumeInfo, info)
@@ -82,11 +91,27 @@ func (f *VolumeFinder) isMatch(volume v1.PersistentVolume) bool {
 		return false
 	}
 	// volumeHandle is storageSystemID-volumeID
-	split := strings.Split(volume.Spec.CSI.VolumeHandle, "-")
-	if len(split) == 2 {
-		if split[0] == f.StorageSystemID && Contains(f.DriverNames, volume.Spec.CSI.Driver) {
+	volstorageid, err := f.getStorageID(volume)
+	if err != nil {
+		f.Logger.WithField("volume name", volume.Name).Warn("no storage system id found")
+		return false
+	}
+	for _, storageSystemID := range f.StorageSystemID {
+		if volstorageid == storageSystemID.ID && Contains(storageSystemID.DriverNames, volume.Spec.CSI.Driver) {
 			return true
 		}
 	}
 	return false
+}
+
+func (f *VolumeFinder) getStorageID(volume v1.PersistentVolume) (string, error) {
+	if volume.Spec.CSI == nil {
+		return "", errors.New("storage system id not found")
+	}
+	// volumeHandle is storageSystemID-volumeID
+	split := strings.Split(volume.Spec.CSI.VolumeHandle, "-")
+	if len(split) == 2 {
+		return split[0], nil
+	}
+	return "", errors.New("storage system id not found")
 }

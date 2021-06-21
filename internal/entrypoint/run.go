@@ -50,8 +50,8 @@ type Config struct {
 	SDCTickInterval           time.Duration
 	VolumeTickInterval        time.Duration
 	StoragePoolTickInterval   time.Duration
-	PowerFlexClient           pflexServices.PowerFlexClient
-	PowerFlexConfig           sio.ConfigConnect
+	PowerFlexClient           map[string]pflexServices.PowerFlexClient
+	PowerFlexConfig           map[string]sio.ConfigConnect
 	SDCFinder                 service.SDCFinder
 	StorageClassFinder        service.StorageClassFinder
 	LeaderElector             service.LeaderElector
@@ -126,24 +126,36 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 				logger.Info("powerflex SDC metrics collection is disabled")
 				continue
 			}
-			_, err := config.PowerFlexClient.Authenticate(&config.PowerFlexConfig)
-			if err != nil {
-				logger.WithError(err).Error("failed to authenticate with PowerFlex. retrying on next tick...")
-				continue
-			}
-			sdcs, err := pflexSvc.GetSDCs(ctx, config.PowerFlexClient, config.SDCFinder)
-			if err != nil {
-				logger.WithError(err).Error("getting SDCs")
-				continue
-			}
 
-			nodes, err := config.NodeFinder.GetNodes()
-			if err != nil {
-				logger.WithError(err).Error("getting kubernetes nodes")
-				continue
-			}
+			logger.WithField("number of PowerFlexClient", len(config.PowerFlexClient)).Debug("PowerFlexClient")
 
-			pflexSvc.GetSDCStatistics(ctx, nodes, sdcs)
+			for key, client := range config.PowerFlexClient {
+				logger.WithField("storage system id", key).Debug("storage system id")
+				sioConfig, ok := config.PowerFlexConfig[key]
+				if !ok {
+					logger.WithError(err).WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
+					continue
+				}
+				_, err := client.Authenticate(&sioConfig)
+				if err != nil {
+					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("failed to authenticate with PowerFlex. retrying on next tick...")
+					continue
+				}
+
+				sdcs, err := pflexSvc.GetSDCs(ctx, client, config.SDCFinder)
+				if err != nil {
+					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("getting SDCs")
+					continue
+				}
+
+				nodes, err := config.NodeFinder.GetNodes()
+				if err != nil {
+					logger.WithError(err).Error("getting kubernetes nodes")
+					continue
+				}
+
+				pflexSvc.GetSDCStatistics(ctx, nodes, sdcs)
+			}
 
 		case <-volumeTicker.C:
 			if !config.LeaderElector.IsLeader() {
@@ -154,23 +166,34 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 				logger.Info("powerflex volume metrics collection is disabled")
 				continue
 			}
-			_, err := config.PowerFlexClient.Authenticate(&config.PowerFlexConfig)
-			if err != nil {
-				logger.WithError(err).Error("failed to authenticate with PowerFlex. retrying on next tick...", err)
-				continue
-			}
-			sdcs, err := pflexSvc.GetSDCs(ctx, config.PowerFlexClient, config.SDCFinder)
-			if err != nil {
-				logger.WithError(err).Error("getting SDCs")
-				continue
-			}
 
-			volumes, err := pflexSvc.GetVolumes(ctx, sdcs)
-			if err != nil {
-				logger.WithError(err).Error("getting volumes")
-				continue
+			logger.WithField("number of PowerFlexClient", len(config.PowerFlexClient)).Debug("PowerFlexClient")
+
+			for key, client := range config.PowerFlexClient {
+				logger.WithField("storage system id", key).Debug("storage system id")
+				sioConfig, ok := config.PowerFlexConfig[key]
+				if !ok {
+					logger.WithError(err).WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
+					continue
+				}
+				_, err := client.Authenticate(&sioConfig)
+				if err != nil {
+					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("failed to authenticate with PowerFlex. retrying on next tick...")
+					continue
+				}
+				sdcs, err := pflexSvc.GetSDCs(ctx, client, config.SDCFinder)
+				if err != nil {
+					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("getting SDCs")
+					continue
+				}
+
+				volumes, err := pflexSvc.GetVolumes(ctx, sdcs)
+				if err != nil {
+					logger.WithError(err).Error("getting volumes")
+					continue
+				}
+				pflexSvc.ExportVolumeStatistics(ctx, volumes, config.VolumeFinder)
 			}
-			pflexSvc.ExportVolumeStatistics(ctx, volumes, config.VolumeFinder)
 
 		case <-storagePoolTicker.C:
 			if !config.LeaderElector.IsLeader() {
@@ -182,19 +205,31 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 				continue
 			}
 
-			_, err := config.PowerFlexClient.Authenticate(&config.PowerFlexConfig)
-			if err != nil {
-				logger.WithError(err).Error("failed to authenticate with PowerFlex. Retrying on next tick...", err)
-				continue
-			}
+			logger.WithField("number of PowerFlexClient", len(config.PowerFlexClient)).Debug("PowerFlexClient")
 
-			storageClassMetas, err := pflexSvc.GetStorageClasses(ctx, config.PowerFlexClient, config.StorageClassFinder)
-			if err != nil {
-				logger.WithError(err).Error("getting storage class and storage pool information")
-				continue
-			}
+			for key, client := range config.PowerFlexClient {
+				logger.WithField("storage system id", key).Debug("storage system id")
 
-			pflexSvc.GetStoragePoolStatistics(ctx, storageClassMetas)
+				sioConfig, ok := config.PowerFlexConfig[key]
+				if !ok {
+					logger.WithError(err).WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
+					continue
+				}
+				_, err := client.Authenticate(&sioConfig)
+				if err != nil {
+					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("failed to authenticate with PowerFlex. retrying on next tick...")
+					continue
+				}
+
+				storageClassMetas, err := pflexSvc.GetStorageClasses(ctx, client, config.StorageClassFinder)
+				if err != nil {
+					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("getting storage class and storage pool information")
+					continue
+				}
+
+				logger.WithField("storageClassMetas", storageClassMetas).Debug("storageClassMetas")
+				pflexSvc.GetStoragePoolStatistics(ctx, storageClassMetas)
+			}
 
 		case err := <-errCh:
 			if err == nil {

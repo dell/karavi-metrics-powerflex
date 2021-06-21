@@ -67,8 +67,8 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:   pfClient,
-				PowerFlexConfig:   sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:   map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:   map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				SDCFinder:         sdcFinder,
 				NodeFinder:        nodeFinder,
 				LeaderElector:     leaderElector,
@@ -121,8 +121,8 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:   pfClient,
-				PowerFlexConfig:   sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:   map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:   map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				SDCFinder:         sdcFinder,
 				NodeFinder:        nodeFinder,
 				LeaderElector:     leaderElector,
@@ -161,8 +161,8 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:   pfClient,
-				PowerFlexConfig:   sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:   map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:   map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				SDCFinder:         sdcFinder,
 				NodeFinder:        nodeFinder,
 				LeaderElector:     leaderElector,
@@ -216,8 +216,8 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:   pfClient,
-				PowerFlexConfig:   sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:   map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:   map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				SDCFinder:         sdcFinder,
 				NodeFinder:        nodeFinder,
 				LeaderElector:     leaderElector,
@@ -267,8 +267,8 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:   pfClient,
-				PowerFlexConfig:   sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:   map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:   map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				SDCFinder:         sdcFinder,
 				NodeFinder:        nodeFinder,
 				LeaderElector:     leaderElector,
@@ -298,9 +298,8 @@ func Test_Run(t *testing.T) {
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:    nil,
-				PowerFlexConfig:    sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
-				SDCFinder:          sdcFinder,
+				PowerFlexClient: nil,
+				PowerFlexConfig: map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}}, SDCFinder: sdcFinder,
 				NodeFinder:         nodeFinder,
 				LeaderElector:      leaderElector,
 				SDCMetricsEnabled:  true,
@@ -322,8 +321,8 @@ func Test_Run(t *testing.T) {
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:    pfClient,
-				PowerFlexConfig:    sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:    map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:    map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				SDCFinder:          nil,
 				LeaderElector:      leaderElector,
 				SDCMetricsEnabled:  true,
@@ -346,8 +345,8 @@ func Test_Run(t *testing.T) {
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:    pfClient,
-				PowerFlexConfig:    sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:    map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:    map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				SDCFinder:          sdcFinder,
 				NodeFinder:         nil,
 				LeaderElector:      leaderElector,
@@ -372,8 +371,8 @@ func Test_Run(t *testing.T) {
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:    pfClient,
-				PowerFlexConfig:    sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:    map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:    map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				SDCFinder:          sdcFinder,
 				NodeFinder:         nodeFinder,
 				LeaderElector:      leaderElector,
@@ -397,8 +396,8 @@ func Test_Run(t *testing.T) {
 			nodeFinder := mocks.NewMockNodeFinder(ctrl)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:    pfClient,
-				PowerFlexConfig:    sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:    map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:    map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				SDCFinder:          sdcFinder,
 				NodeFinder:         nodeFinder,
 				SDCMetricsEnabled:  true,
@@ -422,8 +421,8 @@ func Test_Run(t *testing.T) {
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:    pfClient,
-				PowerFlexConfig:    sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:    map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:    map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				SDCFinder:          sdcFinder,
 				NodeFinder:         nodeFinder,
 				LeaderElector:      leaderElector,
@@ -459,8 +458,8 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:   pfClient,
-				PowerFlexConfig:   sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:   map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:   map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				SDCFinder:         sdcFinder,
 				LeaderElector:     leaderElector,
 				SDCMetricsEnabled: true,
@@ -489,8 +488,8 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:      pfClient,
-				PowerFlexConfig:      sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:      map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:      map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				SDCFinder:            sdcFinder,
 				LeaderElector:        leaderElector,
 				VolumeMetricsEnabled: true,
@@ -526,8 +525,8 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:      pfClient,
-				PowerFlexConfig:      sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:      map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:      map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				SDCFinder:            sdcFinder,
 				LeaderElector:        leaderElector,
 				VolumeMetricsEnabled: true,
@@ -556,8 +555,8 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:      pfClient,
-				PowerFlexConfig:      sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:      map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:      map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				SDCFinder:            sdcFinder,
 				LeaderElector:        leaderElector,
 				VolumeMetricsEnabled: true,
@@ -594,8 +593,8 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:      pfClient,
-				PowerFlexConfig:      sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:      map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:      map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				SDCFinder:            sdcFinder,
 				LeaderElector:        leaderElector,
 				VolumeMetricsEnabled: true,
@@ -644,8 +643,8 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:           pfClient,
-				PowerFlexConfig:           sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:           map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:           map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				StorageClassFinder:        storageClassFinder,
 				LeaderElector:             leaderElector,
 				StoragePoolMetricsEnabled: true,
@@ -678,8 +677,8 @@ func Test_Run(t *testing.T) {
 			sdcFinder := mocks.NewMockSDCFinder(ctrl)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:    pfClient,
-				PowerFlexConfig:    sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:    map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:    map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				SDCFinder:          sdcFinder,
 				LeaderElector:      nil,
 				SDCMetricsEnabled:  true,
@@ -710,8 +709,8 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(false)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:   pfClient,
-				PowerFlexConfig:   sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:   map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:   map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				SDCFinder:         sdcFinder,
 				LeaderElector:     leaderElector,
 				SDCMetricsEnabled: false,
@@ -757,8 +756,8 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:           pfClient,
-				PowerFlexConfig:           sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:           map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:           map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				StorageClassFinder:        storageClassFinder,
 				LeaderElector:             leaderElector,
 				StoragePoolMetricsEnabled: true,
@@ -789,8 +788,8 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:           pfClient,
-				PowerFlexConfig:           sio.ConfigConnect{Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"},
+				PowerFlexClient:           map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:           map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
 				SDCFinder:                 sdcFinder,
 				LeaderElector:             leaderElector,
 				StoragePoolMetricsEnabled: true,

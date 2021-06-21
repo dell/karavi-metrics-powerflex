@@ -18,12 +18,17 @@ type StorageClassGetter interface {
 	GetStorageClasses() (*v1.StorageClassList, error)
 }
 
+// StorageSystemID contains ID, whether is default and associated drivernames
+type StorageSystemID struct {
+	ID          string
+	IsDefault   bool
+	DriverNames []string
+}
+
 // StorageClassFinder is a storage class finder that will query the Kubernetes API for storage classes provisioned by a matching DriverName and StorageSystemID
 type StorageClassFinder struct {
-	API                    StorageClassGetter
-	DriverNames            []string
-	StorageSystemID        string
-	IsDefaultStorageSystem bool
+	API             StorageClassGetter
+	StorageSystemID []StorageSystemID
 }
 
 // GetStorageClasses will return a list of storage classes that match the given DriverName in Kubernetes
@@ -44,19 +49,32 @@ func (f *StorageClassFinder) GetStorageClasses() ([]v1.StorageClass, error) {
 }
 
 func (f *StorageClassFinder) isMatch(class v1.StorageClass) bool {
-	if !Contains(f.DriverNames, class.Provisioner) {
-		return false
+
+	for _, storage := range f.StorageSystemID {
+		if !Contains(storage.DriverNames, class.Provisioner) {
+			continue
+		}
+
+		systemID := class.Parameters["systemID"]
+
+		if systemID == storage.ID {
+			return true
+		}
 	}
 
-	systemID, systemIDExists := class.Parameters["systemID"]
+	for _, storage := range f.StorageSystemID {
+		if !Contains(storage.DriverNames, class.Provisioner) {
+			continue
+		}
 
-	// if a storage system is marked as default, the StorageClass is a match if either the 'systemID' key does not exist or if it matches the storage system ID
-	if f.IsDefaultStorageSystem {
-		return !systemIDExists || systemID == f.StorageSystemID
+		systemID, systemIDExists := class.Parameters["systemID"]
+		// if a storage system is marked as default, the StorageClass is a match if either the 'systemID' key does not exist or if it matches the storage system ID
+		if storage.IsDefault && (!systemIDExists || systemID == storage.ID) {
+			return true
+		}
 	}
 
-	// if a storage system is not marked as default, the StorageClass is a match only if the 'systemID' matches the storage system ID
-	return systemID == f.StorageSystemID
+	return false
 }
 
 // GetStoragePools will return a list of storage pool names from a given Kubernetes storage class
