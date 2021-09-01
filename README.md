@@ -18,7 +18,7 @@ You may obtain a copy of the License at
 
 Metrics for PowerFlex is part of Dell EMC Container Storage Modules (CSM) for Observability, which provides Kubernetes administrators standardized approaches for storage observability in Kuberenetes environments.
 
-Metrics for PowerFlex is an open source distributed solution that provides insight into storage usage and performance as it relates to the CSI (Container Storage Interface) Drivers for Dell EMC PowerFlex.
+Metrics for PowerFlex is an open source distributed solution that provides insight into storage usage and performance as it relates to the CSI (Container Storage Interface) Driver for Dell EMC PowerFlex.
 
 Metrics for PowerFlex captures telemetry data of storage usage and performance obtained through the CSI Driver for Dell EMC PowerFlex. The Metrics service pushes it to the OpenTelemetry Collector, so it can be processed, and exported in a format consumable by Prometheus. Prometheus can then be configured to scrape the OpenTelemetry Collector exporter endpoint to provide metrics so they can be visualized in Grafana.
 
