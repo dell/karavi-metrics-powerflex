@@ -187,7 +187,9 @@ func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFind
 		storageClassFinder.StorageSystemID[i] = storageID
 		volumeFinder.StorageSystemID[i] = storageID
 
-		client, err := sio.NewClientWithArgs(powerFlexEndpoint, "", storageSystem.Insecure, true)
+		// backwards compatible with previous 'Insecure' flag
+		insecure := storageSystem.Insecure || storageSystem.SkipCertificateValidation
+		client, err := sio.NewClientWithArgs(powerFlexEndpoint, "", insecure, true)
 		if err != nil {
 			logger.WithError(err).Fatal("creating powerflex client")
 		}
