@@ -43,7 +43,7 @@ func Test_GetSDCStatistics(t *testing.T) {
 			metrics := mocks.NewMockMetricsRecorder(ctrl)
 
 			sdc1 := mocks.NewMockStatisticsGetter(ctrl)
-			sdc1.EXPECT().GetStatistics().Return(&types.SdcStatistics{}, nil).Times(1)
+			sdc1.EXPECT().GetStatistics().Return(&types.SdcStatistics{}, nil).Times(10)
 			sdc2 := mocks.NewMockStatisticsGetter(ctrl)
 			sdc2.EXPECT().GetStatistics().Return(&types.SdcStatistics{}, nil).Times(1)
 			sdc3 := mocks.NewMockStatisticsGetter(ctrl)
