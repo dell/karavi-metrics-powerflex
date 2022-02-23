@@ -5,44 +5,45 @@
 package mocks
 
 import (
-	v1 "github.com/dell/goscaleio/types/v1"
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+
+	goscaleio "github.com/dell/goscaleio/types/v1"
+	gomock "github.com/golang/mock/gomock"
 )
 
-// MockStoragePoolStatisticsGetter is a mock of StoragePoolStatisticsGetter interface
+// MockStoragePoolStatisticsGetter is a mock of StoragePoolStatisticsGetter interface.
 type MockStoragePoolStatisticsGetter struct {
 	ctrl     *gomock.Controller
 	recorder *MockStoragePoolStatisticsGetterMockRecorder
 }
 
-// MockStoragePoolStatisticsGetterMockRecorder is the mock recorder for MockStoragePoolStatisticsGetter
+// MockStoragePoolStatisticsGetterMockRecorder is the mock recorder for MockStoragePoolStatisticsGetter.
 type MockStoragePoolStatisticsGetterMockRecorder struct {
 	mock *MockStoragePoolStatisticsGetter
 }
 
-// NewMockStoragePoolStatisticsGetter creates a new mock instance
+// NewMockStoragePoolStatisticsGetter creates a new mock instance.
 func NewMockStoragePoolStatisticsGetter(ctrl *gomock.Controller) *MockStoragePoolStatisticsGetter {
 	mock := &MockStoragePoolStatisticsGetter{ctrl: ctrl}
 	mock.recorder = &MockStoragePoolStatisticsGetterMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockStoragePoolStatisticsGetter) EXPECT() *MockStoragePoolStatisticsGetterMockRecorder {
 	return m.recorder
 }
 
-// GetStatistics mocks base method
-func (m *MockStoragePoolStatisticsGetter) GetStatistics() (*v1.Statistics, error) {
+// GetStatistics mocks base method.
+func (m *MockStoragePoolStatisticsGetter) GetStatistics() (*goscaleio.Statistics, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetStatistics")
-	ret0, _ := ret[0].(*v1.Statistics)
+	ret0, _ := ret[0].(*goscaleio.Statistics)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetStatistics indicates an expected call of GetStatistics
+// GetStatistics indicates an expected call of GetStatistics.
 func (mr *MockStoragePoolStatisticsGetterMockRecorder) GetStatistics() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStatistics", reflect.TypeOf((*MockStoragePoolStatisticsGetter)(nil).GetStatistics))
