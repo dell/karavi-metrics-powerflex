@@ -66,7 +66,7 @@ jobs:
       - name: Checkout the code
         uses: actions/checkout@v2
       - name: Install Mockgen
-        run: sudo apt-get install mockgen
+        run: go install github.com/golang/mock/mockgen@v1.4.4
       - name: Run Mockgen
         run: mockgen -h
       - name: Get dependencies
