@@ -221,12 +221,12 @@ func (mw *MetricsWrapper) Record(ctx context.Context, meta interface{},
 
 	metrics := metricsMapValue.(*Metrics)
 
-	metrics.ReadBW.Add(ctx, readBW)
-	metrics.WriteBW.Add(ctx, writeBW)
-	metrics.ReadIOPS.Add(ctx, readIOPS)
-	metrics.WriteIOPS.Add(ctx, writeIOPS)
-	metrics.ReadLatency.Add(ctx, readLatency)
-	metrics.WriteLatency.Add(ctx, writeLatency)
+	metrics.ReadBW.Add(ctx, readBW, labels...)
+	metrics.WriteBW.Add(ctx, writeBW, labels...)
+	metrics.ReadIOPS.Add(ctx, readIOPS, labels...)
+	metrics.WriteIOPS.Add(ctx, writeIOPS, labels...)
+	metrics.ReadLatency.Add(ctx, readLatency, labels...)
+	metrics.WriteLatency.Add(ctx, writeLatency, labels...)
 
 	return nil
 }
@@ -259,10 +259,10 @@ func (mw *MetricsWrapper) RecordCapacity(ctx context.Context, meta interface{},
 
 				metrics := metricsMapValue.(*CapacityMetrics)
 
-				metrics.TotalLogicalCapacity.Add(ctx, totalLogicalCapacity)
-				metrics.LogicalCapacityAvailable.Add(ctx, logicalCapacityAvailable)
-				metrics.LogicalCapacityInUse.Add(ctx, logicalCapacityInUse)
-				metrics.LogicalProvisioned.Add(ctx, logicalProvisioned)
+				metrics.TotalLogicalCapacity.Add(ctx, totalLogicalCapacity, labels...)
+				metrics.LogicalCapacityAvailable.Add(ctx, logicalCapacityAvailable, labels...)
+				metrics.LogicalCapacityInUse.Add(ctx, logicalCapacityInUse, labels...)
+				metrics.LogicalProvisioned.Add(ctx, logicalProvisioned, labels...)
 			}
 		}
 	default:
