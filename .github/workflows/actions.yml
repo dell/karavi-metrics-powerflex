@@ -65,12 +65,12 @@ jobs:
         id: go
       - name: Checkout the code
         uses: actions/checkout@v2
-      #- name: Install Mockgen
-       # run: go get github.com/golang/mock/mockgen@v1.4.4
-      - name: Get dependencies
-        run:  go mod download
+      - name: Install Mockgen
+        run: apt-get install mockgen
       - name: Run Mockgen
         run: mockgen -h && which mockgen
+      - name: Get dependencies
+        run:  go mod download
       - name: Build csm-metrics-powerflex Docker Image
         run: make clean build docker  
       - name: Image scanner
