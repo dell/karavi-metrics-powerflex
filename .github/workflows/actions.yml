@@ -68,7 +68,7 @@ jobs:
       - name: Install Mockgen
         run: sudo apt-get install mockgen
       - name: Run Mockgen
-        run: mockgen -h && which mockgen
+        run: mockgen -h
       - name: Get dependencies
         run:  go mod download
       - name: Build csm-metrics-powerflex Docker Image
