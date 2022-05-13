@@ -14,6 +14,7 @@ List the GitHub issues impacted by this PR:
 - [ ] I have verified that new and existing unit tests pass locally with my changes
 - [ ] I have not allowed coverage numbers to degenerate
 - [ ] I have maintained at least 90% code coverage
+- [ ] I have inspected the Grafana dashboards to verify the data is displayed properly
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the documentation
 - [ ] I have added tests that prove my fix is effective or that my feature works
@@ -24,3 +25,9 @@ Please describe the tests that you ran to verify your changes. Please also list 
 
 - [ ] Test A
 - [ ] Test B
+
+# Manual inspection of the GUI
+I have verified that the dashboards show the data properly while generating I/O and storage resources
+
+- [ ] Yes
+- [ ] No
