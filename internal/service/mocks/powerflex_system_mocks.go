@@ -5,36 +5,35 @@
 package mocks
 
 import (
-	reflect "reflect"
-
 	goscaleio "github.com/dell/goscaleio"
 	gomock "github.com/golang/mock/gomock"
+	reflect "reflect"
 )
 
-// MockPowerFlexSystem is a mock of PowerFlexSystem interface.
+// MockPowerFlexSystem is a mock of PowerFlexSystem interface
 type MockPowerFlexSystem struct {
 	ctrl     *gomock.Controller
 	recorder *MockPowerFlexSystemMockRecorder
 }
 
-// MockPowerFlexSystemMockRecorder is the mock recorder for MockPowerFlexSystem.
+// MockPowerFlexSystemMockRecorder is the mock recorder for MockPowerFlexSystem
 type MockPowerFlexSystemMockRecorder struct {
 	mock *MockPowerFlexSystem
 }
 
-// NewMockPowerFlexSystem creates a new mock instance.
+// NewMockPowerFlexSystem creates a new mock instance
 func NewMockPowerFlexSystem(ctrl *gomock.Controller) *MockPowerFlexSystem {
 	mock := &MockPowerFlexSystem{ctrl: ctrl}
 	mock.recorder = &MockPowerFlexSystemMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use.
+// EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockPowerFlexSystem) EXPECT() *MockPowerFlexSystemMockRecorder {
 	return m.recorder
 }
 
-// FindSdc mocks base method.
+// FindSdc mocks base method
 func (m *MockPowerFlexSystem) FindSdc(arg0, arg1 string) (*goscaleio.Sdc, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindSdc", arg0, arg1)
@@ -43,7 +42,7 @@ func (m *MockPowerFlexSystem) FindSdc(arg0, arg1 string) (*goscaleio.Sdc, error)
 	return ret0, ret1
 }
 
-// FindSdc indicates an expected call of FindSdc.
+// FindSdc indicates an expected call of FindSdc
 func (mr *MockPowerFlexSystemMockRecorder) FindSdc(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindSdc", reflect.TypeOf((*MockPowerFlexSystem)(nil).FindSdc), arg0, arg1)

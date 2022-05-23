@@ -845,7 +845,7 @@ func Test_Run(t *testing.T) {
 			entrypoint.ConfigValidatorFunc = noCheckConfig
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
-			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).AnyTimes().Return(nil)
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metrics.NewMockService(ctrl)

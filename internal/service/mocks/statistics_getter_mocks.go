@@ -5,37 +5,36 @@
 package mocks
 
 import (
-	reflect "reflect"
-
 	goscaleio "github.com/dell/goscaleio"
 	goscaleio0 "github.com/dell/goscaleio/types/v1"
 	gomock "github.com/golang/mock/gomock"
+	reflect "reflect"
 )
 
-// MockStatisticsGetter is a mock of StatisticsGetter interface.
+// MockStatisticsGetter is a mock of StatisticsGetter interface
 type MockStatisticsGetter struct {
 	ctrl     *gomock.Controller
 	recorder *MockStatisticsGetterMockRecorder
 }
 
-// MockStatisticsGetterMockRecorder is the mock recorder for MockStatisticsGetter.
+// MockStatisticsGetterMockRecorder is the mock recorder for MockStatisticsGetter
 type MockStatisticsGetterMockRecorder struct {
 	mock *MockStatisticsGetter
 }
 
-// NewMockStatisticsGetter creates a new mock instance.
+// NewMockStatisticsGetter creates a new mock instance
 func NewMockStatisticsGetter(ctrl *gomock.Controller) *MockStatisticsGetter {
 	mock := &MockStatisticsGetter{ctrl: ctrl}
 	mock.recorder = &MockStatisticsGetterMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use.
+// EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockStatisticsGetter) EXPECT() *MockStatisticsGetterMockRecorder {
 	return m.recorder
 }
 
-// FindVolumes mocks base method.
+// FindVolumes mocks base method
 func (m *MockStatisticsGetter) FindVolumes() ([]*goscaleio.Volume, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindVolumes")
@@ -44,7 +43,7 @@ func (m *MockStatisticsGetter) FindVolumes() ([]*goscaleio.Volume, error) {
 	return ret0, ret1
 }
 
-// FindVolumes indicates an expected call of FindVolumes.
+// FindVolumes indicates an expected call of FindVolumes
 func (mr *MockStatisticsGetterMockRecorder) FindVolumes() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindVolumes", reflect.TypeOf((*MockStatisticsGetter)(nil).FindVolumes))
@@ -59,7 +58,7 @@ func (m *MockStatisticsGetter) GetStatistics() (*goscaleio0.SdcStatistics, error
 	return ret0, ret1
 }
 
-// GetStatistics indicates an expected call of GetStatistics.
+// GetStatistics indicates an expected call of GetStatistics
 func (mr *MockStatisticsGetterMockRecorder) GetStatistics() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStatistics", reflect.TypeOf((*MockStatisticsGetter)(nil).GetStatistics))
@@ -74,7 +73,7 @@ func (m *MockStatisticsGetter) GetVolume() ([]*goscaleio0.Volume, error) {
 	return ret0, ret1
 }
 
-// GetVolume indicates an expected call of GetVolume.
+// GetVolume indicates an expected call of GetVolume
 func (mr *MockStatisticsGetterMockRecorder) GetVolume() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVolume", reflect.TypeOf((*MockStatisticsGetter)(nil).GetVolume))

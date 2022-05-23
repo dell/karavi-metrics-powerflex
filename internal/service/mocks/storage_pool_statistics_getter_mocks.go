@@ -10,25 +10,25 @@ import (
 	reflect "reflect"
 )
 
-// MockStoragePoolStatisticsGetter is a mock of StoragePoolStatisticsGetter interface.
+// MockStoragePoolStatisticsGetter is a mock of StoragePoolStatisticsGetter interface
 type MockStoragePoolStatisticsGetter struct {
 	ctrl     *gomock.Controller
 	recorder *MockStoragePoolStatisticsGetterMockRecorder
 }
 
-// MockStoragePoolStatisticsGetterMockRecorder is the mock recorder for MockStoragePoolStatisticsGetter.
+// MockStoragePoolStatisticsGetterMockRecorder is the mock recorder for MockStoragePoolStatisticsGetter
 type MockStoragePoolStatisticsGetterMockRecorder struct {
 	mock *MockStoragePoolStatisticsGetter
 }
 
-// NewMockStoragePoolStatisticsGetter creates a new mock instance.
+// NewMockStoragePoolStatisticsGetter creates a new mock instance
 func NewMockStoragePoolStatisticsGetter(ctrl *gomock.Controller) *MockStoragePoolStatisticsGetter {
 	mock := &MockStoragePoolStatisticsGetter{ctrl: ctrl}
 	mock.recorder = &MockStoragePoolStatisticsGetterMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use.
+// EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockStoragePoolStatisticsGetter) EXPECT() *MockStoragePoolStatisticsGetterMockRecorder {
 	return m.recorder
 }
@@ -42,7 +42,7 @@ func (m *MockStoragePoolStatisticsGetter) GetStatistics() (*goscaleio.Statistics
 	return ret0, ret1
 }
 
-// GetStatistics indicates an expected call of GetStatistics.
+// GetStatistics indicates an expected call of GetStatistics
 func (mr *MockStoragePoolStatisticsGetterMockRecorder) GetStatistics() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStatistics", reflect.TypeOf((*MockStoragePoolStatisticsGetter)(nil).GetStatistics))

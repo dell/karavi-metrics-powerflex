@@ -5,37 +5,36 @@
 package mocks
 
 import (
-	reflect "reflect"
-
 	goscaleio "github.com/dell/goscaleio"
 	goscaleio0 "github.com/dell/goscaleio/types/v1"
 	gomock "github.com/golang/mock/gomock"
+	reflect "reflect"
 )
 
-// MockPowerFlexClient is a mock of PowerFlexClient interface.
+// MockPowerFlexClient is a mock of PowerFlexClient interface
 type MockPowerFlexClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockPowerFlexClientMockRecorder
 }
 
-// MockPowerFlexClientMockRecorder is the mock recorder for MockPowerFlexClient.
+// MockPowerFlexClientMockRecorder is the mock recorder for MockPowerFlexClient
 type MockPowerFlexClientMockRecorder struct {
 	mock *MockPowerFlexClient
 }
 
-// NewMockPowerFlexClient creates a new mock instance.
+// NewMockPowerFlexClient creates a new mock instance
 func NewMockPowerFlexClient(ctrl *gomock.Controller) *MockPowerFlexClient {
 	mock := &MockPowerFlexClient{ctrl: ctrl}
 	mock.recorder = &MockPowerFlexClientMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use.
+// EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockPowerFlexClient) EXPECT() *MockPowerFlexClientMockRecorder {
 	return m.recorder
 }
 
-// Authenticate mocks base method.
+// Authenticate mocks base method
 func (m *MockPowerFlexClient) Authenticate(arg0 *goscaleio.ConfigConnect) (goscaleio.Cluster, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Authenticate", arg0)
@@ -44,13 +43,13 @@ func (m *MockPowerFlexClient) Authenticate(arg0 *goscaleio.ConfigConnect) (gosca
 	return ret0, ret1
 }
 
-// Authenticate indicates an expected call of Authenticate.
+// Authenticate indicates an expected call of Authenticate
 func (mr *MockPowerFlexClientMockRecorder) Authenticate(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Authenticate", reflect.TypeOf((*MockPowerFlexClient)(nil).Authenticate), arg0)
 }
 
-// FindSystem mocks base method.
+// FindSystem mocks base method
 func (m *MockPowerFlexClient) FindSystem(arg0, arg1, arg2 string) (*goscaleio.System, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindSystem", arg0, arg1, arg2)
@@ -59,7 +58,7 @@ func (m *MockPowerFlexClient) FindSystem(arg0, arg1, arg2 string) (*goscaleio.Sy
 	return ret0, ret1
 }
 
-// FindSystem indicates an expected call of FindSystem.
+// FindSystem indicates an expected call of FindSystem
 func (mr *MockPowerFlexClientMockRecorder) FindSystem(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindSystem", reflect.TypeOf((*MockPowerFlexClient)(nil).FindSystem), arg0, arg1, arg2)
@@ -74,7 +73,7 @@ func (m *MockPowerFlexClient) GetInstance(arg0 string) ([]*goscaleio0.System, er
 	return ret0, ret1
 }
 
-// GetInstance indicates an expected call of GetInstance.
+// GetInstance indicates an expected call of GetInstance
 func (mr *MockPowerFlexClientMockRecorder) GetInstance(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInstance", reflect.TypeOf((*MockPowerFlexClient)(nil).GetInstance), arg0)
@@ -89,7 +88,7 @@ func (m *MockPowerFlexClient) GetStoragePool(arg0 string) ([]*goscaleio0.Storage
 	return ret0, ret1
 }
 
-// GetStoragePool indicates an expected call of GetStoragePool.
+// GetStoragePool indicates an expected call of GetStoragePool
 func (mr *MockPowerFlexClientMockRecorder) GetStoragePool(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStoragePool", reflect.TypeOf((*MockPowerFlexClient)(nil).GetStoragePool), arg0)

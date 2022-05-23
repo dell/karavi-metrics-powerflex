@@ -23,7 +23,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	sio "github.com/dell/goscaleio"
-	"go.opentelemetry.io/otel/metric/global"
+	"go.opentelemetry.io/otel/api/global"
 
 	"os"
 
@@ -187,9 +187,7 @@ func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFind
 		storageClassFinder.StorageSystemID[i] = storageID
 		volumeFinder.StorageSystemID[i] = storageID
 
-		// backwards compatible with previous 'Insecure' flag
-		insecure := storageSystem.Insecure || storageSystem.SkipCertificateValidation
-		client, err := sio.NewClientWithArgs(powerFlexEndpoint, "", insecure, true)
+		client, err := sio.NewClientWithArgs(powerFlexEndpoint, "", storageSystem.Insecure, true)
 		if err != nil {
 			logger.WithError(err).Fatal("creating powerflex client")
 		}
