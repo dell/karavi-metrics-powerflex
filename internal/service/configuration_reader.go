@@ -9,21 +9,23 @@
 package service
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"sigs.k8s.io/yaml"
 )
 
 // ArrayConnectionData contains data required to connect to array
 type ArrayConnectionData struct {
-	SystemID  string `json:"systemID"`
-	Username  string `json:"username"`
-	Password  string `json:"password"`
-	Endpoint  string `json:"endpoint"`
-	Insecure  bool   `json:"insecure,omitempty"`
-	IsDefault bool   `json:"isDefault,omitempty"`
+	SystemID                  string `json:"systemID"`
+	Username                  string `json:"username"`
+	Password                  string `json:"password"`
+	Endpoint                  string `json:"endpoint"`
+	Insecure                  bool   `json:"insecure,omitempty"`
+	IsDefault                 bool   `json:"isDefault,omitempty"`
+	SkipCertificateValidation bool   `json:"skipCertificateValidation,omitempty"`
 }
 
 // ConfigurationReader handles reading of the storage system configuration secret
@@ -47,7 +49,13 @@ func (c *ConfigurationReader) GetStorageSystemConfiguration(file string) ([]Arra
 	}
 
 	connectionData := make([]ArrayConnectionData, 0)
-	err = json.Unmarshal(config, &connectionData)
+	// support backward compatibility
+	config, err = yaml.JSONToYAML(config)
+	if err != nil {
+		return nil, fmt.Errorf(fmt.Sprintf("converting json to yaml: %v", err))
+	}
+
+	err = yaml.Unmarshal(config, &connectionData)
 	if err != nil {
 		return nil, fmt.Errorf(fmt.Sprintf("Unable to parse the credentials: %v", err))
 	}

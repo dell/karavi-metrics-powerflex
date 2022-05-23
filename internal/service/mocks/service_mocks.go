@@ -6,60 +6,61 @@ package mocks
 
 import (
 	context "context"
+	reflect "reflect"
+
 	service "github.com/dell/karavi-metrics-powerflex/internal/service"
 	gomock "github.com/golang/mock/gomock"
 	v1 "k8s.io/api/core/v1"
-	reflect "reflect"
 )
 
-// MockService is a mock of Service interface
+// MockService is a mock of Service interface.
 type MockService struct {
 	ctrl     *gomock.Controller
 	recorder *MockServiceMockRecorder
 }
 
-// MockServiceMockRecorder is the mock recorder for MockService
+// MockServiceMockRecorder is the mock recorder for MockService.
 type MockServiceMockRecorder struct {
 	mock *MockService
 }
 
-// NewMockService creates a new mock instance
+// NewMockService creates a new mock instance.
 func NewMockService(ctrl *gomock.Controller) *MockService {
 	mock := &MockService{ctrl: ctrl}
 	mock.recorder = &MockServiceMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
-// ExportVolumeStatistics mocks base method
+// ExportVolumeStatistics mocks base method.
 func (m *MockService) ExportVolumeStatistics(arg0 context.Context, arg1 []service.VolumeStatisticsGetter, arg2 service.VolumeFinder) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "ExportVolumeStatistics", arg0, arg1, arg2)
 }
 
-// ExportVolumeStatistics indicates an expected call of ExportVolumeStatistics
+// ExportVolumeStatistics indicates an expected call of ExportVolumeStatistics.
 func (mr *MockServiceMockRecorder) ExportVolumeStatistics(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExportVolumeStatistics", reflect.TypeOf((*MockService)(nil).ExportVolumeStatistics), arg0, arg1, arg2)
 }
 
-// GetSDCStatistics mocks base method
+// GetSDCStatistics mocks base method.
 func (m *MockService) GetSDCStatistics(arg0 context.Context, arg1 []v1.Node, arg2 []service.StatisticsGetter) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "GetSDCStatistics", arg0, arg1, arg2)
 }
 
-// GetSDCStatistics indicates an expected call of GetSDCStatistics
+// GetSDCStatistics indicates an expected call of GetSDCStatistics.
 func (mr *MockServiceMockRecorder) GetSDCStatistics(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSDCStatistics", reflect.TypeOf((*MockService)(nil).GetSDCStatistics), arg0, arg1, arg2)
 }
 
-// GetSDCs mocks base method
+// GetSDCs mocks base method.
 func (m *MockService) GetSDCs(arg0 context.Context, arg1 service.PowerFlexClient, arg2 service.SDCFinder) ([]service.StatisticsGetter, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSDCs", arg0, arg1, arg2)
@@ -68,13 +69,13 @@ func (m *MockService) GetSDCs(arg0 context.Context, arg1 service.PowerFlexClient
 	return ret0, ret1
 }
 
-// GetSDCs indicates an expected call of GetSDCs
+// GetSDCs indicates an expected call of GetSDCs.
 func (mr *MockServiceMockRecorder) GetSDCs(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSDCs", reflect.TypeOf((*MockService)(nil).GetSDCs), arg0, arg1, arg2)
 }
 
-// GetStorageClasses mocks base method
+// GetStorageClasses mocks base method.
 func (m *MockService) GetStorageClasses(arg0 context.Context, arg1 service.PowerFlexClient, arg2 service.StorageClassFinder) ([]service.StorageClassMeta, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetStorageClasses", arg0, arg1, arg2)
@@ -83,25 +84,25 @@ func (m *MockService) GetStorageClasses(arg0 context.Context, arg1 service.Power
 	return ret0, ret1
 }
 
-// GetStorageClasses indicates an expected call of GetStorageClasses
+// GetStorageClasses indicates an expected call of GetStorageClasses.
 func (mr *MockServiceMockRecorder) GetStorageClasses(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStorageClasses", reflect.TypeOf((*MockService)(nil).GetStorageClasses), arg0, arg1, arg2)
 }
 
-// GetStoragePoolStatistics mocks base method
+// GetStoragePoolStatistics mocks base method.
 func (m *MockService) GetStoragePoolStatistics(arg0 context.Context, arg1 []service.StorageClassMeta) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "GetStoragePoolStatistics", arg0, arg1)
 }
 
-// GetStoragePoolStatistics indicates an expected call of GetStoragePoolStatistics
+// GetStoragePoolStatistics indicates an expected call of GetStoragePoolStatistics.
 func (mr *MockServiceMockRecorder) GetStoragePoolStatistics(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStoragePoolStatistics", reflect.TypeOf((*MockService)(nil).GetStoragePoolStatistics), arg0, arg1)
 }
 
-// GetVolumes mocks base method
+// GetVolumes mocks base method.
 func (m *MockService) GetVolumes(arg0 context.Context, arg1 []service.StatisticsGetter) ([]service.VolumeStatisticsGetter, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVolumes", arg0, arg1)
@@ -110,7 +111,7 @@ func (m *MockService) GetVolumes(arg0 context.Context, arg1 []service.Statistics
 	return ret0, ret1
 }
 
-// GetVolumes indicates an expected call of GetVolumes
+// GetVolumes indicates an expected call of GetVolumes.
 func (mr *MockServiceMockRecorder) GetVolumes(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVolumes", reflect.TypeOf((*MockService)(nil).GetVolumes), arg0, arg1)

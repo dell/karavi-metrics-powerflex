@@ -5,35 +5,36 @@
 package mocks
 
 import (
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	v1 "k8s.io/api/core/v1"
-	reflect "reflect"
 )
 
-// MockNodeGetter is a mock of NodeGetter interface
+// MockNodeGetter is a mock of NodeGetter interface.
 type MockNodeGetter struct {
 	ctrl     *gomock.Controller
 	recorder *MockNodeGetterMockRecorder
 }
 
-// MockNodeGetterMockRecorder is the mock recorder for MockNodeGetter
+// MockNodeGetterMockRecorder is the mock recorder for MockNodeGetter.
 type MockNodeGetterMockRecorder struct {
 	mock *MockNodeGetter
 }
 
-// NewMockNodeGetter creates a new mock instance
+// NewMockNodeGetter creates a new mock instance.
 func NewMockNodeGetter(ctrl *gomock.Controller) *MockNodeGetter {
 	mock := &MockNodeGetter{ctrl: ctrl}
 	mock.recorder = &MockNodeGetterMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockNodeGetter) EXPECT() *MockNodeGetterMockRecorder {
 	return m.recorder
 }
 
-// GetNodes mocks base method
+// GetNodes mocks base method.
 func (m *MockNodeGetter) GetNodes() (*v1.NodeList, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetNodes")
@@ -42,7 +43,7 @@ func (m *MockNodeGetter) GetNodes() (*v1.NodeList, error) {
 	return ret0, ret1
 }
 
-// GetNodes indicates an expected call of GetNodes
+// GetNodes indicates an expected call of GetNodes.
 func (mr *MockNodeGetterMockRecorder) GetNodes() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNodes", reflect.TypeOf((*MockNodeGetter)(nil).GetNodes))

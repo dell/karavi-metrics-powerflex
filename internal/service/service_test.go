@@ -23,7 +23,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/otel/api/global"
+	"go.opentelemetry.io/otel/metric/global"
 
 	sio "github.com/dell/goscaleio"
 	types "github.com/dell/goscaleio/types/v1"
