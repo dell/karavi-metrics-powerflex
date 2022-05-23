@@ -6,7 +6,7 @@ package mocks
 
 import (
 	goscaleio "github.com/dell/goscaleio"
-	v1 "github.com/dell/goscaleio/types/v1"
+	goscaleio0 "github.com/dell/goscaleio/types/v1"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )
@@ -65,10 +65,10 @@ func (mr *MockPowerFlexClientMockRecorder) FindSystem(arg0, arg1, arg2 interface
 }
 
 // GetInstance mocks base method
-func (m *MockPowerFlexClient) GetInstance(arg0 string) ([]*v1.System, error) {
+func (m *MockPowerFlexClient) GetInstance(arg0 string) ([]*goscaleio0.System, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetInstance", arg0)
-	ret0, _ := ret[0].([]*v1.System)
+	ret0, _ := ret[0].([]*goscaleio0.System)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -80,10 +80,10 @@ func (mr *MockPowerFlexClientMockRecorder) GetInstance(arg0 interface{}) *gomock
 }
 
 // GetStoragePool mocks base method
-func (m *MockPowerFlexClient) GetStoragePool(arg0 string) ([]*v1.StoragePool, error) {
+func (m *MockPowerFlexClient) GetStoragePool(arg0 string) ([]*goscaleio0.StoragePool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetStoragePool", arg0)
-	ret0, _ := ret[0].([]*v1.StoragePool)
+	ret0, _ := ret[0].([]*goscaleio0.StoragePool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
