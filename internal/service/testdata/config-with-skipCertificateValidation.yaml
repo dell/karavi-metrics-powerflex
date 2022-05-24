@@ -11,4 +11,3 @@
   endpoint: https://127.0.0.2
   skipCertificateValidation: false
   mdm: mdm3,mdm4
-  
