@@ -38,7 +38,7 @@ func Test_ConfigurationReader(t *testing.T) {
 	}
 
 	tests := map[string]func(t *testing.T) (service.ConfigurationReader, string, []checkFn){
-		"success with no default system in config": func(*testing.T) (service.ConfigurationReader, string, []checkFn) {
+		"success json with no default system in config": func(*testing.T) (service.ConfigurationReader, string, []checkFn) {
 			file := "testdata/config-with-no-default.json"
 			configReader := service.ConfigurationReader{}
 
@@ -57,6 +57,56 @@ func Test_ConfigurationReader(t *testing.T) {
 					SystemID: "ID2",
 					Endpoint: "https://127.0.0.2",
 					Insecure: true,
+				},
+			}
+
+			return configReader, file, check(hasNoError, checkExpectedOutput(expectedResult))
+		},
+		"success yaml with no default system in config": func(*testing.T) (service.ConfigurationReader, string, []checkFn) {
+			file := "testdata/config-with-no-default.yaml"
+			configReader := service.ConfigurationReader{}
+
+			expectedResult := []service.ArrayConnectionData{
+				{
+					Username:  "admin",
+					Password:  "password",
+					SystemID:  "ID1",
+					Endpoint:  "http://127.0.0.1",
+					Insecure:  true,
+					IsDefault: false,
+				},
+				{
+					Username: "admin",
+					Password: "password",
+					SystemID: "ID2",
+					Endpoint: "https://127.0.0.2",
+					Insecure: true,
+				},
+			}
+
+			return configReader, file, check(hasNoError, checkExpectedOutput(expectedResult))
+		},
+		"success yaml with skipCertificateValidation": func(*testing.T) (service.ConfigurationReader, string, []checkFn) {
+			file := "testdata/config-with-skipCertificateValidation.yaml"
+			configReader := service.ConfigurationReader{}
+
+			expectedResult := []service.ArrayConnectionData{
+				{
+					Username:                  "admin",
+					Password:                  "password",
+					SystemID:                  "ID1",
+					Endpoint:                  "http://127.0.0.1",
+					Insecure:                  false,
+					SkipCertificateValidation: true,
+					IsDefault:                 false,
+				},
+				{
+					Username:                  "admin",
+					Password:                  "password",
+					SystemID:                  "ID2",
+					Endpoint:                  "https://127.0.0.2",
+					Insecure:                  false,
+					SkipCertificateValidation: false,
 				},
 			}
 
