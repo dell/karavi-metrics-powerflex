@@ -19,7 +19,7 @@ import (
 	pflexServices "github.com/dell/karavi-metrics-powerflex/internal/service"
 	otlexporters "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters"
 	"github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
+	"go.opentelemetry.io/otel/exporters/otlp"
 	"google.golang.org/grpc/credentials"
 
 	sio "github.com/dell/goscaleio"
@@ -87,8 +87,8 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 	}()
 
 	go func() {
-		options := []otlpmetricgrpc.Option{
-			otlpmetricgrpc.WithEndpoint(config.CollectorAddress),
+		options := []otlp.ExporterOption{
+			otlp.WithAddress(config.CollectorAddress),
 		}
 
 		if config.CollectorCertPath != "" {
@@ -96,9 +96,9 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 			if err != nil {
 				errCh <- err
 			}
-			options = append(options, otlpmetricgrpc.WithTLSCredentials(transportCreds))
+			options = append(options, otlp.WithTLSCredentials(transportCreds))
 		} else {
-			options = append(options, otlpmetricgrpc.WithInsecure())
+			options = append(options, otlp.WithInsecure())
 		}
 
 		errCh <- exporter.InitExporter(options...)

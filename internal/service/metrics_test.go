@@ -17,9 +17,9 @@ import (
 	"github.com/dell/karavi-metrics-powerflex/internal/service/mocks"
 
 	"github.com/golang/mock/gomock"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/metric/global"
+	"go.opentelemetry.io/otel/api/global"
+	"go.opentelemetry.io/otel/api/kv"
+	"go.opentelemetry.io/otel/api/metric"
 )
 
 func Test_Metrics_Record(t *testing.T) {
@@ -446,12 +446,12 @@ func Test_Volume_Metrics_Label_Update(t *testing.T) {
 		},
 	}
 
-	expectedLables := []attribute.KeyValue{
-		attribute.String("VolumeID", metaSecond.ID),
-		attribute.String("VolumeName", metaSecond.Name),
-		attribute.String("MappedNodeIDs", "__"+metaSecond.MappedSDCs[0].SdcID+"__"),
-		attribute.String("MappedNodeIPs", "__"+metaSecond.MappedSDCs[0].SdcIP+"__"),
-		attribute.String("PlotWithMean", "No"),
+	expectedLables := []kv.KeyValue{
+		kv.String("VolumeID", metaSecond.ID),
+		kv.String("VolumeName", metaSecond.Name),
+		kv.String("MappedNodeIDs", "__"+metaSecond.MappedSDCs[0].SdcID+"__"),
+		kv.String("MappedNodeIPs", "__"+metaSecond.MappedSDCs[0].SdcIP+"__"),
+		kv.String("PlotWithMean", "No"),
 	}
 
 	ctrl := gomock.NewController(t)
@@ -519,7 +519,7 @@ func Test_Volume_Metrics_Label_Update(t *testing.T) {
 		if !ok {
 			t.Errorf("expected labels to exist for %v, but did not find them", metaFirst.ID)
 		}
-		labels := newLabels.([]attribute.KeyValue)
+		labels := newLabels.([]kv.KeyValue)
 		for _, l := range labels {
 			for _, e := range expectedLables {
 				if l.Key == e.Key {

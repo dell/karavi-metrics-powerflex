@@ -5,36 +5,35 @@
 package mocks
 
 import (
-	reflect "reflect"
-
 	gomock "github.com/golang/mock/gomock"
 	v1 "k8s.io/api/storage/v1"
+	reflect "reflect"
 )
 
-// MockKubernetesAPI is a mock of KubernetesAPI interface.
+// MockKubernetesAPI is a mock of KubernetesAPI interface
 type MockKubernetesAPI struct {
 	ctrl     *gomock.Controller
 	recorder *MockKubernetesAPIMockRecorder
 }
 
-// MockKubernetesAPIMockRecorder is the mock recorder for MockKubernetesAPI.
+// MockKubernetesAPIMockRecorder is the mock recorder for MockKubernetesAPI
 type MockKubernetesAPIMockRecorder struct {
 	mock *MockKubernetesAPI
 }
 
-// NewMockKubernetesAPI creates a new mock instance.
+// NewMockKubernetesAPI creates a new mock instance
 func NewMockKubernetesAPI(ctrl *gomock.Controller) *MockKubernetesAPI {
 	mock := &MockKubernetesAPI{ctrl: ctrl}
 	mock.recorder = &MockKubernetesAPIMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use.
+// EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockKubernetesAPI) EXPECT() *MockKubernetesAPIMockRecorder {
 	return m.recorder
 }
 
-// GetCSINodes mocks base method.
+// GetCSINodes mocks base method
 func (m *MockKubernetesAPI) GetCSINodes() (*v1.CSINodeList, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCSINodes")
@@ -43,7 +42,7 @@ func (m *MockKubernetesAPI) GetCSINodes() (*v1.CSINodeList, error) {
 	return ret0, ret1
 }
 
-// GetCSINodes indicates an expected call of GetCSINodes.
+// GetCSINodes indicates an expected call of GetCSINodes
 func (mr *MockKubernetesAPIMockRecorder) GetCSINodes() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCSINodes", reflect.TypeOf((*MockKubernetesAPI)(nil).GetCSINodes))
