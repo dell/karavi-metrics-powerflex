@@ -431,7 +431,7 @@ func Test_GetSDCMeta(t *testing.T) {
 
 			sdc := &sio.Sdc{
 				Sdc: &types.Sdc{
-					SdcIp: "1.2.3.4",
+					SdcIP: "1.2.3.4",
 				},
 			}
 

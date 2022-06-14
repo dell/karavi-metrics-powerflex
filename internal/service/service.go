@@ -137,7 +137,7 @@ func (s *PowerFlexService) GetSDCs(ctx context.Context, client PowerFlexClient, 
 		}
 		s.Logger.WithFields(logrus.Fields{"system": sys}).Debug("found system")
 		for _, sdcGUID := range sdcGUIDs {
-			sdc, err := sys.FindSdc("SdcGuid", sdcGUID)
+			sdc, err := sys.FindSdc("SdcGUID", sdcGUID)
 			if err != nil {
 				s.Logger.WithField("sdc_guid", sdcGUID).Warn("unable to find SDC with GUID")
 			} else {
@@ -163,7 +163,7 @@ func GetSDCMeta(sdc interface{}, nodes []corev1.Node) *SDCMeta {
 	loop:
 		for _, node := range nodes {
 			for _, addr := range node.Status.Addresses {
-				if addr.Address == v.Sdc.SdcIp {
+				if addr.Address == v.Sdc.SdcIP {
 					name = node.GetName()
 					break loop
 				}
@@ -173,8 +173,8 @@ func GetSDCMeta(sdc interface{}, nodes []corev1.Node) *SDCMeta {
 		return &SDCMeta{
 			Name:    name,
 			ID:      v.Sdc.ID,
-			IP:      v.Sdc.SdcIp,
-			SdcGUID: v.Sdc.SdcGuid,
+			IP:      v.Sdc.SdcIP,
+			SdcGUID: v.Sdc.SdcGUID,
 		}
 	default:
 		return &SDCMeta{}
