@@ -137,7 +137,7 @@ func (s *PowerFlexService) GetSDCs(ctx context.Context, client PowerFlexClient, 
 		}
 		s.Logger.WithFields(logrus.Fields{"system": sys}).Debug("found system")
 		for _, sdcGUID := range sdcGUIDs {
-			sdc, err := sys.FindSdc("SdcGuid", sdcGUID)
+			sdc, err := sys.FindSdc("SdcGUID", sdcGUID)
 			if err != nil {
 				s.Logger.WithField("sdc_guid", sdcGUID).Warn("unable to find SDC with GUID")
 			} else {
