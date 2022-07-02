@@ -5,34 +5,35 @@
 package mocks
 
 import (
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
 )
 
-// MockSDCFinder is a mock of SDCFinder interface
+// MockSDCFinder is a mock of SDCFinder interface.
 type MockSDCFinder struct {
 	ctrl     *gomock.Controller
 	recorder *MockSDCFinderMockRecorder
 }
 
-// MockSDCFinderMockRecorder is the mock recorder for MockSDCFinder
+// MockSDCFinderMockRecorder is the mock recorder for MockSDCFinder.
 type MockSDCFinderMockRecorder struct {
 	mock *MockSDCFinder
 }
 
-// NewMockSDCFinder creates a new mock instance
+// NewMockSDCFinder creates a new mock instance.
 func NewMockSDCFinder(ctrl *gomock.Controller) *MockSDCFinder {
 	mock := &MockSDCFinder{ctrl: ctrl}
 	mock.recorder = &MockSDCFinderMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockSDCFinder) EXPECT() *MockSDCFinderMockRecorder {
 	return m.recorder
 }
 
-// GetSDCGuids mocks base method
+// GetSDCGuids mocks base method.
 func (m *MockSDCFinder) GetSDCGuids() ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSDCGuids")
@@ -41,7 +42,7 @@ func (m *MockSDCFinder) GetSDCGuids() ([]string, error) {
 	return ret0, ret1
 }
 
-// GetSDCGuids indicates an expected call of GetSDCGuids
+// GetSDCGuids indicates an expected call of GetSDCGuids.
 func (mr *MockSDCFinderMockRecorder) GetSDCGuids() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSDCGuids", reflect.TypeOf((*MockSDCFinder)(nil).GetSDCGuids))

@@ -15,11 +15,9 @@ import (
 
 	"github.com/dell/karavi-metrics-powerflex/internal/service"
 	"github.com/dell/karavi-metrics-powerflex/internal/service/mocks"
-
 	"github.com/golang/mock/gomock"
-	"go.opentelemetry.io/otel/api/global"
-	"go.opentelemetry.io/otel/api/kv"
-	"go.opentelemetry.io/otel/api/metric"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric/global"
 )
 
 func Test_Metrics_Record(t *testing.T) {
@@ -63,43 +61,45 @@ func Test_Metrics_Record(t *testing.T) {
 
 			getMeter := func(prefix string) *service.MetricsWrapper {
 				meter := mocks.NewMockFloat64UpDownCounterCreater(ctrl)
+				provider := mocks.NewMockInstrumentProvider(ctrl)
 				otMeter := global.Meter(prefix + "_test")
-				readBW, err := otMeter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_second")
+				readBW, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "read_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				writeBW, err := otMeter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_second")
+				writeBW, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "write_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				readIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "read_iops_per_second")
+				readIOPS, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "read_iops_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				writeIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "write_iops_per_second")
+				writeIOPS, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "write_iops_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				readLatency, err := otMeter.NewFloat64UpDownCounter(prefix + "read_latency_milliseconds")
+				readLatency, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "read_latency_milliseconds")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				writeLatency, err := otMeter.NewFloat64UpDownCounter(prefix + "write_latency_milliseconds")
+				writeLatency, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "write_latency_milliseconds")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(readBW, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(writeBW, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(readIOPS, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(writeIOPS, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(readLatency, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(writeLatency, nil)
+				meter.EXPECT().AsyncFloat64().Return(provider).Times(6)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(readBW, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(writeBW, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(readIOPS, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(writeIOPS, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(readLatency, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(writeLatency, nil)
 
 				return &service.MetricsWrapper{
 					Meter: meter,
@@ -116,8 +116,15 @@ func Test_Metrics_Record(t *testing.T) {
 		"error creating read_bw_megabytes_per_second": func(t *testing.T) ([]*service.MetricsWrapper, []checkFn) {
 			ctrl := gomock.NewController(t)
 			meter := mocks.NewMockFloat64UpDownCounterCreater(ctrl)
+			provider := mocks.NewMockInstrumentProvider(ctrl)
+			otMeter := global.Meter("")
+			empty, err := otMeter.AsyncFloat64().UpDownCounter("")
+			if err != nil {
+				t.Fatal(err)
+			}
 
-			meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(metric.Float64UpDownCounter{}, errors.New("error")).Times(2)
+			meter.EXPECT().AsyncFloat64().Return(provider).Times(2)
+			provider.EXPECT().UpDownCounter(gomock.Any()).Return(empty, errors.New("error")).Times(2)
 
 			mws := []*service.MetricsWrapper{{Meter: meter}, {Meter: meter}}
 
@@ -127,13 +134,19 @@ func Test_Metrics_Record(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			getMeter := func(prefix string) *service.MetricsWrapper {
 				meter := mocks.NewMockFloat64UpDownCounterCreater(ctrl)
+				provider := mocks.NewMockInstrumentProvider(ctrl)
 				otMeter := global.Meter(prefix + "_test")
-				readBW, err := otMeter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_second")
+				readBW, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "read_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(readBW, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(metric.Float64UpDownCounter{}, errors.New("error"))
+				empty, err := otMeter.AsyncFloat64().UpDownCounter("")
+				if err != nil {
+					t.Fatal(err)
+				}
+				meter.EXPECT().AsyncFloat64().Return(provider).Times(2)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(readBW, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(empty, errors.New("error"))
 
 				return &service.MetricsWrapper{
 					Meter: meter,
@@ -151,21 +164,28 @@ func Test_Metrics_Record(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			getMeter := func(prefix string) *service.MetricsWrapper {
 				meter := mocks.NewMockFloat64UpDownCounterCreater(ctrl)
+				provider := mocks.NewMockInstrumentProvider(ctrl)
 				otMeter := global.Meter(prefix + "_test")
 
-				readBW, err := otMeter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_second")
+				readBW, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "read_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				writeBW, err := otMeter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_second")
+				writeBW, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "write_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(readBW, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(writeBW, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(metric.Float64UpDownCounter{}, errors.New("error"))
+				empty, err := otMeter.AsyncFloat64().UpDownCounter("")
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				meter.EXPECT().AsyncFloat64().Return(provider).Times(3)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(readBW, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(writeBW, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(empty, errors.New("error"))
 
 				return &service.MetricsWrapper{
 					Meter: meter,
@@ -183,27 +203,34 @@ func Test_Metrics_Record(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			getMeter := func(prefix string) *service.MetricsWrapper {
 				meter := mocks.NewMockFloat64UpDownCounterCreater(ctrl)
+				provider := mocks.NewMockInstrumentProvider(ctrl)
 				otMeter := global.Meter(prefix + "_test")
 
-				readBW, err := otMeter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_second")
+				readBW, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "read_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				writeBW, err := otMeter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_second")
+				writeBW, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "write_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				readIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "read_iops_per_second")
+				readIOPS, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "read_iops_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(readBW, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(writeBW, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(readIOPS, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(metric.Float64UpDownCounter{}, errors.New("error"))
+				empty, err := otMeter.AsyncFloat64().UpDownCounter("")
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				meter.EXPECT().AsyncFloat64().Return(provider).Times(4)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(readBW, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(writeBW, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(readIOPS, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(empty, errors.New("error"))
 
 				return &service.MetricsWrapper{
 					Meter: meter,
@@ -221,33 +248,39 @@ func Test_Metrics_Record(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			getMeter := func(prefix string) *service.MetricsWrapper {
 				meter := mocks.NewMockFloat64UpDownCounterCreater(ctrl)
+				provider := mocks.NewMockInstrumentProvider(ctrl)
 				otMeter := global.Meter(prefix + "_test")
 
-				readBW, err := otMeter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_second")
+				readBW, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "read_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				writeBW, err := otMeter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_second")
+				writeBW, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "write_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				readIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "read_iops_per_second")
+				readIOPS, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "read_iops_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				writeIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "write_iops_per_second")
+				writeIOPS, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "write_iops_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(readBW, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(writeBW, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(readIOPS, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(writeIOPS, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(metric.Float64UpDownCounter{}, errors.New("error"))
+				empty, err := otMeter.AsyncFloat64().UpDownCounter("")
+				if err != nil {
+					t.Fatal(err)
+				}
+				meter.EXPECT().AsyncFloat64().Return(provider).Times(5)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(readBW, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(writeBW, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(readIOPS, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(writeIOPS, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(empty, errors.New("error"))
 
 				return &service.MetricsWrapper{
 					Meter: meter,
@@ -265,39 +298,46 @@ func Test_Metrics_Record(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			getMeter := func(prefix string) *service.MetricsWrapper {
 				meter := mocks.NewMockFloat64UpDownCounterCreater(ctrl)
+				provider := mocks.NewMockInstrumentProvider(ctrl)
 				otMeter := global.Meter(prefix + "_test")
 
-				readBW, err := otMeter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_second")
+				readBW, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "read_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				writeBW, err := otMeter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_second")
+				writeBW, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "write_bw_megabytes_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				readIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "read_iops_per_second")
+				readIOPS, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "read_iops_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				writeIOPS, err := otMeter.NewFloat64UpDownCounter(prefix + "write_iops_per_second")
+				writeIOPS, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "write_iops_per_second")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				readLatency, err := otMeter.NewFloat64UpDownCounter(prefix + "read_latency_milliseconds")
+				readLatency, err := otMeter.AsyncFloat64().UpDownCounter(prefix + "read_latency_milliseconds")
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(readBW, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(writeBW, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(readIOPS, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(writeIOPS, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(readLatency, nil)
-				meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(metric.Float64UpDownCounter{}, errors.New("error"))
+				empty, err := otMeter.AsyncFloat64().UpDownCounter("")
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				meter.EXPECT().AsyncFloat64().Return(provider).Times(6)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(readBW, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(writeBW, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(readIOPS, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(writeIOPS, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(readLatency, nil)
+				provider.EXPECT().UpDownCounter(gomock.Any()).Return(empty, errors.New("error"))
 
 				return &service.MetricsWrapper{
 					Meter: meter,
@@ -347,32 +387,34 @@ func Test_Metrics_RecordCapacity(t *testing.T) {
 			ctrl := gomock.NewController(t)
 
 			meter := mocks.NewMockFloat64UpDownCounterCreater(ctrl)
+			provider := mocks.NewMockInstrumentProvider(ctrl)
 			otMeter := global.Meter("test")
 
-			totalLogicalCapacity, err := otMeter.NewFloat64UpDownCounter("TotalLogicalCapacity")
+			totalLogicalCapacity, err := otMeter.AsyncFloat64().UpDownCounter("TotalLogicalCapacity")
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			logicalCapacityAvailable, err := otMeter.NewFloat64UpDownCounter("LogicalCapacityAvailable")
+			logicalCapacityAvailable, err := otMeter.AsyncFloat64().UpDownCounter("LogicalCapacityAvailable")
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			logicalCapacityInUse, err := otMeter.NewFloat64UpDownCounter("LogicalCapacityInUse")
+			logicalCapacityInUse, err := otMeter.AsyncFloat64().UpDownCounter("LogicalCapacityInUse")
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			logicalProvisioned, err := otMeter.NewFloat64UpDownCounter("LogicalProvisioned")
+			logicalProvisioned, err := otMeter.AsyncFloat64().UpDownCounter("LogicalProvisioned")
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(totalLogicalCapacity, nil)
-			meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(logicalCapacityAvailable, nil)
-			meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(logicalCapacityInUse, nil)
-			meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(logicalProvisioned, nil)
+			meter.EXPECT().AsyncFloat64().Return(provider).Times(4)
+			provider.EXPECT().UpDownCounter(gomock.Any()).Return(totalLogicalCapacity, nil)
+			provider.EXPECT().UpDownCounter(gomock.Any()).Return(logicalCapacityAvailable, nil)
+			provider.EXPECT().UpDownCounter(gomock.Any()).Return(logicalCapacityInUse, nil)
+			provider.EXPECT().UpDownCounter(gomock.Any()).Return(logicalProvisioned, nil)
 
 			mw := &service.MetricsWrapper{
 				Meter: meter,
@@ -392,8 +434,15 @@ func Test_Metrics_RecordCapacity(t *testing.T) {
 		"error creating CapacityInUse": func(t *testing.T) (*service.MetricsWrapper, service.StorageClassMeta, []checkFn) {
 			ctrl := gomock.NewController(t)
 			meter := mocks.NewMockFloat64UpDownCounterCreater(ctrl)
+			provider := mocks.NewMockInstrumentProvider(ctrl)
+			otMeter := global.Meter("")
+			empty, err := otMeter.AsyncFloat64().UpDownCounter("")
+			if err != nil {
+				t.Fatal(err)
+			}
 
-			meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(metric.Float64UpDownCounter{}, errors.New("error")).Times(1)
+			meter.EXPECT().AsyncFloat64().Return(provider).Times(1)
+			provider.EXPECT().UpDownCounter(gomock.Any()).Return(empty, errors.New("error")).Times(1)
 
 			mw := &service.MetricsWrapper{
 				Meter: meter,
@@ -446,60 +495,62 @@ func Test_Volume_Metrics_Label_Update(t *testing.T) {
 		},
 	}
 
-	expectedLables := []kv.KeyValue{
-		kv.String("VolumeID", metaSecond.ID),
-		kv.String("VolumeName", metaSecond.Name),
-		kv.String("MappedNodeIDs", "__"+metaSecond.MappedSDCs[0].SdcID+"__"),
-		kv.String("MappedNodeIPs", "__"+metaSecond.MappedSDCs[0].SdcIP+"__"),
-		kv.String("PlotWithMean", "No"),
+	expectedLables := []attribute.KeyValue{
+		attribute.String("VolumeID", metaSecond.ID),
+		attribute.String("VolumeName", metaSecond.Name),
+		attribute.String("MappedNodeIDs", "__"+metaSecond.MappedSDCs[0].SdcID+"__"),
+		attribute.String("MappedNodeIPs", "__"+metaSecond.MappedSDCs[0].SdcIP+"__"),
+		attribute.String("PlotWithMean", "No"),
 	}
 
 	ctrl := gomock.NewController(t)
 
 	meter := mocks.NewMockFloat64UpDownCounterCreater(ctrl)
+	provider := mocks.NewMockInstrumentProvider(ctrl)
 	otMeter := global.Meter("powerflex_volume__test")
-	readBW, err := otMeter.NewFloat64UpDownCounter("powerflex_volume_read_bw_megabytes_per_second")
+	readBW, err := otMeter.AsyncFloat64().UpDownCounter("powerflex_volume_read_bw_megabytes_per_second")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	writeBW, err := otMeter.NewFloat64UpDownCounter("powerflex_volume_write_bw_megabytes_per_second")
+	writeBW, err := otMeter.AsyncFloat64().UpDownCounter("powerflex_volume_write_bw_megabytes_per_second")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	readIOPS, err := otMeter.NewFloat64UpDownCounter("powerflex_volume_read_iops_per_second")
+	readIOPS, err := otMeter.AsyncFloat64().UpDownCounter("powerflex_volume_read_iops_per_second")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	writeIOPS, err := otMeter.NewFloat64UpDownCounter("powerflex_volume_write_iops_per_second")
+	writeIOPS, err := otMeter.AsyncFloat64().UpDownCounter("powerflex_volume_write_iops_per_second")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	readLatency, err := otMeter.NewFloat64UpDownCounter("powerflex_volume_read_latency_milliseconds")
+	readLatency, err := otMeter.AsyncFloat64().UpDownCounter("powerflex_volume_read_latency_milliseconds")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	writeLatency, err := otMeter.NewFloat64UpDownCounter("powerflex_volume_write_latency_milliseconds")
+	writeLatency, err := otMeter.AsyncFloat64().UpDownCounter("powerflex_volume_write_latency_milliseconds")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(readBW, nil)
-	meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(writeBW, nil)
-	meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(readIOPS, nil)
-	meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(writeIOPS, nil)
-	meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(readLatency, nil)
-	meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(writeLatency, nil)
-	meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(readBW, nil)
-	meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(writeBW, nil)
-	meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(readIOPS, nil)
-	meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(writeIOPS, nil)
-	meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(readLatency, nil)
-	meter.EXPECT().NewFloat64UpDownCounter(gomock.Any()).Return(writeLatency, nil)
+	meter.EXPECT().AsyncFloat64().Return(provider).Times(12)
+	provider.EXPECT().UpDownCounter(gomock.Any()).Return(readBW, nil)
+	provider.EXPECT().UpDownCounter(gomock.Any()).Return(writeBW, nil)
+	provider.EXPECT().UpDownCounter(gomock.Any()).Return(readIOPS, nil)
+	provider.EXPECT().UpDownCounter(gomock.Any()).Return(writeIOPS, nil)
+	provider.EXPECT().UpDownCounter(gomock.Any()).Return(readLatency, nil)
+	provider.EXPECT().UpDownCounter(gomock.Any()).Return(writeLatency, nil)
+	provider.EXPECT().UpDownCounter(gomock.Any()).Return(readBW, nil)
+	provider.EXPECT().UpDownCounter(gomock.Any()).Return(writeBW, nil)
+	provider.EXPECT().UpDownCounter(gomock.Any()).Return(readIOPS, nil)
+	provider.EXPECT().UpDownCounter(gomock.Any()).Return(writeIOPS, nil)
+	provider.EXPECT().UpDownCounter(gomock.Any()).Return(readLatency, nil)
+	provider.EXPECT().UpDownCounter(gomock.Any()).Return(writeLatency, nil)
 
 	mw := &service.MetricsWrapper{
 		Meter: meter,
@@ -519,7 +570,7 @@ func Test_Volume_Metrics_Label_Update(t *testing.T) {
 		if !ok {
 			t.Errorf("expected labels to exist for %v, but did not find them", metaFirst.ID)
 		}
-		labels := newLabels.([]kv.KeyValue)
+		labels := newLabels.([]attribute.KeyValue)
 		for _, l := range labels {
 			for _, e := range expectedLables {
 				if l.Key == e.Key {

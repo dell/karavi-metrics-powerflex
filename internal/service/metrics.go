@@ -13,8 +13,8 @@ import (
 	"errors"
 	"sync"
 
-	"go.opentelemetry.io/otel/api/kv"
-	"go.opentelemetry.io/otel/api/metric"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric/instrument/asyncfloat64"
 )
 
 // MetricsRecorder supports recording I/O metrics
@@ -28,9 +28,10 @@ type MetricsRecorder interface {
 		totalLogicalCapacity, logicalCapacityAvailable, logicalCapacityInUse, logicalProvisioned float64) error
 }
 
-// Float64UpDownCounterCreater creates a Float64UpDownCounter metric
+// Float64UpDownCounterCreater creates a Float64UpDownCounter InstrumentProvider
+//go:generate mockgen -destination=mocks/instrument_provider_mocks.go -package=mocks go.opentelemetry.io/otel/metric/instrument/asyncfloat64 InstrumentProvider
 type Float64UpDownCounterCreater interface {
-	NewFloat64UpDownCounter(name string, options ...metric.InstrumentOption) (metric.Float64UpDownCounter, error)
+	AsyncFloat64() asyncfloat64.InstrumentProvider
 }
 
 // MetricsWrapper contains data used for pushing metrics data
@@ -43,58 +44,52 @@ type MetricsWrapper struct {
 
 // Metrics contains the list of metrics data that is collected
 type Metrics struct {
-	ReadBW       metric.BoundFloat64UpDownCounter
-	WriteBW      metric.BoundFloat64UpDownCounter
-	ReadIOPS     metric.BoundFloat64UpDownCounter
-	WriteIOPS    metric.BoundFloat64UpDownCounter
-	ReadLatency  metric.BoundFloat64UpDownCounter
-	WriteLatency metric.BoundFloat64UpDownCounter
+	ReadBW       asyncfloat64.UpDownCounter
+	WriteBW      asyncfloat64.UpDownCounter
+	ReadIOPS     asyncfloat64.UpDownCounter
+	WriteIOPS    asyncfloat64.UpDownCounter
+	ReadLatency  asyncfloat64.UpDownCounter
+	WriteLatency asyncfloat64.UpDownCounter
 }
 
 // CapacityMetrics contains the metrics related to a capacity
 type CapacityMetrics struct {
-	TotalLogicalCapacity     metric.BoundFloat64UpDownCounter
-	LogicalCapacityAvailable metric.BoundFloat64UpDownCounter
-	LogicalCapacityInUse     metric.BoundFloat64UpDownCounter
-	LogicalProvisioned       metric.BoundFloat64UpDownCounter
+	TotalLogicalCapacity     asyncfloat64.UpDownCounter
+	LogicalCapacityAvailable asyncfloat64.UpDownCounter
+	LogicalCapacityInUse     asyncfloat64.UpDownCounter
+	LogicalProvisioned       asyncfloat64.UpDownCounter
 }
 
-func (mw *MetricsWrapper) initMetrics(prefix, metaID string, labels []kv.KeyValue) (*Metrics, error) {
-	unboundReadBW, err := mw.Meter.NewFloat64UpDownCounter(prefix + "read_bw_megabytes_per_second")
+func (mw *MetricsWrapper) initMetrics(prefix, metaID string, labels []attribute.KeyValue) (*Metrics, error) {
+	readBW, err := mw.Meter.AsyncFloat64().UpDownCounter(prefix + "read_bw_megabytes_per_second")
 	if err != nil {
 		return nil, err
 	}
-	readBW := unboundReadBW.Bind(labels...)
 
-	unboundWriteBW, err := mw.Meter.NewFloat64UpDownCounter(prefix + "write_bw_megabytes_per_second")
+	writeBW, err := mw.Meter.AsyncFloat64().UpDownCounter(prefix + "write_bw_megabytes_per_second")
 	if err != nil {
 		return nil, err
 	}
-	writeBW := unboundWriteBW.Bind(labels...)
 
-	unboundReadIOPS, err := mw.Meter.NewFloat64UpDownCounter(prefix + "read_iops_per_second")
+	readIOPS, err := mw.Meter.AsyncFloat64().UpDownCounter(prefix + "read_iops_per_second")
 	if err != nil {
 		return nil, err
 	}
-	readIOPS := unboundReadIOPS.Bind(labels...)
 
-	unboundWriteIOPS, err := mw.Meter.NewFloat64UpDownCounter(prefix + "write_iops_per_second")
+	writeIOPS, err := mw.Meter.AsyncFloat64().UpDownCounter(prefix + "write_iops_per_second")
 	if err != nil {
 		return nil, err
 	}
-	writeIOPS := unboundWriteIOPS.Bind(labels...)
 
-	unboundReadLatency, err := mw.Meter.NewFloat64UpDownCounter(prefix + "read_latency_milliseconds")
+	readLatency, err := mw.Meter.AsyncFloat64().UpDownCounter(prefix + "read_latency_milliseconds")
 	if err != nil {
 		return nil, err
 	}
-	readLatency := unboundReadLatency.Bind(labels...)
 
-	unboundWriteLatency, err := mw.Meter.NewFloat64UpDownCounter(prefix + "write_latency_milliseconds")
+	writeLatency, err := mw.Meter.AsyncFloat64().UpDownCounter(prefix + "write_latency_milliseconds")
 	if err != nil {
 		return nil, err
 	}
-	writeLatency := unboundWriteLatency.Bind(labels...)
 
 	metrics := &Metrics{
 		ReadBW:       readBW,
@@ -111,30 +106,26 @@ func (mw *MetricsWrapper) initMetrics(prefix, metaID string, labels []kv.KeyValu
 	return metrics, nil
 }
 
-func (mw *MetricsWrapper) initCapacityMetrics(prefix, metaID string, labels []kv.KeyValue) (*CapacityMetrics, error) {
-	unboundTotalLogicalCapacity, err := mw.Meter.NewFloat64UpDownCounter(prefix + "total_logical_capacity_gigabytes")
+func (mw *MetricsWrapper) initCapacityMetrics(prefix, metaID string, labels []attribute.KeyValue) (*CapacityMetrics, error) {
+	totalLogicalCapacity, err := mw.Meter.AsyncFloat64().UpDownCounter(prefix + "total_logical_capacity_gigabytes")
 	if err != nil {
 		return nil, err
 	}
-	totalLogicalCapacity := unboundTotalLogicalCapacity.Bind(labels...)
 
-	unboundLogicalCapacityAvailable, err := mw.Meter.NewFloat64UpDownCounter(prefix + "logical_capacity_available_gigabytes")
+	logicalCapacityAvailable, err := mw.Meter.AsyncFloat64().UpDownCounter(prefix + "logical_capacity_available_gigabytes")
 	if err != nil {
 		return nil, err
 	}
-	logicalCapacityAvailable := unboundLogicalCapacityAvailable.Bind(labels...)
 
-	unboundLogicalCapacityInUse, err := mw.Meter.NewFloat64UpDownCounter(prefix + "logical_capacity_in_use_gigabytes")
+	logicalCapacityInUse, err := mw.Meter.AsyncFloat64().UpDownCounter(prefix + "logical_capacity_in_use_gigabytes")
 	if err != nil {
 		return nil, err
 	}
-	logicalCapacityInUse := unboundLogicalCapacityInUse.Bind(labels...)
 
-	unboundLogicalProvisioned, err := mw.Meter.NewFloat64UpDownCounter(prefix + "logical_provisioned_gigabytes")
+	logicalProvisioned, err := mw.Meter.AsyncFloat64().UpDownCounter(prefix + "logical_provisioned_gigabytes")
 	if err != nil {
 		return nil, err
 	}
-	logicalProvisioned := unboundLogicalProvisioned.Bind(labels...)
 
 	metrics := &CapacityMetrics{
 		TotalLogicalCapacity:     totalLogicalCapacity,
@@ -157,7 +148,7 @@ func (mw *MetricsWrapper) Record(ctx context.Context, meta interface{},
 
 	var prefix string
 	var metaID string
-	var labels []kv.KeyValue
+	var labels []attribute.KeyValue
 	switch v := meta.(type) {
 	case *VolumeMeta:
 		prefix, metaID = "powerflex_volume_", v.ID
@@ -167,23 +158,23 @@ func (mw *MetricsWrapper) Record(ctx context.Context, meta interface{},
 			mappedSDCIDs += (ip.SdcID + "__")
 			mappedSDCIPs += (ip.SdcIP + "__")
 		}
-		labels = []kv.KeyValue{
-			kv.String("VolumeID", v.ID),
-			kv.String("VolumeName", v.Name),
-			kv.String("StorageSystemID", v.StorageSystemID),
-			kv.String("PersistentVolumeName", v.PersistentVolumeName),
-			kv.String("MappedNodeIDs", mappedSDCIDs),
-			kv.String("MappedNodeIPs", mappedSDCIPs),
-			kv.String("PlotWithMean", "No"),
+		labels = []attribute.KeyValue{
+			attribute.String("VolumeID", v.ID),
+			attribute.String("VolumeName", v.Name),
+			attribute.String("StorageSystemID", v.StorageSystemID),
+			attribute.String("PersistentVolumeName", v.PersistentVolumeName),
+			attribute.String("MappedNodeIDs", mappedSDCIDs),
+			attribute.String("MappedNodeIPs", mappedSDCIPs),
+			attribute.String("PlotWithMean", "No"),
 		}
 	case *SDCMeta:
 		prefix, metaID = "powerflex_export_node_", v.ID
-		labels = []kv.KeyValue{
-			kv.String("ID", v.ID),
-			kv.String("Name", v.Name),
-			kv.String("IP", v.IP),
-			kv.String("NodeGUID", v.SdcGUID),
-			kv.String("PlotWithMean", "No"),
+		labels = []attribute.KeyValue{
+			attribute.String("ID", v.ID),
+			attribute.String("Name", v.Name),
+			attribute.String("IP", v.IP),
+			attribute.String("NodeGUID", v.SdcGUID),
+			attribute.String("PlotWithMean", "No"),
 		}
 	default:
 		return errors.New("unknown MetaData type")
@@ -206,7 +197,7 @@ func (mw *MetricsWrapper) Record(ctx context.Context, meta interface{},
 			}
 			metricsMapValue = newMetrics
 		} else {
-			currentLabels := currentLabels.([]kv.KeyValue)
+			currentLabels := currentLabels.([]attribute.KeyValue)
 			updatedLabels := currentLabels
 			haveLabelsChanged := false
 			for i, current := range currentLabels {
@@ -231,12 +222,12 @@ func (mw *MetricsWrapper) Record(ctx context.Context, meta interface{},
 
 	metrics := metricsMapValue.(*Metrics)
 
-	metrics.ReadBW.Add(ctx, readBW)
-	metrics.WriteBW.Add(ctx, writeBW)
-	metrics.ReadIOPS.Add(ctx, readIOPS)
-	metrics.WriteIOPS.Add(ctx, writeIOPS)
-	metrics.ReadLatency.Add(ctx, readLatency)
-	metrics.WriteLatency.Add(ctx, writeLatency)
+	metrics.ReadBW.Observe(ctx, readBW, labels...)
+	metrics.WriteBW.Observe(ctx, writeBW, labels...)
+	metrics.ReadIOPS.Observe(ctx, readIOPS, labels...)
+	metrics.WriteIOPS.Observe(ctx, writeIOPS, labels...)
+	metrics.ReadLatency.Observe(ctx, readLatency, labels...)
+	metrics.WriteLatency.Observe(ctx, writeLatency, labels...)
 
 	return nil
 }
@@ -251,11 +242,11 @@ func (mw *MetricsWrapper) RecordCapacity(ctx context.Context, meta interface{},
 		case "csi-vxflexos.dellemc.com":
 			prefix, metaID := "powerflex_storage_pool_", v.ID
 			for pool := range v.StoragePools {
-				labels := []kv.KeyValue{
-					kv.String("StorageClass", v.Name),
-					kv.String("Driver", v.Driver),
-					kv.String("StoragePool", pool),
-					kv.String("StorageSystemID", v.StorageSystemID),
+				labels := []attribute.KeyValue{
+					attribute.String("StorageClass", v.Name),
+					attribute.String("Driver", v.Driver),
+					attribute.String("StoragePool", pool),
+					attribute.String("StorageSystemID", v.StorageSystemID),
 				}
 
 				metricsMapValue, ok := mw.CapacityMetrics.Load(metaID)
@@ -269,10 +260,10 @@ func (mw *MetricsWrapper) RecordCapacity(ctx context.Context, meta interface{},
 
 				metrics := metricsMapValue.(*CapacityMetrics)
 
-				metrics.TotalLogicalCapacity.Add(ctx, totalLogicalCapacity)
-				metrics.LogicalCapacityAvailable.Add(ctx, logicalCapacityAvailable)
-				metrics.LogicalCapacityInUse.Add(ctx, logicalCapacityInUse)
-				metrics.LogicalProvisioned.Add(ctx, logicalProvisioned)
+				metrics.TotalLogicalCapacity.Observe(ctx, totalLogicalCapacity, labels...)
+				metrics.LogicalCapacityAvailable.Observe(ctx, logicalCapacityAvailable, labels...)
+				metrics.LogicalCapacityInUse.Observe(ctx, logicalCapacityInUse, labels...)
+				metrics.LogicalProvisioned.Observe(ctx, logicalProvisioned, labels...)
 			}
 		}
 	default:
