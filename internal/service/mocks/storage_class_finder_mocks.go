@@ -5,35 +5,36 @@
 package mocks
 
 import (
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	v1 "k8s.io/api/storage/v1"
-	reflect "reflect"
 )
 
-// MockStorageClassFinder is a mock of StorageClassFinder interface
+// MockStorageClassFinder is a mock of StorageClassFinder interface.
 type MockStorageClassFinder struct {
 	ctrl     *gomock.Controller
 	recorder *MockStorageClassFinderMockRecorder
 }
 
-// MockStorageClassFinderMockRecorder is the mock recorder for MockStorageClassFinder
+// MockStorageClassFinderMockRecorder is the mock recorder for MockStorageClassFinder.
 type MockStorageClassFinderMockRecorder struct {
 	mock *MockStorageClassFinder
 }
 
-// NewMockStorageClassFinder creates a new mock instance
+// NewMockStorageClassFinder creates a new mock instance.
 func NewMockStorageClassFinder(ctrl *gomock.Controller) *MockStorageClassFinder {
 	mock := &MockStorageClassFinder{ctrl: ctrl}
 	mock.recorder = &MockStorageClassFinderMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockStorageClassFinder) EXPECT() *MockStorageClassFinderMockRecorder {
 	return m.recorder
 }
 
-// GetStorageClasses mocks base method
+// GetStorageClasses mocks base method.
 func (m *MockStorageClassFinder) GetStorageClasses() ([]v1.StorageClass, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetStorageClasses")
@@ -42,7 +43,7 @@ func (m *MockStorageClassFinder) GetStorageClasses() ([]v1.StorageClass, error) 
 	return ret0, ret1
 }
 
-// GetStorageClasses indicates an expected call of GetStorageClasses
+// GetStorageClasses indicates an expected call of GetStorageClasses.
 func (mr *MockStorageClassFinderMockRecorder) GetStorageClasses() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStorageClasses", reflect.TypeOf((*MockStorageClassFinder)(nil).GetStorageClasses))

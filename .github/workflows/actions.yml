@@ -76,3 +76,5 @@ jobs:
         with:
           image-name: csm-metrics-powerflex
           severity-threshold: HIGH
+        env:
+          DOCKLE_HOST: "unix:///var/run/docker.sock"

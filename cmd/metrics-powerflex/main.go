@@ -23,7 +23,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	sio "github.com/dell/goscaleio"
-	"go.opentelemetry.io/otel/api/global"
+	"go.opentelemetry.io/otel/metric/global"
 
 	"os"
 
