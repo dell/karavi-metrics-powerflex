@@ -16,11 +16,13 @@ type MappedSDC struct {
 
 // VolumeMeta is the details of a volume in an SDC
 type VolumeMeta struct {
-	ID                   string
-	Name                 string
-	PersistentVolumeName string
-	StorageSystemID      string
-	MappedSDCs           []MappedSDC
+	ID                        string
+	Name                      string
+	PersistentVolumeName      string
+	PersistentVolumeClaimName string
+	Namespace                 string
+	StorageSystemID           string
+	MappedSDCs                []MappedSDC
 }
 
 // SDCMeta is meta data for a specific SDC

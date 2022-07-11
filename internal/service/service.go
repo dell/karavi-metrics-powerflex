@@ -434,6 +434,8 @@ func (s *PowerFlexService) gatherVolumeMetrics(ctx context.Context, volumeFinder
 				if pv, ok := persistentVolumes[volumeMeta.Name]; ok {
 					volumeMeta.PersistentVolumeName = pv.PersistentVolume
 					volumeMeta.StorageSystemID = pv.StorageSystemID
+					volumeMeta.Namespace = pv.Namespace
+					volumeMeta.PersistentVolumeClaimName = pv.VolumeClaimName
 				} else {
 					s.Logger.WithField("volume_id", volumeMeta.ID).Error("could not find a Persistent Volume that maps to storage system volume ID")
 				}

@@ -38,8 +38,11 @@ func Test_Metrics_Record(t *testing.T) {
 
 	metas := []interface{}{
 		&service.VolumeMeta{
-			Name: "newVolume",
-			ID:   "123",
+			Name:                      "newVolume",
+			ID:                        "123",
+			PersistentVolumeName:      "pvol0",
+			PersistentVolumeClaimName: "pvc0",
+			Namespace:                 "namespace0",
 			MappedSDCs: []service.MappedSDC{
 				{
 					SdcID: "111",
@@ -474,8 +477,11 @@ func Test_Metrics_RecordCapacity(t *testing.T) {
 
 func Test_Volume_Metrics_Label_Update(t *testing.T) {
 	metaFirst := &service.VolumeMeta{
-		Name: "newVolume",
-		ID:   "123",
+		Name:                      "newVolume",
+		ID:                        "123",
+		PersistentVolumeName:      "pvol1",
+		PersistentVolumeClaimName: "pvc1",
+		Namespace:                 "namespace1",
 		MappedSDCs: []service.MappedSDC{
 			{
 				SdcID: "111",
@@ -485,8 +491,11 @@ func Test_Volume_Metrics_Label_Update(t *testing.T) {
 	}
 
 	metaSecond := &service.VolumeMeta{
-		Name: "newVolume",
-		ID:   "123",
+		Name:                      "newVolume",
+		ID:                        "123",
+		PersistentVolumeName:      "pvol2",
+		PersistentVolumeClaimName: "pvc2",
+		Namespace:                 "namespace2",
 		MappedSDCs: []service.MappedSDC{
 			{
 				SdcID: "222",
@@ -498,6 +507,9 @@ func Test_Volume_Metrics_Label_Update(t *testing.T) {
 	expectedLables := []attribute.KeyValue{
 		attribute.String("VolumeID", metaSecond.ID),
 		attribute.String("VolumeName", metaSecond.Name),
+		attribute.String("PersistentVolumeName", metaSecond.PersistentVolumeName),
+		attribute.String("PersistentVolumeClaimName", metaSecond.PersistentVolumeClaimName),
+		attribute.String("Namespace", metaSecond.Namespace),
 		attribute.String("MappedNodeIDs", "__"+metaSecond.MappedSDCs[0].SdcID+"__"),
 		attribute.String("MappedNodeIPs", "__"+metaSecond.MappedSDCs[0].SdcIP+"__"),
 		attribute.String("PlotWithMean", "No"),
