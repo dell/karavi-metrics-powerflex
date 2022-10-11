@@ -11,6 +11,7 @@ import "go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 //  http://www.apache.org/licenses/LICENSE-2.0
 
 // Otlexporter is an interface for all OpenTelemetry exporters
+//
 //go:generate mockgen -destination=mocks/otlexporters_mocks.go -package=exportermocks github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters Otlexporter
 type Otlexporter interface {
 	InitExporter(...otlpmetricgrpc.Option) error

@@ -13,6 +13,7 @@ import (
 )
 
 // NodeGetter is an interface for getting a list of storage class information
+//
 //go:generate mockgen -destination=mocks/node_getter_mocks.go -package=mocks github.com/dell/karavi-metrics-powerflex/internal/k8s NodeGetter
 type NodeGetter interface {
 	GetNodes() (*corev1.NodeList, error)
