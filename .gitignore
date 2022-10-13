@@ -1,2 +1,4 @@
 vendor/
 cmd/*/bin/
+**/.vscode/
+**/.idea/

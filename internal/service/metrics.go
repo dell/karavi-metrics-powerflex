@@ -18,6 +18,7 @@ import (
 )
 
 // MetricsRecorder supports recording I/O metrics
+//
 //go:generate mockgen -destination=mocks/metrics_mocks.go -package=mocks github.com/dell/karavi-metrics-powerflex/internal/service MetricsRecorder,Float64UpDownCounterCreater
 type MetricsRecorder interface {
 	Record(ctx context.Context, meta interface{},
@@ -29,6 +30,7 @@ type MetricsRecorder interface {
 }
 
 // Float64UpDownCounterCreater creates a Float64UpDownCounter InstrumentProvider
+//
 //go:generate mockgen -destination=mocks/instrument_provider_mocks.go -package=mocks go.opentelemetry.io/otel/metric/instrument/asyncfloat64 InstrumentProvider
 type Float64UpDownCounterCreater interface {
 	AsyncFloat64() asyncfloat64.InstrumentProvider

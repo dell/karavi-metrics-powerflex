@@ -15,6 +15,7 @@ import (
 )
 
 // KubernetesAPI is an interface for accessing the Kubernetes API
+//
 //go:generate mockgen -destination=mocks/kubernetes_api_mocks.go -package=mocks github.com/dell/karavi-metrics-powerflex/internal/k8s KubernetesAPI
 type KubernetesAPI interface {
 	GetCSINodes() (*v1.CSINodeList, error)
