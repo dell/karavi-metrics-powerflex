@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -197,7 +198,7 @@ func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFind
 
 		// backwards compatible with previous 'Insecure' flag
 		insecure := storageSystem.Insecure || storageSystem.SkipCertificateValidation
-		client, err := sio.NewClientWithArgs(powerFlexEndpoint, "", insecure, true)
+		client, err := sio.NewClientWithArgs(powerFlexEndpoint, "", math.MaxInt64, insecure, true)
 		if err != nil {
 			logger.WithError(err).Fatal("creating powerflex client")
 		}
