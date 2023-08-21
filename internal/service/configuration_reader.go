@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2021-2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+ Copyright (c) 2021-2023 Dell Inc. or its subsidiaries. All Rights Reserved.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package service
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -46,7 +45,7 @@ func (c *ConfigurationReader) GetStorageSystemConfiguration(file string) ([]Arra
 		return nil, fmt.Errorf(fmt.Sprintf("File %s does not exist", file))
 	}
 
-	config, err := ioutil.ReadFile(filepath.Clean(file))
+	config, err := os.ReadFile(filepath.Clean(file))
 	if err != nil {
 		return nil, fmt.Errorf(fmt.Sprintf("File %s errors: %v", file, err))
 	}
