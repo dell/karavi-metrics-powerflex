@@ -134,7 +134,7 @@ type LeaderElector interface {
 }
 
 // GetSDCs returns a slice of SDCs
-func (s *PowerFlexService) GetSDCs(ctx context.Context, client PowerFlexClient, sdcFinder SDCFinder) ([]StatisticsGetter, error) {
+func (s *PowerFlexService) GetSDCs(_ context.Context, client PowerFlexClient, sdcFinder SDCFinder) ([]StatisticsGetter, error) {
 	var sdcs []StatisticsGetter
 	sdcGUIDs, err := sdcFinder.GetSDCGuids()
 	if err != nil {
@@ -233,7 +233,7 @@ func (s *PowerFlexService) GetSDCStatistics(ctx context.Context, nodes []corev1.
 
 	for range s.pushSDCMetrics(ctx, s.gatherSDCMetrics(ctx, nodes, s.sdcServer(sdcs))) {
 		// consume the channel until it is empty and closed
-	}
+	} // revive:disable-line:empty-block
 }
 
 func (s *PowerFlexService) sdcServer(sdcs []StatisticsGetter) <-chan StatisticsGetter {
@@ -248,7 +248,7 @@ func (s *PowerFlexService) sdcServer(sdcs []StatisticsGetter) <-chan StatisticsG
 }
 
 // gatherSDCMetrics will collect, in parallel, stats against each SDC referenced by 'statGetters'
-func (s *PowerFlexService) gatherSDCMetrics(ctx context.Context, nodes []corev1.Node, sdcs <-chan StatisticsGetter) <-chan *SDCMetricsRecord {
+func (s *PowerFlexService) gatherSDCMetrics(_ context.Context, nodes []corev1.Node, sdcs <-chan StatisticsGetter) <-chan *SDCMetricsRecord {
 	start := time.Now()
 	defer s.timeSince(start, "gatherMetrics")
 
@@ -365,7 +365,7 @@ func getVolumeMeta(volume interface{}) *VolumeMeta {
 }
 
 // GetVolumes returns all unique, mapped volumes in sdcs
-func (s *PowerFlexService) GetVolumes(ctx context.Context, sdcs []StatisticsGetter) ([]VolumeStatisticsGetter, error) {
+func (s *PowerFlexService) GetVolumes(_ context.Context, sdcs []StatisticsGetter) ([]VolumeStatisticsGetter, error) {
 	var uniqueVolumes []VolumeStatisticsGetter
 	visited := make(map[string]bool)
 
@@ -404,7 +404,7 @@ func (s *PowerFlexService) ExportVolumeStatistics(ctx context.Context, volumes [
 
 	for range s.pushVolumeMetrics(ctx, s.gatherVolumeMetrics(ctx, volumeFinder, s.volumeServer(volumes))) {
 		// consume the channel until it is empty and closed
-	}
+	} // revive:disable-line:empty-block
 }
 
 // volumeServer will return a channel of volumes that can provide statistics about each volume
@@ -420,7 +420,7 @@ func (s *PowerFlexService) volumeServer(volumes []VolumeStatisticsGetter) <-chan
 }
 
 // gatherVolumeMetrics will return a channel of volume metrics based on the input of volumes
-func (s *PowerFlexService) gatherVolumeMetrics(ctx context.Context, volumeFinder VolumeFinder, volumes <-chan VolumeStatisticsGetter) <-chan *VolumeMetricsRecord {
+func (s *PowerFlexService) gatherVolumeMetrics(_ context.Context, volumeFinder VolumeFinder, volumes <-chan VolumeStatisticsGetter) <-chan *VolumeMetricsRecord {
 	start := time.Now()
 	defer s.timeSince(start, "gatherVolumeMetrics")
 
@@ -484,7 +484,6 @@ func (s *PowerFlexService) gatherVolumeMetrics(ctx context.Context, volumeFinder
 					readIOPS: readIOPS, writeIOPS: writeIOPS,
 					readLatency: readLatency, writeLatency: writeLatency,
 				}
-
 			}(volume)
 		}
 
@@ -538,7 +537,7 @@ func (s *PowerFlexService) pushVolumeMetrics(ctx context.Context, volumeMetrics 
 }
 
 // GetStorageClasses returns a list of StorageClassMeta
-func (s *PowerFlexService) GetStorageClasses(ctx context.Context, client PowerFlexClient, storageClassFinder StorageClassFinder) ([]StorageClassMeta, error) {
+func (s *PowerFlexService) GetStorageClasses(_ context.Context, client PowerFlexClient, storageClassFinder StorageClassFinder) ([]StorageClassMeta, error) {
 	var c *sio.Client
 	switch underlyingClient := client.(type) {
 	case *sio.Client:
@@ -645,7 +644,7 @@ func (s *PowerFlexService) GetStoragePoolStatistics(ctx context.Context, storage
 	for i, storageClassMeta := range storageClassMetas {
 		for range s.pushPoolStatistics(ctx, s.gatherPoolStatistics(ctx, &storageClassMetas[i], s.storagePoolServer(storageClassMeta.StoragePools))) {
 			// consume the channel until empty and closed
-		}
+		} // revive:disable-line:empty-block
 	}
 }
 
@@ -660,7 +659,7 @@ func (s *PowerFlexService) storagePoolServer(pools map[string]StoragePoolStatist
 	return poolChannel
 }
 
-func (s *PowerFlexService) gatherPoolStatistics(ctx context.Context, scMeta *StorageClassMeta, pool <-chan IDedPoolStatisticGetter) <-chan *storagePoolMetricsRecord {
+func (s *PowerFlexService) gatherPoolStatistics(_ context.Context, scMeta *StorageClassMeta, pool <-chan IDedPoolStatisticGetter) <-chan *storagePoolMetricsRecord {
 	start := time.Now()
 	defer s.timeSince(start, "gatherPoolStatistics")
 
@@ -705,7 +704,6 @@ func (s *PowerFlexService) gatherPoolStatistics(ctx context.Context, scMeta *Sto
 					LogicalCapacityInUse:     logicalCapacityInUse,
 					LogicalProvisioned:       logicalProvisioned,
 				}
-
 			}(pl)
 		}
 		wg.Wait()

@@ -116,7 +116,7 @@ func (mw *MetricsWrapper) initMetrics(prefix, metaID string, labels []attribute.
 	return metrics, nil
 }
 
-func (mw *MetricsWrapper) initCapacityMetrics(prefix, metaID string, labels []attribute.KeyValue) (*CapacityMetrics, error) {
+func (mw *MetricsWrapper) initCapacityMetrics(prefix, metaID string, _ []attribute.KeyValue) (*CapacityMetrics, error) {
 	totalLogicalCapacity, err := mw.Meter.AsyncFloat64().UpDownCounter(prefix + "total_logical_capacity_gigabytes")
 	if err != nil {
 		return nil, err
@@ -155,7 +155,6 @@ func (mw *MetricsWrapper) Record(ctx context.Context, meta interface{},
 	readIOPS, writeIOPS,
 	readLatency, writeLatency float64,
 ) error {
-
 	var prefix string
 	var metaID string
 	var labels []attribute.KeyValue
@@ -246,8 +245,8 @@ func (mw *MetricsWrapper) Record(ctx context.Context, meta interface{},
 
 // RecordCapacity will publish capacity metrics for a given instance
 func (mw *MetricsWrapper) RecordCapacity(ctx context.Context, meta interface{},
-	totalLogicalCapacity, logicalCapacityAvailable, logicalCapacityInUse, logicalProvisioned float64) error {
-
+	totalLogicalCapacity, logicalCapacityAvailable, logicalCapacityInUse, logicalProvisioned float64,
+) error {
 	switch v := meta.(type) {
 	case StorageClassMeta:
 		switch v.Driver {

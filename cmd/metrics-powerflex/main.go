@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -34,8 +35,6 @@ import (
 	sio "github.com/dell/goscaleio"
 	"go.opentelemetry.io/otel/metric/global"
 
-	"os"
-
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 )
@@ -47,7 +46,6 @@ const (
 )
 
 func main() {
-
 	logger := logrus.New()
 
 	viper.SetConfigFile(defaultConfigFile)
@@ -188,7 +186,7 @@ func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFind
 		if powerFlexSystemID == "" {
 			logger.WithError(err).Fatal("powerflex system ID was empty")
 		}
-		var storageID = k8s.StorageSystemID{
+		storageID := k8s.StorageSystemID{
 			ID:        powerFlexSystemID,
 			IsDefault: storageSystem.IsDefault,
 		}

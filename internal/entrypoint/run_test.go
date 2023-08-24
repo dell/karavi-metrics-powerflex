@@ -44,7 +44,6 @@ func Test_Run(t *testing.T) {
 	validVolumeTickInterval := entrypoint.MinimumSDCTickInterval
 
 	tests := map[string]func(t *testing.T) (expectError bool, config *entrypoint.Config, exporter otlexporters.Otlexporter, pflexSvc pflexServices.Service, prevConfigValidationFunc func(*entrypoint.Config) error, ctrl *gomock.Controller, validatingConfig bool){
-
 		"success": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)

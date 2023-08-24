@@ -46,7 +46,6 @@ type LeaderElector struct {
 
 // InitLeaderElection will run algorithm for leader election, call during service initialzation process
 func (elect *LeaderElector) InitLeaderElection(endpoint string, namespace string) error {
-
 	k8sconfig, err := InClusterConfigFn()
 	if err != nil {
 		return err

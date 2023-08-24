@@ -59,7 +59,6 @@ func Test_GetCSINodes(t *testing.T) {
 
 	tests := map[string]func(t *testing.T) (connectFn, configFn, []checkFn){
 		"success": func(*testing.T) (connectFn, configFn, []checkFn) {
-
 			nodes := &v1.CSINodeList{
 				Items: []v1.CSINode{
 					{
@@ -118,7 +117,6 @@ func Test_GetCSINodes(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func Test_GetPersistentVolumes(t *testing.T) {
@@ -147,7 +145,6 @@ func Test_GetPersistentVolumes(t *testing.T) {
 
 	tests := map[string]func(t *testing.T) (connectFn, configFn, []checkFn){
 		"success": func(*testing.T) (connectFn, configFn, []checkFn) {
-
 			volumes := &corev1.PersistentVolumeList{
 				Items: []corev1.PersistentVolume{
 					{
@@ -196,7 +193,6 @@ func Test_GetPersistentVolumes(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func Test_GetStorageClasses(t *testing.T) {

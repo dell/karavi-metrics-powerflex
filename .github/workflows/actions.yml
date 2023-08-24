@@ -70,11 +70,8 @@ jobs:
       - name: Get dependencies
         run:  go mod download
       - name: Build csm-metrics-powerflex Docker Image
-        run: make clean build docker  
-      - name: Image scanner
-        uses: Azure/container-scan@v0
+        run: make clean build docker
+      - name: Run Trivy action
+        uses: aquasecurity/trivy-action@master
         with:
-          image-name: csm-metrics-powerflex
-          severity-threshold: HIGH
-        env:
-          DOCKLE_HOST: "unix:///var/run/docker.sock"
+          image-ref: csm-metrics-powerflex

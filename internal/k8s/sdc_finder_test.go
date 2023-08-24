@@ -53,7 +53,6 @@ func Test_K8sSDCFinder(t *testing.T) {
 
 	tests := map[string]func(t *testing.T) (k8s.SDCFinder, []checkFn, *gomock.Controller){
 		"success": func(*testing.T) (k8s.SDCFinder, []checkFn, *gomock.Controller) {
-
 			ctrl := gomock.NewController(t)
 			api := mocks.NewMockKubernetesAPI(ctrl)
 
@@ -113,7 +112,6 @@ func Test_K8sSDCFinder(t *testing.T) {
 			return finder, check(hasNoError, checkExpectedOutput([]string{"node-1", "node-3"})), ctrl
 		},
 		"success with multiple driver names": func(*testing.T) (k8s.SDCFinder, []checkFn, *gomock.Controller) {
-
 			ctrl := gomock.NewController(t)
 			api := mocks.NewMockKubernetesAPI(ctrl)
 
@@ -181,5 +179,4 @@ func Test_K8sSDCFinder(t *testing.T) {
 			ctrl.Finish()
 		})
 	}
-
 }

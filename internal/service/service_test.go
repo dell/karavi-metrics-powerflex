@@ -314,7 +314,6 @@ func Test_GetSDCLatency(t *testing.T) {
 			assert.InDelta(t, tc.ExpectedWriteLatency, writeLatency, 0.001)
 		})
 	}
-
 }
 
 func Test_GetSDCs(t *testing.T) {
@@ -341,7 +340,6 @@ func Test_GetSDCs(t *testing.T) {
 
 	tests := map[string]func(t *testing.T) (service.PowerFlexClient, service.SDCFinder, []checkFn, *gomock.Controller){
 		"success": func(*testing.T) (service.PowerFlexClient, service.SDCFinder, []checkFn, *gomock.Controller) {
-
 			ctrl := gomock.NewController(t)
 			powerflexClient := mocks.NewMockPowerFlexClient(ctrl)
 			powerflexSystem := mocks.NewMockPowerFlexSystem(ctrl)
@@ -357,7 +355,6 @@ func Test_GetSDCs(t *testing.T) {
 			return powerflexClient, sdcFinder, check(hasNoError, checkSdcLength(2)), ctrl
 		},
 		"error calling GetSDCGuids": func(*testing.T) (service.PowerFlexClient, service.SDCFinder, []checkFn, *gomock.Controller) {
-
 			ctrl := gomock.NewController(t)
 			powerflexClient := mocks.NewMockPowerFlexClient(ctrl)
 			powerflexSystem := mocks.NewMockPowerFlexSystem(ctrl)
@@ -436,7 +433,6 @@ func Test_GetSDCMeta(t *testing.T) {
 
 	tests := map[string]func(t *testing.T) (*sio.Sdc, []corev1.Node, []checkFn){
 		"success": func(*testing.T) (*sio.Sdc, []corev1.Node, []checkFn) {
-
 			sdc := &sio.Sdc{
 				Sdc: &types.Sdc{
 					SdcIP: "1.2.3.4",
@@ -512,7 +508,6 @@ func Test_GetStorageClasses(t *testing.T) {
 
 	tests := map[string]func(t *testing.T) (service.PowerFlexClient, service.StorageClassFinder, []checkFn, *gomock.Controller){
 		"success one storage class one pool": func(*testing.T) (service.PowerFlexClient, service.StorageClassFinder, []checkFn, *gomock.Controller) {
-
 			ctrl := gomock.NewController(t)
 			powerflexClient := mocks.NewMockPowerFlexClient(ctrl)
 			storageClassFinder := mocks.NewMockStorageClassFinder(ctrl)
@@ -550,7 +545,6 @@ func Test_GetStorageClasses(t *testing.T) {
 			return powerflexClient, storageClassFinder, check(hasNoError, checkPoolLength("class-1", 1)), ctrl
 		},
 		"success two storage classes one pool": func(*testing.T) (service.PowerFlexClient, service.StorageClassFinder, []checkFn, *gomock.Controller) {
-
 			ctrl := gomock.NewController(t)
 			powerflexClient := mocks.NewMockPowerFlexClient(ctrl)
 			storageClassFinder := mocks.NewMockStorageClassFinder(ctrl)
@@ -600,7 +594,6 @@ func Test_GetStorageClasses(t *testing.T) {
 			return powerflexClient, storageClassFinder, check(hasNoError, checkPoolLength("class-1", 1), checkPoolLength("class-1-xfs", 1)), ctrl
 		},
 		"error calling GetStorageClasses": func(*testing.T) (service.PowerFlexClient, service.StorageClassFinder, []checkFn, *gomock.Controller) {
-
 			ctrl := gomock.NewController(t)
 			powerflexClient := mocks.NewMockPowerFlexClient(ctrl)
 			storageClassFinder := mocks.NewMockStorageClassFinder(ctrl)
@@ -610,7 +603,6 @@ func Test_GetStorageClasses(t *testing.T) {
 			return powerflexClient, storageClassFinder, check(hasError), ctrl
 		},
 		"error calling GetInstances": func(*testing.T) (service.PowerFlexClient, service.StorageClassFinder, []checkFn, *gomock.Controller) {
-
 			ctrl := gomock.NewController(t)
 			powerflexClient := mocks.NewMockPowerFlexClient(ctrl)
 			storageClassFinder := mocks.NewMockStorageClassFinder(ctrl)
@@ -683,7 +675,6 @@ func Test_GetStorageClasses(t *testing.T) {
 			return powerflexClient, storageClassFinder, check(hasError), ctrl
 		},
 		"calling GetInstances returns 0 systems": func(*testing.T) (service.PowerFlexClient, service.StorageClassFinder, []checkFn, *gomock.Controller) {
-
 			ctrl := gomock.NewController(t)
 			powerflexClient := mocks.NewMockPowerFlexClient(ctrl)
 			storageClassFinder := mocks.NewMockStorageClassFinder(ctrl)
@@ -888,13 +879,13 @@ func Benchmark_GetStoragePoolStatistics(b *testing.B) {
 
 	for i := 0; i < numOfPools; i++ {
 		i := i
-		tmp_sp := mocks.NewMockStoragePoolStatisticsGetter(ctrl)
-		tmp_sp.EXPECT().GetStatistics().DoAndReturn(func() (*types.Statistics, error) {
+		tmpSp := mocks.NewMockStoragePoolStatisticsGetter(ctrl)
+		tmpSp.EXPECT().GetStatistics().DoAndReturn(func() (*types.Statistics, error) {
 			dur, _ := time.ParseDuration(poolQueryTime)
 			time.Sleep(dur)
 			return &types.Statistics{}, nil
 		})
-		storagePools["poolID-"+strconv.Itoa(i)] = tmp_sp
+		storagePools["poolID-"+strconv.Itoa(i)] = tmpSp
 	}
 
 	scMetas := []service.StorageClassMeta{
@@ -943,13 +934,13 @@ func Test_GetVolumes(t *testing.T) {
 		"success": func(*testing.T) (setup, []service.StatisticsGetter, []checkFn, *gomock.Controller) {
 			ctrl := gomock.NewController(t)
 
-			mapped_infos := []*types.MappedSdcInfo{
+			mappedInfos := []*types.MappedSdcInfo{
 				{SdcID: "60001", SdcIP: "10.234"},
 				{SdcID: "60002", SdcIP: "10.235"},
 			}
 			volumes := []*types.Volume{
-				{ID: "1", Name: "name_testing1", MappedSdcInfo: mapped_infos},
-				{ID: "2", Name: "name_testing2", MappedSdcInfo: mapped_infos[:1]},
+				{ID: "1", Name: "name_testing1", MappedSdcInfo: mappedInfos},
+				{ID: "2", Name: "name_testing2", MappedSdcInfo: mappedInfos[:1]},
 			}
 
 			volumeClient := []*sio.Volume{
@@ -1145,13 +1136,13 @@ func Benchmark_ExportVolumeStatistics(b *testing.B) {
 	volFinder := mocks.NewMockVolumeFinder(ctrl)
 
 	for i := 0; i < numOfVolumes; i++ {
-		tmp_vol := mocks.NewMockVolumeStatisticsGetter(ctrl)
-		tmp_vol.EXPECT().GetVolumeStatistics().DoAndReturn(func() (*types.VolumeStatistics, error) {
+		tmpVol := mocks.NewMockVolumeStatisticsGetter(ctrl)
+		tmpVol.EXPECT().GetVolumeStatistics().DoAndReturn(func() (*types.VolumeStatistics, error) {
 			dur, _ := time.ParseDuration(volumeQueryTime)
 			time.Sleep(dur)
 			return &types.VolumeStatistics{}, nil
 		})
-		volumes = append(volumes, tmp_vol)
+		volumes = append(volumes, tmpVol)
 	}
 
 	service := service.PowerFlexService{MetricsWrapper: metrics, Logger: logrus.New()}
@@ -1327,7 +1318,6 @@ func Test_GetVolumeLatency(t *testing.T) {
 			assert.InDelta(t, tc.ExpectedWriteLatency, writeLatency, 0.001)
 		})
 	}
-
 }
 
 func Test_GetTotalLogicalCapacity(t *testing.T) {
