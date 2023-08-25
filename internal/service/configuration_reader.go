@@ -52,7 +52,6 @@ func (c *ConfigurationReader) GetStorageSystemConfiguration(file string) ([]Arra
 
 	if string(config) == "" {
 		return nil, fmt.Errorf("arrays details are not provided in vxflexos-config secret")
-
 	}
 
 	connectionData := make([]ArrayConnectionData, 0)

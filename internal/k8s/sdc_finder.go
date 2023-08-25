@@ -63,7 +63,6 @@ func (f *SDCFinder) isMatch(driver v1.CSINodeDriver) bool {
 					return true
 				}
 			}
-
 		}
 	}
 	return false

@@ -43,15 +43,13 @@ const (
 	// MinimumVolTickInterval is the minimum allowed interval when querying volume metrics
 	MinimumVolTickInterval = 5 * time.Second
 	// DefaultEndPoint for leader election path
-	DefaultEndPoint = "karavi-metrics-powerflex"
+	DefaultEndPoint = "karavi-metrics-powerflex" // #nosec G101
 	// DefaultNameSpace for powerflex pod running metrics collection
 	DefaultNameSpace = "karavi"
 )
 
-var (
-	// ConfigValidatorFunc is used to override config validation in testing
-	ConfigValidatorFunc func(*Config) error = ValidateConfig
-)
+// ConfigValidatorFunc is used to override config validation in testing
+var ConfigValidatorFunc = ValidateConfig
 
 // Config holds data that will be used by the service
 type Config struct {
@@ -116,7 +114,7 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	//set initial tick intervals
+	// set initial tick intervals
 	SDCTickInterval := config.SDCTickInterval
 	VolumeTickInterval := config.VolumeTickInterval
 	StoragePoolTickInterval := config.StoragePoolTickInterval
@@ -248,7 +246,7 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 			return nil
 		}
 
-		//check if tick interval config settings have changed
+		// check if tick interval config settings have changed
 		if SDCTickInterval != config.SDCTickInterval {
 			SDCTickInterval = config.SDCTickInterval
 			sdcTicker = time.NewTicker(SDCTickInterval)

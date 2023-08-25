@@ -53,7 +53,6 @@ func Test_K8sNodeFinder(t *testing.T) {
 
 	tests := map[string]func(t *testing.T) (k8s.NodeFinder, []checkFn, *gomock.Controller){
 		"success finding nodes": func(*testing.T) (k8s.NodeFinder, []checkFn, *gomock.Controller) {
-
 			ctrl := gomock.NewController(t)
 			api := mocks.NewMockNodeGetter(ctrl)
 

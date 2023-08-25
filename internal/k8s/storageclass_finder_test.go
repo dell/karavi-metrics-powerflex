@@ -53,7 +53,6 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 
 	tests := map[string]func(t *testing.T) (k8s.StorageClassFinder, []checkFn, *gomock.Controller){
 		"success not selecting storageclass that is not in config": func(*testing.T) (k8s.StorageClassFinder, []checkFn, *gomock.Controller) {
-
 			ctrl := gomock.NewController(t)
 			api := mocks.NewMockStorageClassGetter(ctrl)
 
@@ -96,7 +95,6 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 			return finder, check(hasNoError, checkExpectedOutput(expected.Items)), ctrl
 		},
 		"success selecting the matching driver name with storage classes": func(*testing.T) (k8s.StorageClassFinder, []checkFn, *gomock.Controller) {
-
 			ctrl := gomock.NewController(t)
 			api := mocks.NewMockStorageClassGetter(ctrl)
 
@@ -133,7 +131,6 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 			return finder, check(hasNoError, checkExpectedOutput(storageClasses.Items)), ctrl
 		},
 		"success selecting storage classes matching multiple driver names": func(*testing.T) (k8s.StorageClassFinder, []checkFn, *gomock.Controller) {
-
 			ctrl := gomock.NewController(t)
 			api := mocks.NewMockStorageClassGetter(ctrl)
 
@@ -191,7 +188,6 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 			return finder, check(hasNoError, checkExpectedOutput(storageClasses.Items)), ctrl
 		},
 		"success matching storage classes without systemID based on a default system being used": func(*testing.T) (k8s.StorageClassFinder, []checkFn, *gomock.Controller) {
-
 			ctrl := gomock.NewController(t)
 			api := mocks.NewMockStorageClassGetter(ctrl)
 
@@ -260,7 +256,6 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 			)), ctrl
 		},
 		"success selecting storage classes matching one of two driver names": func(*testing.T) (k8s.StorageClassFinder, []checkFn, *gomock.Controller) {
-
 			ctrl := gomock.NewController(t)
 			api := mocks.NewMockStorageClassGetter(ctrl)
 
@@ -358,7 +353,6 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 			ctrl.Finish()
 		})
 	}
-
 }
 
 func Test_GetStoragePools(t *testing.T) {
