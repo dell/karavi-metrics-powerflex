@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/dell/goscaleio v1.12.0
-	github.com/fsnotify/fsnotify v1.5.3
+	github.com/fsnotify/fsnotify v1.6.0
 	github.com/golang/mock v1.6.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.10.1
