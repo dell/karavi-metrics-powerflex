@@ -3,10 +3,10 @@ module github.com/dell/karavi-metrics-powerflex
 go 1.21
 
 require (
-	github.com/dell/goscaleio v1.11.1-0.20230816075825-380ffbcbcd75
+	github.com/dell/goscaleio v1.12.0
 	github.com/fsnotify/fsnotify v1.5.3
 	github.com/golang/mock v1.6.0
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.1
 	go.opentelemetry.io/otel v1.7.0
