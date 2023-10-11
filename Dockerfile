@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/ubi-micro@sha256:630cf7bdef807f048cadfe7180d6c27eb3aaa99323ffc3628811da230ed3322a
+FROM registry.access.redhat.com/ubi9/ubi-micro@sha256:21daf4c8bea788f6114822ab2d4a23cca6c682bdccc8aa7cae1124bcd8002066
 LABEL vendor="Dell Inc." \
       name="csm-metrics-powerflex" \
       summary="Dell Container Storage Modules (CSM) for Observability - Metrics for PowerFlex" \
