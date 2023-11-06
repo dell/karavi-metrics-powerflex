@@ -29,9 +29,15 @@ generate:
 test:
 	go test -count=1 -cover -race -timeout 30s -short ./...
 
+.PHONY: download-csm-common
+download-csm-common:
+	# TODO point to main branch
+	curl -O -L https://raw.githubusercontent.com/dell/csm/default-base-image/config/csm-common.mk
+
 .PHONY: docker
-docker:
-	SERVICE=cmd/metrics-powerflex docker build -t csm-metrics-powerflex -f Dockerfile cmd/metrics-powerflex/
+docker: download-csm-common
+	$(eval include csm-common.mk)
+	SERVICE=cmd/metrics-powerflex docker build -t csm-metrics-powerflex -f Dockerfile --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE) cmd/metrics-powerflex/
 
 .PHONY: push
 push:
