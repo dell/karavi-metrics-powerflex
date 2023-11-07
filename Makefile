@@ -31,8 +31,7 @@ test:
 
 .PHONY: download-csm-common
 download-csm-common:
-	# TODO point to main branch
-	curl -O -L https://raw.githubusercontent.com/dell/csm/default-base-image/config/csm-common.mk
+	curl -O -L https://raw.githubusercontent.com/dell/csm/main/config/csm-common.mk
 
 .PHONY: docker
 docker: download-csm-common
