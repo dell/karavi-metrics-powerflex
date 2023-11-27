@@ -23,6 +23,7 @@ import (
 
 	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 	"github.com/dell/karavi-metrics-powerflex/internal/k8s/mocks"
+	"github.com/sirupsen/logrus"
 
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
@@ -381,6 +382,96 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 					Driver:                  "csi-vxflexos.dellemc.com",
 					ProvisionedSize:         "16Gi",
 					StorageSystemVolumeName: "storage-system-volume-name",
+					StorageSystemID:         "storagesystemid1",
+					CreatedTime:             t1.String(),
+				},
+			})), ctrl
+		},
+		"success skipping volumes that has no pvc claim": func(*testing.T) (k8s.VolumeFinder, []checkFn, *gomock.Controller) {
+			ctrl := gomock.NewController(t)
+			api := mocks.NewMockVolumeGetter(ctrl)
+
+			t1, err := time.Parse(time.RFC3339, "2020-07-28T20:00:00+00:00")
+			assert.Nil(t, err)
+
+			volumes := &corev1.PersistentVolumeList{
+				Items: []corev1.PersistentVolume{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:              "persistent-volume-name1",
+							CreationTimestamp: metav1.Time{Time: t1},
+						},
+						Spec: corev1.PersistentVolumeSpec{
+							Capacity: map[corev1.ResourceName]resource.Quantity{
+								v1.ResourceStorage: resource.MustParse("16Gi"),
+							},
+							PersistentVolumeSource: corev1.PersistentVolumeSource{
+								CSI: &corev1.CSIPersistentVolumeSource{
+									Driver: "csi-vxflexos.dellemc.com",
+									VolumeAttributes: map[string]string{
+										"Name":            "storage-system-volume-name1",
+										"StorageSystemID": "storagesystemid1",
+									},
+									VolumeHandle: "storagesystemid1-volumeid1",
+								},
+							},
+							ClaimRef: &corev1.ObjectReference{
+								Name:      "pvc-name1",
+								Namespace: "namespace-1",
+								UID:       "pvc-uid",
+							},
+							StorageClassName: "storage-class-name",
+						},
+						Status: corev1.PersistentVolumeStatus{
+							Phase: "Bound",
+						},
+					},
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:              "persistent-volume-name-2",
+							CreationTimestamp: metav1.Time{Time: t1},
+						},
+						Spec: corev1.PersistentVolumeSpec{
+							Capacity: map[corev1.ResourceName]resource.Quantity{
+								v1.ResourceStorage: resource.MustParse("8Gi"),
+							},
+							PersistentVolumeSource: corev1.PersistentVolumeSource{
+								CSI: &corev1.CSIPersistentVolumeSource{
+									Driver: "csi-vxflexos.dellemc.com",
+									VolumeAttributes: map[string]string{
+										"Name":     "persistent-volume-name-2",
+										"systemId": "storagesystemid1",
+									},
+									VolumeHandle: "storagesystemid1-volumeid2",
+								},
+							},
+							ClaimRef:         nil,
+							StorageClassName: "storage-class-name-2",
+						},
+						Status: corev1.PersistentVolumeStatus{
+							Phase: "Available",
+						},
+					},
+				},
+			}
+
+			api.EXPECT().GetPersistentVolumes().Times(1).Return(volumes, nil)
+
+			ids := make([]k8s.StorageSystemID, 1)
+			ids[0] = k8s.StorageSystemID{ID: "storagesystemid1", DriverNames: []string{"csi-vxflexos.dellemc.com"}}
+
+			finder := k8s.VolumeFinder{API: api, StorageSystemID: ids, Logger: logrus.New()}
+			return finder, check(hasNoError, checkExpectedOutput([]k8s.VolumeInfo{
+				{
+					Namespace:               "namespace-1",
+					PersistentVolumeClaim:   "pvc-uid",
+					PersistentVolumeStatus:  "Bound",
+					VolumeClaimName:         "pvc-name1",
+					PersistentVolume:        "persistent-volume-name1",
+					StorageClass:            "storage-class-name",
+					Driver:                  "csi-vxflexos.dellemc.com",
+					ProvisionedSize:         "16Gi",
+					StorageSystemVolumeName: "storage-system-volume-name1",
 					StorageSystemID:         "storagesystemid1",
 					CreatedTime:             t1.String(),
 				},
