@@ -75,6 +75,12 @@ func (f VolumeFinder) GetPersistentVolumes() ([]VolumeInfo, error) {
 				continue
 			}
 
+			// Check added to skip PV s which do not have any PVC s
+			if volume.Spec.ClaimRef == nil {
+				f.Logger.Debugf("The PV, %s , do not have a claim \n", volume.Name)
+				continue
+			}
+
 			info := VolumeInfo{
 				Namespace:               claim.Namespace,
 				PersistentVolumeClaim:   string(claim.UID),
