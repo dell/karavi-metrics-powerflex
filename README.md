@@ -55,7 +55,7 @@ Once all prerequisites are on the Linux host, follow the steps below to clone an
 
 1. Clone the repository using the following command: `git clone https://github.com/dell/karavi-metrics-powerflex.git`
 1. Set the DOCKER_REPO environment variable to point to the local Docker repository, for example: `export DOCKER_REPO=<ip-address>:<port>`
-1. In the karavi-metrics-powerflex directory, run the following command to build the Docker image called karavi-metrics-powerflex: `make clean build docker`
+1. In the karavi-metrics-powerflex directory, run the following command to build the Docker image called csm-metrics-powerflex: `make docker`
 1. Tag (with the "latest" tag) and push the image to the local Docker repository by running the following command: `make tag push`
 
 __Note:__ Linux support only. If you are using a local insecure docker registry, ensure you configure the insecure registries on each of the Kubernetes worker nodes to allow access to the local docker repository.
