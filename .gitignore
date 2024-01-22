@@ -2,3 +2,5 @@ vendor/
 cmd/*/bin/
 **/.vscode/
 **/.idea/
+
+csm-common.mk

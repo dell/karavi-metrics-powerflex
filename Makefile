@@ -36,7 +36,7 @@ download-csm-common:
 .PHONY: docker
 docker: download-csm-common
 	$(eval include csm-common.mk)
-	SERVICE=cmd/metrics-powerflex docker build -t csm-metrics-powerflex -f Dockerfile --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE) cmd/metrics-powerflex/
+	docker build -t csm-metrics-powerflex -f Dockerfile --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE) .
 
 .PHONY: push
 push:
