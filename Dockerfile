@@ -1,7 +1,8 @@
 ARG BASEIMAGE
+ARG GOIMAGE
 
 # Build the sdk binary
-FROM golang:1.21 as builder
+FROM $GOIMAGE as builder
 
 # Set envirment variable
 ENV APP_NAME karavi-metrics-powerflex
