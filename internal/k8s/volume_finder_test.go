@@ -38,19 +38,19 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 	type checkFn func(*testing.T, []k8s.VolumeInfo, error)
 	check := func(fns ...checkFn) []checkFn { return fns }
 
-	hasNoError := func(t *testing.T, volumes []k8s.VolumeInfo, err error) {
+	hasNoError := func(t *testing.T, _ []k8s.VolumeInfo, err error) {
 		if err != nil {
 			t.Fatalf("expected no error")
 		}
 	}
 
 	checkExpectedOutput := func(expectedOutput []k8s.VolumeInfo) func(t *testing.T, volumes []k8s.VolumeInfo, err error) {
-		return func(t *testing.T, volumes []k8s.VolumeInfo, err error) {
+		return func(t *testing.T, volumes []k8s.VolumeInfo, _ error) {
 			assert.Equal(t, expectedOutput, volumes)
 		}
 	}
 
-	hasError := func(t *testing.T, volumes []k8s.VolumeInfo, err error) {
+	hasError := func(t *testing.T, _ []k8s.VolumeInfo, err error) {
 		if err == nil {
 			t.Fatalf("expected error")
 		}

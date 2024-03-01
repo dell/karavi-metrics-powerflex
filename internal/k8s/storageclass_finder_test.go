@@ -33,19 +33,19 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 	type checkFn func(*testing.T, []v1.StorageClass, error)
 	check := func(fns ...checkFn) []checkFn { return fns }
 
-	hasNoError := func(t *testing.T, storageClasses []v1.StorageClass, err error) {
+	hasNoError := func(t *testing.T, _ []v1.StorageClass, err error) {
 		if err != nil {
 			t.Fatalf("expected no error")
 		}
 	}
 
 	checkExpectedOutput := func(expectedOutput []v1.StorageClass) func(t *testing.T, storageClasses []v1.StorageClass, err error) {
-		return func(t *testing.T, storageClasses []v1.StorageClass, err error) {
+		return func(t *testing.T, storageClasses []v1.StorageClass, _ error) {
 			assert.Equal(t, expectedOutput, storageClasses)
 		}
 	}
 
-	hasError := func(t *testing.T, volumes []v1.StorageClass, err error) {
+	hasError := func(t *testing.T, _ []v1.StorageClass, err error) {
 		if err == nil {
 			t.Fatalf("expected error")
 		}

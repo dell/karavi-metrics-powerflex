@@ -33,19 +33,19 @@ func Test_K8sNodeFinder(t *testing.T) {
 	type checkFn func(*testing.T, []corev1.Node, error)
 	check := func(fns ...checkFn) []checkFn { return fns }
 
-	hasNoError := func(t *testing.T, nodes []corev1.Node, err error) {
+	hasNoError := func(t *testing.T, _ []corev1.Node, err error) {
 		if err != nil {
 			t.Fatalf("expected no error")
 		}
 	}
 
 	checkExpectedOutput := func(expectedOutput []corev1.Node) func(t *testing.T, nodes []corev1.Node, err error) {
-		return func(t *testing.T, nodes []corev1.Node, err error) {
+		return func(t *testing.T, nodes []corev1.Node, _ error) {
 			assert.Equal(t, expectedOutput, nodes)
 		}
 	}
 
-	hasError := func(t *testing.T, nodes []corev1.Node, err error) {
+	hasError := func(t *testing.T, _ []corev1.Node, err error) {
 		if err == nil {
 			t.Fatalf("expected error")
 		}
