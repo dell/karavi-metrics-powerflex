@@ -33,19 +33,19 @@ func Test_K8sSDCFinder(t *testing.T) {
 	type checkFn func(*testing.T, []string, error)
 	check := func(fns ...checkFn) []checkFn { return fns }
 
-	hasNoError := func(t *testing.T, sdcGuids []string, err error) {
+	hasNoError := func(t *testing.T, _ []string, err error) {
 		if err != nil {
 			t.Fatalf("expected no error")
 		}
 	}
 
 	checkExpectedOutput := func(expectedOutput []string) func(t *testing.T, sdcGuids []string, err error) {
-		return func(t *testing.T, sdcGuids []string, err error) {
+		return func(t *testing.T, sdcGuids []string, _ error) {
 			assert.Equal(t, expectedOutput, sdcGuids)
 		}
 	}
 
-	hasError := func(t *testing.T, sdcGuids []string, err error) {
+	hasError := func(t *testing.T, _ []string, err error) {
 		if err == nil {
 			t.Fatalf("expected error")
 		}

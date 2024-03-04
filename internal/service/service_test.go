@@ -320,19 +320,19 @@ func Test_GetSDCs(t *testing.T) {
 	type checkFn func(*testing.T, []service.StatisticsGetter, error)
 	check := func(fns ...checkFn) []checkFn { return fns }
 
-	hasNoError := func(t *testing.T, sdcs []service.StatisticsGetter, err error) {
+	hasNoError := func(t *testing.T, _ []service.StatisticsGetter, err error) {
 		if err != nil {
 			t.Fatalf("expected no error")
 		}
 	}
 
 	checkSdcLength := func(length int) func(t *testing.T, sdcs []service.StatisticsGetter, err error) {
-		return func(t *testing.T, sdcs []service.StatisticsGetter, err error) {
+		return func(t *testing.T, sdcs []service.StatisticsGetter, _ error) {
 			assert.Equal(t, length, len(sdcs))
 		}
 	}
 
-	hasError := func(t *testing.T, sdc []service.StatisticsGetter, err error) {
+	hasError := func(t *testing.T, _ []service.StatisticsGetter, err error) {
 		if err == nil {
 			t.Fatalf("expected error")
 		}
@@ -479,14 +479,14 @@ func Test_GetStorageClasses(t *testing.T) {
 	type checkFn func(*testing.T, []service.StorageClassMeta, error)
 	check := func(fns ...checkFn) []checkFn { return fns }
 
-	hasNoError := func(t *testing.T, classes []service.StorageClassMeta, err error) {
+	hasNoError := func(t *testing.T, _ []service.StorageClassMeta, err error) {
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
 	}
 
 	checkPoolLength := func(class string, length int) func(t *testing.T, classes []service.StorageClassMeta, err error) {
-		return func(t *testing.T, classes []service.StorageClassMeta, err error) {
+		return func(t *testing.T, classes []service.StorageClassMeta, _ error) {
 			if class == "" {
 				assert.Equal(t, 0, len(classes))
 				return
@@ -500,7 +500,7 @@ func Test_GetStorageClasses(t *testing.T) {
 		}
 	}
 
-	hasError := func(t *testing.T, classes []service.StorageClassMeta, err error) {
+	hasError := func(t *testing.T, _ []service.StorageClassMeta, err error) {
 		if err == nil {
 			t.Fatalf("expected error")
 		}
@@ -914,18 +914,18 @@ func Test_GetVolumes(t *testing.T) {
 	type checkFn func(*testing.T, []service.VolumeStatisticsGetter, error)
 	check := func(fns ...checkFn) []checkFn { return fns }
 
-	hasError := func(t *testing.T, vols []service.VolumeStatisticsGetter, err error) {
+	hasError := func(t *testing.T, _ []service.VolumeStatisticsGetter, err error) {
 		if err == nil {
 			t.Fatalf("expected error")
 		}
 	}
-	hasNoError := func(t *testing.T, vols []service.VolumeStatisticsGetter, err error) {
+	hasNoError := func(t *testing.T, _ []service.VolumeStatisticsGetter, err error) {
 		if err != nil {
 			t.Fatalf("did not expected error but got %v", err)
 		}
 	}
 	checkVolumeLength := func(length int) func(t *testing.T, vols []service.VolumeStatisticsGetter, err error) {
-		return func(t *testing.T, vols []service.VolumeStatisticsGetter, err error) {
+		return func(t *testing.T, vols []service.VolumeStatisticsGetter, _ error) {
 			assert.Equal(t, length, len(vols))
 		}
 	}

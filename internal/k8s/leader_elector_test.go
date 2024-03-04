@@ -53,7 +53,7 @@ func Test_InitLeaderElection(t *testing.T) {
 				return nil, nil
 			}
 
-			clientset := func(config *rest.Config) (*kubernetes.Clientset, error) {
+			clientset := func(_ *rest.Config) (*kubernetes.Clientset, error) {
 				return nil, errors.New("error")
 			}
 
@@ -64,11 +64,11 @@ func Test_InitLeaderElection(t *testing.T) {
 				return nil, nil
 			}
 
-			clientset := func(config *rest.Config) (*kubernetes.Clientset, error) {
+			clientset := func(_ *rest.Config) (*kubernetes.Clientset, error) {
 				mockClientset := &kubernetes.Clientset{}
 				return mockClientset, nil
 			}
-			leaderelection := func(lec leaderelection.LeaderElectionConfig) (*leaderelection.LeaderElector, error) {
+			leaderelection := func(_ leaderelection.LeaderElectionConfig) (*leaderelection.LeaderElector, error) {
 				return nil, errors.New("error")
 			}
 			return configFn, clientset, leaderelection, check(hasError)

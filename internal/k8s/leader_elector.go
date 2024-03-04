@@ -63,7 +63,7 @@ func (elect *LeaderElector) InitLeaderElection(endpoint string, namespace string
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(context.Context) {},
 			OnStoppedLeading: func() {},
-			OnNewLeader:      func(identity string) {},
+			OnNewLeader:      func(_ string) {},
 		},
 		Lock: &resourcelock.EndpointsLock{
 			EndpointsMeta: metav1.ObjectMeta{
