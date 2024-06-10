@@ -36,7 +36,11 @@ download-csm-common:
 .PHONY: docker
 docker: download-csm-common
 	$(eval include csm-common.mk)
-	docker build -t csm-metrics-powerflex -f Dockerfile --build-arg BASEIMAGE=$(DEFAULT_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE) .
+	@echo "Building base image from $(DEFAULT_BASEIMAGE) and loading dependencies..."
+	./scripts/build_ubi_micro.sh $(DEFAULT_BASEIMAGE)
+	@echo "Base image build: SUCCESS"
+	$(eval BASEIMAGE="localhost/mpfx-ubimicro:latest")
+	podman build -t csm-metrics-powerflex -f Dockerfile --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE) .
 
 .PHONY: push
 push:
