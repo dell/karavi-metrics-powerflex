@@ -39,7 +39,7 @@ build-base-image: download-csm-common
 	@echo "Building base image from $(DEFAULT_BASEIMAGE) and loading dependencies..."
 	./scripts/build_ubi_micro.sh $(DEFAULT_BASEIMAGE)
 	@echo "Base image build: SUCCESS"
-	$(eval BASEIMAGE="mpfx-ubimicro:latest")
+	$(eval BASEIMAGE=mpfx-ubimicro:latest)
 
 .PHONY: docker
 docker: build-base-image
