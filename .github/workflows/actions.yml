@@ -72,10 +72,12 @@ jobs:
         run:  go mod download
       - name: Build csm-metrics-powerflex Docker Image
         run: |
-         make clean build docker
-         podman save csm-metrics-powerflex -o /tmp/csm-metrics-powerflex.tar
+         chmod +x ./scripts/build-ubi-micro.sh
+         make build-base-image
+         podman build -t docker.io/csm-metrics-powerflex -f ./Dockerfile --build-arg GOIMAGE=golang:latest--build-arg BASEIMAGE="localhost/mpfx-ubimicro"
+         podman save docker.io/library/csm-metrics-powerflex -o /tmp/csm-metrics-powerflex.tar
          docker load -i /tmp/csm-metrics-powerflex.tar
       - name: Run Trivy action
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: localhost/csm-metrics-powerflex
+          image-ref: csm-metrics-powerflex
