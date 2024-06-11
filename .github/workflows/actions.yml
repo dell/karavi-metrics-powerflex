@@ -72,7 +72,7 @@ jobs:
         run:  go mod download
       - name: Build csm-metrics-powerflex Docker Image
         run: |
-         chmod +x ./scripts/build-ubi-micro.sh
+         chmod +x ./scripts/build_ubi_micro.sh
          make build-base-image
          podman build -t docker.io/csm-metrics-powerflex -f ./Dockerfile --build-arg GOIMAGE=golang:latest--build-arg BASEIMAGE="localhost/mpfx-ubimicro"
          podman save docker.io/library/csm-metrics-powerflex -o /tmp/csm-metrics-powerflex.tar
