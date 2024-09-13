@@ -1,9 +1,9 @@
 name: Workflow
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 jobs:
   code-check:
     name: Check Go formatting, linting, vetting
@@ -58,25 +58,25 @@ jobs:
     name: Image Scanner
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Go lastest
+      - name: Set up Go latest
         uses: actions/setup-go@v5
         with:
-          go-version: ^1.22
+          go-version: "stable"
           cache: false
         id: go
       - name: Checkout the code
         uses: actions/checkout@v4
       - name: Install Mockgen
-        run: go install github.com/golang/mock/mockgen@v1.4.4
+        run: go install github.com/golang/mock/mockgen@v1.6.0
       - name: Get dependencies
-        run:  go mod download
+        run: go mod download
       - name: Build csm-metrics-powerflex Docker Image
         run: |
-         chmod +x ./scripts/build_ubi_micro.sh
-         make build-base-image
-         podman build -t docker.io/csm-metrics-powerflex -f ./Dockerfile --build-arg GOIMAGE=golang:latest --build-arg BASEIMAGE="localhost/mpfx-ubimicro"
-         podman save docker.io/library/csm-metrics-powerflex -o /tmp/csm-metrics-powerflex.tar
-         docker load -i /tmp/csm-metrics-powerflex.tar
+          chmod +x ./scripts/build_ubi_micro.sh
+          make build-base-image
+          podman build -t docker.io/csm-metrics-powerflex -f ./Dockerfile --build-arg GOIMAGE=golang:latest --build-arg BASEIMAGE="localhost/mpfx-ubimicro"
+          podman save docker.io/library/csm-metrics-powerflex -o /tmp/csm-metrics-powerflex.tar
+          docker load -i /tmp/csm-metrics-powerflex.tar
       - name: Run Trivy action
         uses: aquasecurity/trivy-action@master
         with:

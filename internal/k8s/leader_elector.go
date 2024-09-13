@@ -65,12 +65,12 @@ func (elect *LeaderElector) InitLeaderElection(endpoint string, namespace string
 			OnStoppedLeading: func() {},
 			OnNewLeader:      func(_ string) {},
 		},
-		Lock: &resourcelock.EndpointsLock{
-			EndpointsMeta: metav1.ObjectMeta{
+		Lock: &resourcelock.LeaseLock{
+			LeaseMeta: metav1.ObjectMeta{
 				Name:      endpoint,
 				Namespace: namespace,
 			},
-			Client: k8sclient.CoreV1(),
+			Client: k8sclient.CoordinationV1(),
 			LockConfig: resourcelock.ResourceLockConfig{
 				Identity: os.Getenv("HOSTNAME"),
 			},
