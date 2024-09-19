@@ -7,8 +7,8 @@ help:
 	@echo
 	@echo "build    - Builds the code locally"
 	@echo "clean    - Cleans the local build"
-	@echo "docker   - Builds Docker images"
-	@echo "push     - Pushes Docker images to a registry"
+	@echo "podman   - Builds Podman images"
+	@echo "push     - Pushes Podman images to a registry"
 	@echo "check    - Runs code checking tools: lint, format, gosec, and vet"
 	@echo "test     - Runs the unit tests"
 	@echo
@@ -41,17 +41,18 @@ build-base-image: download-csm-common
 	@echo "Base image build: SUCCESS"
 	$(eval BASEIMAGE=mpfx-ubimicro:latest)
 
-.PHONY: docker
-docker: build-base-image
-	docker build -t csm-metrics-powerflex -f Dockerfile --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE) .
+# Pre-requisites: RHEL, buildah, podman
+.PHONY: podman
+podman: build-base-image
+	podman build -t csm-metrics-powerflex -f Dockerfile --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE) .
 
 .PHONY: push
 push:
-	docker push ${DOCKER_REPO}/csm-metrics-powerflex\:latest
+	podman push ${DOCKER_REPO}/csm-metrics-powerflex\:latest
 
 .PHONY: tag
 tag:
-	docker tag csm-metrics-powerflex\:latest ${DOCKER_REPO}/csm-metrics-powerflex\:latest
+	podman tag csm-metrics-powerflex\:latest ${DOCKER_REPO}/csm-metrics-powerflex\:latest
 
 .PHONY: check
 check:
