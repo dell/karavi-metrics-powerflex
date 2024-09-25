@@ -47,7 +47,7 @@ podman: build-base-image
 	podman build $(NOCACHE) -t csm-metrics-powerflex -f Dockerfile --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE) .
 
 .PHONY: podman-no-cache
-podman-no-cache: build-base-image
+podman-no-cache:
 	@make podman NOCACHE=--no-cache
 
 .PHONY: push
