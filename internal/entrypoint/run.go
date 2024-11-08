@@ -48,6 +48,7 @@ const (
 // ConfigValidatorFunc is used to override config validation in testing
 var ConfigValidatorFunc = ValidateConfig
 
+// PowerflexClient wraps a real powerflex client and an authentication token getter
 type PowerflexClient struct {
 	Client      pflexServices.PowerFlexClient
 	TokenGetter pflexServices.TokenGetter
