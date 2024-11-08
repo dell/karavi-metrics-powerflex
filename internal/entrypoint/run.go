@@ -143,7 +143,7 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 
 				token, err := sioConfig.TokenGetter.GetToken(ctx)
 				if err != nil {
-					logger.WithError(err).Error("getting token")
+					logger.WithError(err).Error("getting authentication token")
 					continue
 				}
 				sioConfig.Client.SetToken(token)
@@ -182,7 +182,7 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 
 				token, err := sioConfig.TokenGetter.GetToken(ctx)
 				if err != nil {
-					logger.WithError(err).Error("getting token")
+					logger.WithError(err).Error("getting authentication token")
 					continue
 				}
 				sioConfig.Client.SetToken(token)
@@ -220,7 +220,7 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 
 				token, err := sioConfig.TokenGetter.GetToken(ctx)
 				if err != nil {
-					logger.WithError(err).Error("getting token")
+					logger.WithError(err).Error("getting authentication token")
 					continue
 				}
 				sioConfig.Client.SetToken(token)
