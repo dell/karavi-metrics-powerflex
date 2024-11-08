@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"math"
 	"os"
 	"strconv"
@@ -28,7 +29,6 @@ import (
 	"github.com/dell/karavi-metrics-powerflex/internal/entrypoint"
 	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 	"github.com/dell/karavi-metrics-powerflex/internal/service"
-	pflexServices "github.com/dell/karavi-metrics-powerflex/internal/service"
 	otlexporters "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters"
 	"github.com/sirupsen/logrus"
 
@@ -164,8 +164,7 @@ func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFind
 	sdcFinder.StorageSystemID = make([]k8s.StorageSystemID, len(storageSystemArray))
 	storageClassFinder.StorageSystemID = make([]k8s.StorageSystemID, len(storageSystemArray))
 
-	config.PowerFlexClient = make(map[string]pflexServices.PowerFlexClient)
-	config.PowerFlexConfig = make(map[string]sio.ConfigConnect)
+	config.PowerFlexClient = make(map[string]*entrypoint.PowerflexClient)
 	for i, storageSystem := range storageSystemArray {
 		powerFlexEndpoint := storageSystem.Endpoint
 		if powerFlexEndpoint == "" {
@@ -200,9 +199,35 @@ func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFind
 		if err != nil {
 			logger.WithError(err).Fatal("creating powerflex client")
 		}
-		config.PowerFlexClient[powerFlexSystemID] = client
 
-		config.PowerFlexConfig[powerFlexSystemID] = sio.ConfigConnect{Username: powerFlexGatewayUser, Password: powerFlexGatewayPassword}
+		// create TokenGetter for system
+		tk := service.NewTokenManager(service.TokenManagerConfig{
+			PowerFlexClient:      client,
+			TokenRefreshInterval: 5 * time.Minute,
+			ConfigConnect: &sio.ConfigConnect{
+				Endpoint: powerFlexEndpoint,
+				Username: powerFlexGatewayUser,
+				Password: powerFlexGatewayPassword,
+			},
+			Logger: logger,
+		})
+
+		go func() {
+			err := tk.Start(context.Background())
+			if err != nil {
+				log.Printf("token cache stopped for %s: %v", powerFlexEndpoint, err)
+			}
+		}()
+
+		//todo: stop token getter of old client
+		/*if client, ok := oldConfig.PowerFlexClient[powerFlexSystemID]; ok {
+			client.TokenGetter.Stop()
+		}*/
+
+		config.PowerFlexClient[powerFlexSystemID] = &entrypoint.PowerflexClient{
+			Client:      client,
+			TokenGetter: tk,
+		}
 
 		logger.WithField("storage_system_id", powerFlexSystemID).Info("set powerflex system ID")
 	}

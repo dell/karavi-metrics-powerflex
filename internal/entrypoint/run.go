@@ -23,14 +23,11 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/dell/karavi-metrics-powerflex/internal/service"
 	pflexServices "github.com/dell/karavi-metrics-powerflex/internal/service"
 	otlexporters "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"google.golang.org/grpc/credentials"
-
-	sio "github.com/dell/goscaleio"
 )
 
 const (
@@ -51,18 +48,22 @@ const (
 // ConfigValidatorFunc is used to override config validation in testing
 var ConfigValidatorFunc = ValidateConfig
 
+type PowerflexClient struct {
+	Client      pflexServices.PowerFlexClient
+	TokenGetter pflexServices.TokenGetter
+}
+
 // Config holds data that will be used by the service
 type Config struct {
 	SDCTickInterval           time.Duration
 	VolumeTickInterval        time.Duration
 	StoragePoolTickInterval   time.Duration
-	PowerFlexClient           map[string]pflexServices.PowerFlexClient
-	PowerFlexConfig           map[string]sio.ConfigConnect
-	SDCFinder                 service.SDCFinder
-	StorageClassFinder        service.StorageClassFinder
-	LeaderElector             service.LeaderElector
-	VolumeFinder              service.VolumeFinder
-	NodeFinder                service.NodeFinder
+	PowerFlexClient           map[string]*PowerflexClient
+	SDCFinder                 pflexServices.SDCFinder
+	StorageClassFinder        pflexServices.StorageClassFinder
+	LeaderElector             pflexServices.LeaderElector
+	VolumeFinder              pflexServices.VolumeFinder
+	NodeFinder                pflexServices.NodeFinder
 	SDCMetricsEnabled         bool
 	VolumeMetricsEnabled      bool
 	StoragePoolMetricsEnabled bool
@@ -135,22 +136,21 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 
 			logger.WithField("number of PowerFlexClient", len(config.PowerFlexClient)).Debug("PowerFlexClient")
 
-			for key, client := range config.PowerFlexClient {
+			for key, sioConfig := range config.PowerFlexClient {
 				logger.WithField("storage system id", key).Debug("storage system id")
-				sioConfig, ok := config.PowerFlexConfig[key]
-				if !ok {
-					logger.WithError(err).WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
-					continue
-				}
-				_, err := client.Authenticate(&sioConfig)
-				if err != nil {
-					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("failed to authenticate with PowerFlex. retrying on next tick...")
-					continue
-				}
 
-				sdcs, err := pflexSvc.GetSDCs(ctx, client, config.SDCFinder)
+				endpoint := sioConfig.Client.GetConfigConnect().Endpoint
+
+				token, err := sioConfig.TokenGetter.GetToken(ctx)
 				if err != nil {
-					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("getting SDCs")
+					logger.WithError(err).Error("getting token")
+					continue
+				}
+				sioConfig.Client.SetToken(token)
+
+				sdcs, err := pflexSvc.GetSDCs(ctx, sioConfig.Client, config.SDCFinder)
+				if err != nil {
+					logger.WithError(err).WithField("endpoint", endpoint).Error("getting SDCs")
 					continue
 				}
 
@@ -175,21 +175,21 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 
 			logger.WithField("number of PowerFlexClient", len(config.PowerFlexClient)).Debug("PowerFlexClient")
 
-			for key, client := range config.PowerFlexClient {
+			for key, sioConfig := range config.PowerFlexClient {
 				logger.WithField("storage system id", key).Debug("storage system id")
-				sioConfig, ok := config.PowerFlexConfig[key]
-				if !ok {
-					logger.WithError(err).WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
+
+				endpoint := sioConfig.Client.GetConfigConnect().Endpoint
+
+				token, err := sioConfig.TokenGetter.GetToken(ctx)
+				if err != nil {
+					logger.WithError(err).Error("getting token")
 					continue
 				}
-				_, err := client.Authenticate(&sioConfig)
+				sioConfig.Client.SetToken(token)
+
+				sdcs, err := pflexSvc.GetSDCs(ctx, sioConfig.Client, config.SDCFinder)
 				if err != nil {
-					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("failed to authenticate with PowerFlex. retrying on next tick...")
-					continue
-				}
-				sdcs, err := pflexSvc.GetSDCs(ctx, client, config.SDCFinder)
-				if err != nil {
-					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("getting SDCs")
+					logger.WithError(err).WithField("endpoint", endpoint).Error("getting SDCs")
 					continue
 				}
 
@@ -213,23 +213,21 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 
 			logger.WithField("number of PowerFlexClient", len(config.PowerFlexClient)).Debug("PowerFlexClient")
 
-			for key, client := range config.PowerFlexClient {
+			for key, sioConfig := range config.PowerFlexClient {
 				logger.WithField("storage system id", key).Debug("storage system id")
 
-				sioConfig, ok := config.PowerFlexConfig[key]
-				if !ok {
-					logger.WithError(err).WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
-					continue
-				}
-				_, err := client.Authenticate(&sioConfig)
-				if err != nil {
-					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("failed to authenticate with PowerFlex. retrying on next tick...")
-					continue
-				}
+				endpoint := sioConfig.Client.GetConfigConnect().Endpoint
 
-				storageClassMetas, err := pflexSvc.GetStorageClasses(ctx, client, config.StorageClassFinder)
+				token, err := sioConfig.TokenGetter.GetToken(ctx)
 				if err != nil {
-					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("getting storage class and storage pool information")
+					logger.WithError(err).Error("getting token")
+					continue
+				}
+				sioConfig.Client.SetToken(token)
+
+				storageClassMetas, err := pflexSvc.GetStorageClasses(ctx, sioConfig.Client, config.StorageClassFinder)
+				if err != nil {
+					logger.WithError(err).WithField("endpoint", endpoint).Error("getting storage class and storage pool information")
 					continue
 				}
 
