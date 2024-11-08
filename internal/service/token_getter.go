@@ -36,10 +36,6 @@ type TokenManager struct {
 
 // Config is the configuration for building a PowerFlexTokenGetter
 type TokenManagerConfig struct {
-	//CredentialIdentifier string
-	//CredentialEngine     string
-	//CredentialPath       string
-	//StorageService       pb.StorageServiceClient
 	PowerFlexClient      *goscaleio.Client
 	TokenRefreshInterval time.Duration
 	ConfigConnect        *goscaleio.ConfigConnect
