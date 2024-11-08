@@ -164,6 +164,12 @@ func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFind
 	sdcFinder.StorageSystemID = make([]k8s.StorageSystemID, len(storageSystemArray))
 	storageClassFinder.StorageSystemID = make([]k8s.StorageSystemID, len(storageSystemArray))
 
+	// copy existing powerflex clients to stop the existing token getters
+	existingPowerflexClients := make(map[string]*entrypoint.PowerflexClient)
+	for k, v := range config.PowerFlexClient {
+		existingPowerflexClients[k] = v
+	}
+
 	config.PowerFlexClient = make(map[string]*entrypoint.PowerflexClient)
 	for i, storageSystem := range storageSystemArray {
 		powerFlexEndpoint := storageSystem.Endpoint
@@ -200,8 +206,12 @@ func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFind
 			logger.WithError(err).Fatal("creating powerflex client")
 		}
 
-		// create TokenGetter for system
-		tk := service.NewTokenManager(service.TokenManagerConfig{
+		// stop existing token getter
+		if client, ok := existingPowerflexClients[powerFlexSystemID]; ok {
+			client.TokenGetter.Stop()
+		}
+
+		tokenGetter := service.NewTokenManager(service.TokenManagerConfig{
 			PowerFlexClient:      client,
 			TokenRefreshInterval: 5 * time.Minute,
 			ConfigConnect: &sio.ConfigConnect{
@@ -213,20 +223,15 @@ func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFind
 		})
 
 		go func() {
-			err := tk.Start(context.Background())
+			err := tokenGetter.Start(context.Background())
 			if err != nil {
 				log.Printf("token cache stopped for %s: %v", powerFlexEndpoint, err)
 			}
 		}()
 
-		//todo: stop token getter of old client
-		/*if client, ok := oldConfig.PowerFlexClient[powerFlexSystemID]; ok {
-			client.TokenGetter.Stop()
-		}*/
-
 		config.PowerFlexClient[powerFlexSystemID] = &entrypoint.PowerflexClient{
 			Client:      client,
-			TokenGetter: tk,
+			TokenGetter: tokenGetter,
 		}
 
 		logger.WithField("storage_system_id", powerFlexSystemID).Info("set powerflex system ID")
