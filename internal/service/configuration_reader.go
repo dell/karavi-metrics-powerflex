@@ -42,12 +42,12 @@ type ConfigurationReader struct{}
 // If no default system is supplied, the first system in the list is returned
 func (c *ConfigurationReader) GetStorageSystemConfiguration(file string) ([]ArrayConnectionData, error) {
 	if _, err := os.Stat(file); os.IsNotExist(err) {
-		return nil, fmt.Errorf(fmt.Sprintf("File %s does not exist", file))
+		return nil, fmt.Errorf("%s", fmt.Sprintf("File %s does not exist", file))
 	}
 
 	config, err := os.ReadFile(filepath.Clean(file))
 	if err != nil {
-		return nil, fmt.Errorf(fmt.Sprintf("File %s errors: %v", file, err))
+		return nil, fmt.Errorf("%s", fmt.Sprintf("File %s errors: %v", file, err))
 	}
 
 	if string(config) == "" {
@@ -58,12 +58,12 @@ func (c *ConfigurationReader) GetStorageSystemConfiguration(file string) ([]Arra
 	// support backward compatibility
 	config, err = yaml.JSONToYAML(config)
 	if err != nil {
-		return nil, fmt.Errorf(fmt.Sprintf("converting json to yaml: %v", err))
+		return nil, fmt.Errorf("%s", fmt.Sprintf("converting json to yaml: %v", err))
 	}
 
 	err = yaml.Unmarshal(config, &connectionData)
 	if err != nil {
-		return nil, fmt.Errorf(fmt.Sprintf("Unable to parse the credentials: %v", err))
+		return nil, fmt.Errorf("%s", fmt.Sprintf("Unable to parse the credentials: %v", err))
 	}
 
 	if len(connectionData) == 0 {
@@ -82,16 +82,16 @@ func (c *ConfigurationReader) GetStorageSystemConfiguration(file string) ([]Arra
 
 func validateStorageSystem(system ArrayConnectionData, i int) error {
 	if system.SystemID == "" {
-		return fmt.Errorf(fmt.Sprintf("invalid value for system name at index %d", i))
+		return fmt.Errorf("%s", fmt.Sprintf("invalid value for system name at index %d", i))
 	}
 	if system.Username == "" {
-		return fmt.Errorf(fmt.Sprintf("invalid value for Username at index %d", i))
+		return fmt.Errorf("%s", fmt.Sprintf("invalid value for Username at index %d", i))
 	}
 	if system.Password == "" {
-		return fmt.Errorf(fmt.Sprintf("invalid value for Password at index %d", i))
+		return fmt.Errorf("%s", fmt.Sprintf("invalid value for Password at index %d", i))
 	}
 	if system.Endpoint == "" {
-		return fmt.Errorf(fmt.Sprintf("invalid value for Endpoint at index %d", i))
+		return fmt.Errorf("%s", fmt.Sprintf("invalid value for Endpoint at index %d", i))
 	}
 	return nil
 }

@@ -373,7 +373,7 @@ func Test_NewForConfigError(t *testing.T) {
 	defer func() { k8s.NewConfigFn = oldNewConfigFn }()
 	expected := "could not create Clientset from KubeConfig"
 	k8s.NewConfigFn = func(_ *rest.Config) (*kubernetes.Clientset, error) {
-		return nil, fmt.Errorf(expected)
+		return nil, fmt.Errorf("%s", expected)
 	}
 
 	_, err := k8sapi.GetStorageClasses()
