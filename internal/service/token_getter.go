@@ -25,7 +25,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// TokenGetter manages and retains a valid token for a PowerFlex
+// TokenManager manages and retains a valid token for a PowerFlex
 type TokenManager struct {
 	Config       TokenManagerConfig
 	sem          chan struct{}
@@ -34,7 +34,7 @@ type TokenManager struct {
 	done         chan struct{}
 }
 
-// Config is the configuration for building a PowerFlexTokenGetter
+// TokenManagerConfig is the configuration for building a TokenManagerConfig
 type TokenManagerConfig struct {
 	PowerFlexClient      *goscaleio.Client
 	TokenRefreshInterval time.Duration
@@ -42,7 +42,7 @@ type TokenManagerConfig struct {
 	Logger               *logrus.Logger
 }
 
-// NewTokenGetter returns a PowerFlexTokenGetter from the supplied Config
+// NewTokenManager returns a PowerFlexTokenGetter from the supplied Config
 func NewTokenManager(c TokenManagerConfig) *TokenManager {
 	return &TokenManager{
 		Config: c,
