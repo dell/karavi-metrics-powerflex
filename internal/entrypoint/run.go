@@ -177,7 +177,6 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 					logger.WithError(err).WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
 					continue
 				}
-
 				sdcs, err := pflexSvc.GetSDCs(ctx, client, config.SDCFinder)
 				if err != nil {
 					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("getting SDCs")
