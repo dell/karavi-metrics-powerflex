@@ -78,7 +78,6 @@ type TokenGetter interface {
 //
 //go:generate mockgen -destination=mocks/powerflex_client_mocks.go -package=mocks github.com/dell/karavi-metrics-powerflex/internal/service PowerFlexClient
 type PowerFlexClient interface {
-	//Authenticate(*sio.ConfigConnect) (sio.Cluster, error)
 	GetInstance(string) ([]*types.System, error)
 	FindSystem(string, string, string) (*sio.System, error)
 	GetStoragePool(href string) ([]*types.StoragePool, error)
