@@ -200,9 +200,13 @@ func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFind
 		if err != nil {
 			logger.WithError(err).Fatal("creating powerflex client")
 		}
-		config.PowerFlexClient[powerFlexSystemID] = client
 
-		config.PowerFlexConfig[powerFlexSystemID] = sio.ConfigConnect{Username: powerFlexGatewayUser, Password: powerFlexGatewayPassword}
+		_, err = client.Authenticate(&sio.ConfigConnect{Username: powerFlexGatewayUser, Password: powerFlexGatewayPassword})
+		if err != nil {
+			logger.WithError(err).Fatalf("authenticating to powerflex %s", powerFlexSystemID)
+		}
+
+		config.PowerFlexClient[powerFlexSystemID] = client
 
 		logger.WithField("storage_system_id", powerFlexSystemID).Info("set powerflex system ID")
 	}

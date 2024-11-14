@@ -47,7 +47,6 @@ func Test_Run(t *testing.T) {
 		"success": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			pfClient.EXPECT().Authenticate(gomock.Any()).AnyTimes().Return(sio.Cluster{}, nil)
 
 			sdcFinder := mocks.NewMockSDCFinder(ctrl)
 			sdcFinder.EXPECT().GetSDCGuids().AnyTimes().Return([]string{"1.2.3.4", "1.2.3.5"}, nil)
@@ -101,7 +100,6 @@ func Test_Run(t *testing.T) {
 		"success even if error during call to GetSDCs": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			pfClient.EXPECT().Authenticate(gomock.Any()).AnyTimes().Return(sio.Cluster{}, nil)
 
 			sdcFinder := mocks.NewMockSDCFinder(ctrl)
 			sdcFinder.EXPECT().GetSDCGuids().AnyTimes().Return([]string{"1.2.3.4", "1.2.3.5"}, nil)
@@ -154,7 +152,6 @@ func Test_Run(t *testing.T) {
 		"success even if error during call to NodeFinder": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			pfClient.EXPECT().Authenticate(gomock.Any()).AnyTimes().Return(sio.Cluster{}, nil)
 
 			sdcFinder := mocks.NewMockSDCFinder(ctrl)
 			sdcFinder.EXPECT().GetSDCGuids().AnyTimes().Return([]string{"1.2.3.4", "1.2.3.5"}, nil)
@@ -194,8 +191,6 @@ func Test_Run(t *testing.T) {
 		"success even if SDC metrics collection is disabled": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			// authenticate should not be called because SDC metrics collection is disabled
-			pfClient.EXPECT().Authenticate(gomock.Any()).Times(0).Return(sio.Cluster{}, nil)
 
 			sdcFinder := mocks.NewMockSDCFinder(ctrl)
 			// GetSDCGuids should not be called because SDC metrics collection is disabled
@@ -243,57 +238,6 @@ func Test_Run(t *testing.T) {
 				nil,
 				errors.New("error"),
 			)
-			svc.EXPECT().GetSDCStatistics(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-
-			return false, config, e, svc, prevConfigValidationFunc, ctrl, false
-		},
-		"success even if PowerFlex authentication fails": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
-			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			pfClient.EXPECT().Authenticate(gomock.Any()).Return(sio.Cluster{}, fmt.Errorf("An error occurred while authenticating with the PowerFlex server")).AnyTimes()
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
-			nodeFinder := mocks.NewMockNodeFinder(ctrl)
-			nodeFinder.EXPECT().GetNodes().AnyTimes().
-				Return([]corev1.Node{
-					{
-						ObjectMeta: metav1.ObjectMeta{
-							Name: "node1",
-						},
-						Status: corev1.NodeStatus{
-							Addresses: []corev1.NodeAddress{
-								{
-									Address: "1.2.3.6",
-								},
-							},
-						},
-					},
-				}, nil)
-
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
-			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
-
-			config := &entrypoint.Config{
-				PowerFlexClient:   map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:   map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:         sdcFinder,
-				NodeFinder:        nodeFinder,
-				LeaderElector:     leaderElector,
-				SDCMetricsEnabled: true,
-			}
-			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
-			entrypoint.ConfigValidatorFunc = noCheckConfig
-
-			e := exportermocks.NewMockOtlexporter(ctrl)
-			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
-			e.EXPECT().StopExporter().Return(nil)
-
-			svc := metrics.NewMockService(ctrl)
-			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
-				[]pflexServices.StatisticsGetter{},
-				nil,
-			)
-
 			svc.EXPECT().GetSDCStatistics(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 			return false, config, e, svc, prevConfigValidationFunc, ctrl, false
@@ -485,7 +429,6 @@ func Test_Run(t *testing.T) {
 		"success for volume metrics": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			pfClient.EXPECT().Authenticate(gomock.Any()).AnyTimes().Return(sio.Cluster{}, nil)
 
 			sdcFinder := mocks.NewMockSDCFinder(ctrl)
 			sdcFinder.EXPECT().GetSDCGuids().AnyTimes().Return([]string{"1.2.3.4", "1.2.3.5"}, nil)
@@ -521,38 +464,9 @@ func Test_Run(t *testing.T) {
 
 			return false, config, e, svc, prevConfigValidationFunc, ctrl, false
 		},
-		"success even with failed Powerflex authentication": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
-			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			pfClient.EXPECT().Authenticate(gomock.Any()).Return(sio.Cluster{}, fmt.Errorf("An error occurred while authenticating with the PowerFlex server")).AnyTimes()
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
-
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
-			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
-
-			config := &entrypoint.Config{
-				PowerFlexClient:      map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:      map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:            sdcFinder,
-				LeaderElector:        leaderElector,
-				VolumeMetricsEnabled: true,
-			}
-			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
-			entrypoint.ConfigValidatorFunc = noCheckConfig
-
-			e := exportermocks.NewMockOtlexporter(ctrl)
-			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
-			e.EXPECT().StopExporter().Return(nil)
-
-			svc := metrics.NewMockService(ctrl)
-
-			return false, config, e, svc, prevConfigValidationFunc, ctrl, false
-		},
 		"error getting volumes": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			pfClient.EXPECT().Authenticate(gomock.Any()).AnyTimes().Return(sio.Cluster{}, nil)
 
 			sdcFinder := mocks.NewMockSDCFinder(ctrl)
 			sdcFinder.EXPECT().GetSDCGuids().AnyTimes().Return([]string{"1.2.3.4", "1.2.3.5"}, nil)
@@ -590,7 +504,6 @@ func Test_Run(t *testing.T) {
 		"volume success even if error during call to GetSDCs": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			pfClient.EXPECT().Authenticate(gomock.Any()).AnyTimes().Return(sio.Cluster{}, nil)
 
 			sdcFinder := mocks.NewMockSDCFinder(ctrl)
 			sdcFinder.EXPECT().GetSDCGuids().AnyTimes().Return([]string{"1.2.3.4", "1.2.3.5"}, nil)
@@ -629,7 +542,6 @@ func Test_Run(t *testing.T) {
 		"success for storage class/pool": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			pfClient.EXPECT().Authenticate(gomock.Any()).AnyTimes().Return(sio.Cluster{}, nil)
 
 			sc1 := v1.StorageClass{}
 			sc1.Provisioner = "csi-vxflexos.dellemc.com"
@@ -704,8 +616,6 @@ func Test_Run(t *testing.T) {
 		"success even if is leader is false": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			// authenticate should not be called because SDC metrics collection is disabled
-			pfClient.EXPECT().Authenticate(gomock.Any()).Times(0).Return(sio.Cluster{}, nil)
 
 			sdcFinder := mocks.NewMockSDCFinder(ctrl)
 			// GetSDCGuids should not be called because SDC metrics collection is disabled
@@ -742,7 +652,6 @@ func Test_Run(t *testing.T) {
 		"success for storage class/pool with GetStorageClasses err": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			pfClient.EXPECT().Authenticate(gomock.Any()).AnyTimes().Return(sio.Cluster{}, nil)
 
 			sc1 := v1.StorageClass{}
 			sc1.Provisioner = "csi-vxflexos.dellemc.com"
@@ -781,37 +690,6 @@ func Test_Run(t *testing.T) {
 				Return(nil, fmt.Errorf("there was error getting the StorageClass")).AnyTimes()
 
 			svc.EXPECT().GetStoragePoolStatistics(gomock.Any(), gomock.Any()).AnyTimes()
-
-			return false, config, e, svc, prevConfigValidationFunc, ctrl, false
-		},
-		"success even if PowerFlex authentication fails for StoragePoolMetrics": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
-			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			pfClient.EXPECT().Authenticate(gomock.Any()).Return(sio.Cluster{}, fmt.Errorf("An error occurred while authenticating with the PowerFlex server")).AnyTimes()
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
-
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
-			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
-
-			config := &entrypoint.Config{
-				PowerFlexClient:           map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:           map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:                 sdcFinder,
-				LeaderElector:             leaderElector,
-				StoragePoolMetricsEnabled: true,
-			}
-			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
-			entrypoint.ConfigValidatorFunc = noCheckConfig
-
-			e := exportermocks.NewMockOtlexporter(ctrl)
-			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
-			e.EXPECT().StopExporter().Return(nil)
-
-			svc := metrics.NewMockService(ctrl)
-			// GetStorageClasses should not be called if authentication fails
-			svc.EXPECT().GetStorageClasses(gomock.Any(), gomock.Any(), gomock.Any()).Times(0).
-				Return(nil, fmt.Errorf("there was error getting the StorageClass"))
 
 			return false, config, e, svc, prevConfigValidationFunc, ctrl, false
 		},
