@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -85,6 +86,7 @@ func Test_Run(t *testing.T) {
 				NodeFinder:        nodeFinder,
 				LeaderElector:     leaderElector,
 				SDCMetricsEnabled: true,
+				Lock:              &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -142,6 +144,7 @@ func Test_Run(t *testing.T) {
 				NodeFinder:        nodeFinder,
 				LeaderElector:     leaderElector,
 				SDCMetricsEnabled: true,
+				Lock:              &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -185,6 +188,7 @@ func Test_Run(t *testing.T) {
 				NodeFinder:        nodeFinder,
 				LeaderElector:     leaderElector,
 				SDCMetricsEnabled: true,
+				Lock:              &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -240,6 +244,7 @@ func Test_Run(t *testing.T) {
 				NodeFinder:        nodeFinder,
 				LeaderElector:     leaderElector,
 				SDCMetricsEnabled: false,
+				Lock:              &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -295,6 +300,7 @@ func Test_Run(t *testing.T) {
 				NodeFinder:        nodeFinder,
 				LeaderElector:     leaderElector,
 				SDCMetricsEnabled: true,
+				Lock:              &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -325,6 +331,7 @@ func Test_Run(t *testing.T) {
 				SDCMetricsEnabled:  true,
 				SDCTickInterval:    validSDCTickInterval,
 				VolumeTickInterval: validVolumeTickInterval,
+				Lock:               &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = entrypoint.ValidateConfig
@@ -347,6 +354,7 @@ func Test_Run(t *testing.T) {
 				SDCMetricsEnabled:  true,
 				SDCTickInterval:    validSDCTickInterval,
 				VolumeTickInterval: validVolumeTickInterval,
+				Lock:               &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = entrypoint.ValidateConfig
@@ -371,6 +379,7 @@ func Test_Run(t *testing.T) {
 				SDCMetricsEnabled:  true,
 				SDCTickInterval:    validSDCTickInterval,
 				VolumeTickInterval: validVolumeTickInterval,
+				Lock:               &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = entrypoint.ValidateConfig
@@ -396,6 +405,7 @@ func Test_Run(t *testing.T) {
 				SDCMetricsEnabled:  true,
 				SDCTickInterval:    entrypoint.MinimumSDCTickInterval - time.Second,
 				VolumeTickInterval: validVolumeTickInterval,
+				Lock:               &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = entrypoint.ValidateConfig
@@ -419,6 +429,7 @@ func Test_Run(t *testing.T) {
 				SDCMetricsEnabled:  true,
 				SDCTickInterval:    validSDCTickInterval,
 				VolumeTickInterval: entrypoint.MinimumVolTickInterval - time.Second,
+				Lock:               &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = entrypoint.ValidateConfig
@@ -444,6 +455,7 @@ func Test_Run(t *testing.T) {
 				SDCMetricsEnabled:  true,
 				SDCTickInterval:    validSDCTickInterval,
 				VolumeTickInterval: entrypoint.MaximumVolTickInterval + time.Second,
+				Lock:               &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = entrypoint.ValidateConfig
@@ -477,6 +489,7 @@ func Test_Run(t *testing.T) {
 				SDCFinder:         sdcFinder,
 				LeaderElector:     leaderElector,
 				SDCMetricsEnabled: true,
+				Lock:              &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -510,6 +523,7 @@ func Test_Run(t *testing.T) {
 				SDCFinder:            sdcFinder,
 				LeaderElector:        leaderElector,
 				VolumeMetricsEnabled: true,
+				Lock:                 &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -552,6 +566,7 @@ func Test_Run(t *testing.T) {
 				SDCFinder:            sdcFinder,
 				LeaderElector:        leaderElector,
 				VolumeMetricsEnabled: true,
+				Lock:                 &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -593,6 +608,7 @@ func Test_Run(t *testing.T) {
 				SDCFinder:            sdcFinder,
 				LeaderElector:        leaderElector,
 				VolumeMetricsEnabled: true,
+				Lock:                 &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -646,6 +662,7 @@ func Test_Run(t *testing.T) {
 				StorageClassFinder:        storageClassFinder,
 				LeaderElector:             leaderElector,
 				StoragePoolMetricsEnabled: true,
+				Lock:                      &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -683,6 +700,7 @@ func Test_Run(t *testing.T) {
 				SDCMetricsEnabled:  true,
 				SDCTickInterval:    validSDCTickInterval,
 				VolumeTickInterval: validVolumeTickInterval,
+				Lock:               &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = entrypoint.ValidateConfig
@@ -712,6 +730,7 @@ func Test_Run(t *testing.T) {
 				SDCFinder:         sdcFinder,
 				LeaderElector:     leaderElector,
 				SDCMetricsEnabled: false,
+				Lock:              &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -762,6 +781,7 @@ func Test_Run(t *testing.T) {
 				StorageClassFinder:        storageClassFinder,
 				LeaderElector:             leaderElector,
 				StoragePoolMetricsEnabled: true,
+				Lock:                      &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -788,6 +808,7 @@ func Test_Run(t *testing.T) {
 			config := &entrypoint.Config{
 				LeaderElector:     leaderElector,
 				CollectorCertPath: "testdata/test-cert.crt",
+				Lock:              &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -810,6 +831,7 @@ func Test_Run(t *testing.T) {
 			config := &entrypoint.Config{
 				LeaderElector:     leaderElector,
 				CollectorCertPath: "testdata/bad-cert.crt",
+				Lock:              &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -840,6 +862,7 @@ func Test_Run(t *testing.T) {
 				NodeFinder:        nil,
 				LeaderElector:     leaderElector,
 				SDCMetricsEnabled: true,
+				Lock:              &sync.Mutex{},
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig

@@ -24,6 +24,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dell/karavi-metrics-powerflex/internal/entrypoint"
@@ -107,7 +108,9 @@ func main() {
 		}
 	}
 
+	configLock := &sync.Mutex{}
 	config := &entrypoint.Config{
+		Lock:               configLock,
 		SDCFinder:          sdcFinder,
 		StorageClassFinder: storageClassFinder,
 		LeaderElector:      leaderElectorGetter,
@@ -153,6 +156,9 @@ func main() {
 }
 
 func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFinder, storageClassFinder *k8s.StorageClassFinder, volumeFinder *k8s.VolumeFinder, logger *logrus.Logger) {
+	config.Lock.Lock()
+	defer config.Lock.Unlock()
+
 	configReader := service.ConfigurationReader{}
 
 	storageSystemArray, err := configReader.GetStorageSystemConfiguration(defaultStorageSystemConfigFile)
