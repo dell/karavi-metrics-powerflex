@@ -15,10 +15,9 @@
 package service
 
 import (
+	"context"
 	"sync"
 	"time"
-
-	"context"
 
 	"github.com/dell/goscaleio"
 	"github.com/sirupsen/logrus"
