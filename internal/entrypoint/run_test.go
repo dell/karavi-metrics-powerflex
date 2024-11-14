@@ -822,6 +822,35 @@ func Test_Run(t *testing.T) {
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, false
 		},
+		"array calls are not executed if token getter fails": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
+			ctrl := gomock.NewController(t)
+			pfClient := metrics.NewMockPowerFlexClient(ctrl)
+			pfClient.EXPECT().GetConfigConnect().AnyTimes().Return(&sio.ConfigConnect{Endpoint: "10.0.0.l"})
+
+			tk := metrics.NewMockTokenGetter(ctrl)
+			tk.EXPECT().GetToken(gomock.Any()).AnyTimes().Return("", errors.New("error"))
+
+			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
+			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
+
+			config := &entrypoint.Config{
+				PowerFlexClient:   map[string]*entrypoint.PowerflexClient{"key": {Client: pfClient, TokenGetter: tk}},
+				SDCFinder:         nil,
+				NodeFinder:        nil,
+				LeaderElector:     leaderElector,
+				SDCMetricsEnabled: true,
+			}
+			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
+			entrypoint.ConfigValidatorFunc = noCheckConfig
+
+			e := exportermocks.NewMockOtlexporter(ctrl)
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
+			e.EXPECT().StopExporter().Return(nil)
+
+			svc := metrics.NewMockService(ctrl)
+			return false, config, e, svc, prevConfigValidationFunc, ctrl, false
+		},
 	}
 
 	for name, test := range tests {
