@@ -140,7 +140,13 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 			logger.WithField("number of PowerFlexClient", len(config.PowerFlexClient)).Debug("PowerFlexClient")
 
 			config.Lock.Lock()
-			for key, sioConfig := range config.PowerFlexClient {
+			powerflexClients := make(map[string]*PowerflexClient)
+			for k, v := range config.PowerFlexClient {
+				powerflexClients[k] = v
+			}
+			config.Lock.Unlock()
+
+			for key, sioConfig := range powerflexClients {
 				logger.WithField("storage system id", key).Debug("storage system id")
 
 				endpoint := sioConfig.Client.GetConfigConnect().Endpoint
@@ -166,7 +172,6 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 
 				pflexSvc.GetSDCStatistics(ctx, nodes, sdcs)
 			}
-			config.Lock.Unlock()
 
 		case <-volumeTicker.C:
 			if !config.LeaderElector.IsLeader() {
@@ -181,7 +186,13 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 			logger.WithField("number of PowerFlexClient", len(config.PowerFlexClient)).Debug("PowerFlexClient")
 
 			config.Lock.Lock()
-			for key, sioConfig := range config.PowerFlexClient {
+			powerflexClients := make(map[string]*PowerflexClient)
+			for k, v := range config.PowerFlexClient {
+				powerflexClients[k] = v
+			}
+			config.Lock.Unlock()
+
+			for key, sioConfig := range powerflexClients {
 				logger.WithField("storage system id", key).Debug("storage system id")
 
 				endpoint := sioConfig.Client.GetConfigConnect().Endpoint
@@ -206,7 +217,6 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 				}
 				pflexSvc.ExportVolumeStatistics(ctx, volumes, config.VolumeFinder)
 			}
-			config.Lock.Unlock()
 
 		case <-storagePoolTicker.C:
 			if !config.LeaderElector.IsLeader() {
@@ -221,7 +231,13 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 			logger.WithField("number of PowerFlexClient", len(config.PowerFlexClient)).Debug("PowerFlexClient")
 
 			config.Lock.Lock()
-			for key, sioConfig := range config.PowerFlexClient {
+			powerflexClients := make(map[string]*PowerflexClient)
+			for k, v := range config.PowerFlexClient {
+				powerflexClients[k] = v
+			}
+			config.Lock.Unlock()
+
+			for key, sioConfig := range powerflexClients {
 				logger.WithField("storage system id", key).Debug("storage system id")
 
 				endpoint := sioConfig.Client.GetConfigConnect().Endpoint
@@ -242,7 +258,6 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 				logger.WithField("storageClassMetas", storageClassMetas).Debug("storageClassMetas")
 				pflexSvc.GetStoragePoolStatistics(ctx, storageClassMetas)
 			}
-			config.Lock.Unlock()
 
 		case err := <-errCh:
 			if err == nil {
