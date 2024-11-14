@@ -207,6 +207,7 @@ func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFind
 		}
 
 		config.PowerFlexClient[powerFlexSystemID] = client
+		config.PowerFlexConfig[powerFlexSystemID] = sio.ConfigConnect{Username: powerFlexGatewayUser, Password: powerFlexGatewayPassword}
 
 		logger.WithField("storage_system_id", powerFlexSystemID).Info("set powerflex system ID")
 	}
