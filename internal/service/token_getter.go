@@ -69,10 +69,8 @@ func (tg *TokenManager) Start(ctx context.Context) error {
 			tg.updateTokenFromPowerFlex()
 			timer.Reset(tg.Config.TokenRefreshInterval)
 		case <-tg.done:
-			timer.Stop()
 			return nil
 		case <-ctx.Done():
-			timer.Stop()
 			return ctx.Err()
 		}
 	}
