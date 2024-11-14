@@ -109,6 +109,7 @@ func (tg *TokenManager) updateTokenFromPowerFlex() {
 		<-tg.sem
 	}()
 
+	//todo: implement logout in goscaleio to log out of session before Authenticate
 	if _, err := tg.Config.PowerFlexClient.Authenticate(tg.Config.ConfigConnect); err != nil {
 		tg.Config.Logger.Errorf("PowerFlex Auth error: %+v", err)
 	}
