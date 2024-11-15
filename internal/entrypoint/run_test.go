@@ -266,6 +266,39 @@ func Test_Run(t *testing.T) {
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, true
 		},
+		"success with no PowerFlex config": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
+			ctrl := gomock.NewController(t)
+			sdcFinder := mocks.NewMockSDCFinder(ctrl)
+			nodeFinder := mocks.NewMockNodeFinder(ctrl)
+			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			pfClient := metrics.NewMockPowerFlexClient(ctrl)
+
+			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
+			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
+
+			config := &entrypoint.Config{
+				PowerFlexClient:           map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:           map[string]sio.ConfigConnect{"wrong": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				SDCFinder:                 sdcFinder,
+				NodeFinder:                nodeFinder,
+				LeaderElector:             leaderElector,
+				SDCMetricsEnabled:         true,
+				VolumeMetricsEnabled:      true,
+				StoragePoolMetricsEnabled: true,
+				SDCTickInterval:           validSDCTickInterval,
+				VolumeTickInterval:        validVolumeTickInterval,
+			}
+			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
+			entrypoint.ConfigValidatorFunc = noCheckConfig
+
+			e := exportermocks.NewMockOtlexporter(ctrl)
+			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
+			e.EXPECT().StopExporter().Return(nil)
+
+			svc := metrics.NewMockService(ctrl)
+
+			return false, config, e, svc, prevConfigValidationFunc, ctrl, false
+		},
 		"error no SDC Finder": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)

@@ -139,7 +139,7 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 				logger.WithField("storage system id", key).Debug("storage system id")
 				sioConfig, ok := config.PowerFlexConfig[key]
 				if !ok {
-					logger.WithError(err).WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
+					logger.WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
 					continue
 				}
 
@@ -174,7 +174,7 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 				logger.WithField("storage system id", key).Debug("storage system id")
 				sioConfig, ok := config.PowerFlexConfig[key]
 				if !ok {
-					logger.WithError(err).WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
+					logger.WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
 					continue
 				}
 				sdcs, err := pflexSvc.GetSDCs(ctx, client, config.SDCFinder)
@@ -208,7 +208,7 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 
 				sioConfig, ok := config.PowerFlexConfig[key]
 				if !ok {
-					logger.WithError(err).WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
+					logger.WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
 					continue
 				}
 
