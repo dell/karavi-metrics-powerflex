@@ -31,9 +31,9 @@ import (
 	pflexServices "github.com/dell/karavi-metrics-powerflex/internal/service"
 	otlexporters "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
 
 	sio "github.com/dell/goscaleio"
-	"go.opentelemetry.io/otel/metric/global"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
@@ -121,7 +121,7 @@ func main() {
 
 	pflexSvc := &service.PowerFlexService{
 		MetricsWrapper: &service.MetricsWrapper{
-			Meter: global.Meter("powerflex/sdc"),
+			Meter: otel.Meter("powerflex/sdc"),
 		},
 		Logger: logger,
 	}
