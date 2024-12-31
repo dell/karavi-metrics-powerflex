@@ -31,9 +31,9 @@ import (
 	pflexServices "github.com/dell/karavi-metrics-powerflex/internal/service"
 	otlexporters "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
 
 	sio "github.com/dell/goscaleio"
-	"go.opentelemetry.io/otel/metric/global"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
@@ -121,7 +121,7 @@ func main() {
 
 	pflexSvc := &service.PowerFlexService{
 		MetricsWrapper: &service.MetricsWrapper{
-			Meter: global.Meter("powerflex/sdc"),
+			Meter: otel.Meter("powerflex/sdc"),
 		},
 		Logger: logger,
 	}
@@ -200,13 +200,8 @@ func updatePowerFlexConnection(config *entrypoint.Config, sdcFinder *k8s.SDCFind
 		if err != nil {
 			logger.WithError(err).Fatal("creating powerflex client")
 		}
-
-		_, err = client.Authenticate(&sio.ConfigConnect{Username: powerFlexGatewayUser, Password: powerFlexGatewayPassword})
-		if err != nil {
-			logger.WithError(err).Fatalf("authenticating to powerflex %s", powerFlexSystemID)
-		}
-
 		config.PowerFlexClient[powerFlexSystemID] = client
+
 		config.PowerFlexConfig[powerFlexSystemID] = sio.ConfigConnect{Username: powerFlexGatewayUser, Password: powerFlexGatewayPassword}
 
 		logger.WithField("storage_system_id", powerFlexSystemID).Info("set powerflex system ID")
