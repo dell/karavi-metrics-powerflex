@@ -26,12 +26,12 @@ import (
 	"github.com/dell/karavi-metrics-powerflex/internal/service"
 	"github.com/dell/karavi-metrics-powerflex/internal/service/mocks"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
 
 	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/otel/metric/global"
 
 	sio "github.com/dell/goscaleio"
 	types "github.com/dell/goscaleio/types/v1"
@@ -406,7 +406,7 @@ func Test_GetSDCs(t *testing.T) {
 			powerflexClient, sdcFinder, checkFns, ctrl := tc(t)
 			svc := &service.PowerFlexService{
 				MetricsWrapper: &service.MetricsWrapper{
-					Meter: global.Meter("powerflex/sdc"),
+					Meter: otel.Meter("powerflex/sdc"),
 				},
 				Logger: logrus.New(),
 			}
@@ -740,7 +740,7 @@ func Test_GetStorageClasses(t *testing.T) {
 			powerflexClient, storageClassFinder, checkFns, ctrl := tc(t)
 			svc := &service.PowerFlexService{
 				MetricsWrapper: &service.MetricsWrapper{
-					Meter: global.Meter("powerflex/sdc"),
+					Meter: otel.Meter("powerflex/sdc"),
 				},
 				Logger: logrus.New(),
 			}
