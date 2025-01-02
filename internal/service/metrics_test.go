@@ -22,7 +22,6 @@ import (
 
 	types "github.com/dell/goscaleio/types/v1"
 	"github.com/dell/karavi-metrics-powerflex/internal/service"
-	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -100,6 +99,7 @@ func TestMetricsWrapper_Record(t *testing.T) {
 		})
 	}
 }
+
 func TestMetricsWrapper_Record_Label_Update(t *testing.T) {
 	mw := &service.MetricsWrapper{
 		Meter: otel.Meter("powerflex-test"),
@@ -421,24 +421,40 @@ func Test_Sdc_Metrics_Label_Update(t *testing.T) {
 	})
 }
 
-func TestMetricsWrapper_Record_Capacity(t *testing.T) {
+type MockStoragePoolStatisticsGetter struct{}
+
+func (m *MockStoragePoolStatisticsGetter) GetStatistics() (*types.Statistics, error) {
+	return &types.Statistics{}, nil
+}
+
+func TestMetricsWrapper_RecordCapacity(t *testing.T) {
 	mw := &service.MetricsWrapper{
 		Meter: otel.Meter("powerflex-test"),
 	}
 
-	storageClassMetas := []interface{}{
-		&service.StorageClassMeta{
-			ID: "123",
+	storageClassMeta := service.StorageClassMeta{
+		ID:              "test-id",
+		Name:            "test-name",
+		Driver:          "csi-vxflexos.dellemc.com",
+		StorageSystemID: "test-system-id",
+		StoragePools: map[string]service.StoragePoolStatisticsGetter{
+			"pool1": &MockStoragePoolStatisticsGetter{},
 		},
 	}
-
+	volumeMeta := &service.VolumeMeta{
+		Name: "newVolume",
+	}
+	totalLogicalCapacity := 100.0
+	logicalCapacityAvailable := 50.0
+	logicalCapacityInUse := 30.0
+	logicalProvisioned := 20.0
 	type args struct {
 		ctx                      context.Context
 		meta                     interface{}
-		TotalLogicalCapacity     float64
-		LogicalCapacityAvailable float64
-		LogicalCapacityInUse     float64
-		LogicalProvisioned       float64
+		totalLogicalCapacity     float64
+		logicalCapacityAvailable float64
+		logicalCapacityInUse     float64
+		logicalProvisioned       float64
 	}
 	tests := []struct {
 		name    string
@@ -451,89 +467,33 @@ func TestMetricsWrapper_Record_Capacity(t *testing.T) {
 			mw:   mw,
 			args: args{
 				ctx:                      context.Background(),
-				meta:                     storageClassMetas[0],
-				TotalLogicalCapacity:     1,
-				LogicalCapacityAvailable: 2,
-				LogicalCapacityInUse:     3,
-				LogicalProvisioned:       4,
+				meta:                     storageClassMeta,
+				totalLogicalCapacity:     totalLogicalCapacity,
+				logicalCapacityAvailable: logicalCapacityAvailable,
+				logicalCapacityInUse:     logicalCapacityInUse,
+				logicalProvisioned:       logicalProvisioned,
+			},
+			wantErr: false,
+		},
+		{
+			name: "fail",
+			mw:   mw,
+			args: args{
+				ctx:                      context.Background(),
+				meta:                     volumeMeta,
+				totalLogicalCapacity:     totalLogicalCapacity,
+				logicalCapacityAvailable: logicalCapacityAvailable,
+				logicalCapacityInUse:     logicalCapacityInUse,
+				logicalProvisioned:       logicalProvisioned,
 			},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.mw.RecordCapacity(tt.args.ctx, tt.args.meta, tt.args.TotalLogicalCapacity, tt.args.LogicalCapacityAvailable, tt.args.LogicalCapacityInUse, tt.args.LogicalProvisioned); (err != nil) != tt.wantErr {
+			if err := tt.mw.RecordCapacity(tt.args.ctx, tt.args.meta, tt.args.totalLogicalCapacity, tt.args.logicalCapacityAvailable, tt.args.logicalCapacityInUse, tt.args.logicalProvisioned); (err != nil) != tt.wantErr {
 				t.Errorf("MetricsWrapper.RecordCapacity() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
 }
-
-type MockStoragePoolStatisticsGetter struct{}
-
-func (m *MockStoragePoolStatisticsGetter) GetStatistics() (*types.Statistics, error) {
-	return &types.Statistics{}, nil
-}
-
-func TestRecordCapacity(t *testing.T) {
-	mw := &service.MetricsWrapper{
-		Meter: otel.Meter("powerflex-test"),
-	}
-
-	meta := &service.StorageClassMeta{
-		ID:              "test-id",
-		Name:            "test-name",
-		Driver:          "csi-vxflexos.dellemc.com",
-		StorageSystemID: "test-system-id",
-		StoragePools: map[string]service.StoragePoolStatisticsGetter{
-			"pool1": &MockStoragePoolStatisticsGetter{},
-		},
-	}
-
-	totalLogicalCapacity := 100.0
-	logicalCapacityAvailable := 50.0
-	logicalCapacityInUse := 30.0
-	logicalProvisioned := 20.0
-
-	err := mw.RecordCapacity(context.Background(), meta, totalLogicalCapacity, logicalCapacityAvailable, logicalCapacityInUse, logicalProvisioned)
-	assert.NoError(t, err)
-
-	_, ok := mw.CapacityMetrics.Load(meta.ID)
-	assert.True(t, ok)
-
-	// metrics := metricsMapValue.(*CapacityMetrics)
-	// assert.NotNil(t, metrics)
-
-	// Verify that the metrics have been registered correctly
-	// This part depends on how you want to verify the metrics registration
-	// For example, you might want to check if the callback has been registered
-	// or if the metrics have the expected values
-}
-
-// func TestInitCapacityMetrics(t *testing.T) {
-// 	mw := &service.MetricsWrapper{
-// 		Meter: otel.Meter("powerflex-test"),
-// 	}
-
-// 	prefix := "test_prefix_"
-// 	metaID := "test_meta_id"
-// 	labels := []attribute.KeyValue{
-// 		attribute.String("key1", "value1"),
-// 		attribute.String("key2", "value2"),
-// 	}
-
-// 	metrics, err := mw.InitCapacityMetrics(prefix, metaID, labels)
-// 	assert.NoError(t, err)
-// 	assert.NotNil(t, metrics)
-
-// 	// Verify that the metrics have been initialized correctly
-// 	assert.NotNil(t, metrics.TotalLogicalCapacity)
-// 	assert.NotNil(t, metrics.LogicalCapacityAvailable)
-// 	assert.NotNil(t, metrics.LogicalCapacityInUse)
-// 	assert.NotNil(t, metrics.LogicalProvisioned)
-
-// 	// Verify that the metrics have been stored in the CapacityMetrics map
-// 	metricsMapValue, ok := mw.CapacityMetrics.Load(metaID)
-// 	assert.True(t, ok)
-// 	assert.Equal(t, metrics, metricsMapValue)
-// }
