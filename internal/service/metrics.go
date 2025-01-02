@@ -221,7 +221,7 @@ func (mw *MetricsWrapper) Record(_ context.Context, meta interface{},
 }
 
 // RecordCapacity will publish capacity metrics for a given instance
-func (mw *MetricsWrapper) RecordCapacity(ctx context.Context, meta interface{},
+func (mw *MetricsWrapper) RecordCapacity(_ context.Context, meta interface{},
 	totalLogicalCapacity, logicalCapacityAvailable, logicalCapacityInUse, logicalProvisioned float64,
 ) error {
 	switch v := meta.(type) {
