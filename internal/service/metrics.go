@@ -199,14 +199,19 @@ func (mw *MetricsWrapper) Record(_ context.Context, meta interface{},
 
 	metrics := metricsMapValue.(*Metrics)
 
-	_, _ = mw.Meter.RegisterCallback(func(_ context.Context, obs metric.Observer) error {
+	//_, _ = mw.Meter.RegisterCallback(func(_ context.Context, obs metric.Observer) error {
+	done := make(chan struct{})
+
+	reg, err := mw.Meter.RegisterCallback(func(_ context.Context, obs metric.Observer) error {
 		obs.ObserveFloat64(metrics.ReadBW, float64(readBW), metric.ObserveOption(metric.WithAttributes(labels...)))
 		obs.ObserveFloat64(metrics.WriteBW, float64(writeBW), metric.ObserveOption(metric.WithAttributes(labels...)))
 		obs.ObserveFloat64(metrics.ReadIOPS, float64(readIOPS), metric.ObserveOption(metric.WithAttributes(labels...)))
 		obs.ObserveFloat64(metrics.WriteIOPS, float64(writeIOPS), metric.ObserveOption(metric.WithAttributes(labels...)))
 		obs.ObserveFloat64(metrics.ReadLatency, float64(readLatency), metric.ObserveOption(metric.WithAttributes(labels...)))
 		obs.ObserveFloat64(metrics.WriteLatency, float64(writeLatency), metric.ObserveOption(metric.WithAttributes(labels...)))
-
+		go func() {
+			done <- struct{}{}
+		}()
 		return nil
 	},
 		metrics.ReadBW,
@@ -216,6 +221,12 @@ func (mw *MetricsWrapper) Record(_ context.Context, meta interface{},
 		metrics.ReadLatency,
 		metrics.WriteLatency,
 	)
+
+	if err != nil {
+		return err
+	}
+	<-done
+	_ = reg.Unregister()
 
 	return nil
 }
@@ -247,13 +258,15 @@ func (mw *MetricsWrapper) RecordCapacity(_ context.Context, meta interface{},
 				}
 
 				metrics := metricsMapValue.(*CapacityMetrics)
-
-				_, _ = mw.Meter.RegisterCallback(func(_ context.Context, obs metric.Observer) error {
+				done := make(chan struct{})
+				reg, err := mw.Meter.RegisterCallback(func(_ context.Context, obs metric.Observer) error {
 					obs.ObserveFloat64(metrics.TotalLogicalCapacity, float64(totalLogicalCapacity), metric.ObserveOption(metric.WithAttributes(labels...)))
 					obs.ObserveFloat64(metrics.LogicalCapacityAvailable, float64(logicalCapacityAvailable), metric.ObserveOption(metric.WithAttributes(labels...)))
 					obs.ObserveFloat64(metrics.LogicalCapacityInUse, float64(logicalCapacityInUse), metric.ObserveOption(metric.WithAttributes(labels...)))
 					obs.ObserveFloat64(metrics.LogicalProvisioned, float64(logicalProvisioned), metric.ObserveOption(metric.WithAttributes(labels...)))
-
+					go func() {
+						done <- struct{}{}
+					}()
 					return nil
 				},
 					metrics.TotalLogicalCapacity,
@@ -261,6 +274,11 @@ func (mw *MetricsWrapper) RecordCapacity(_ context.Context, meta interface{},
 					metrics.LogicalCapacityInUse,
 					metrics.LogicalProvisioned,
 				)
+				if err != nil {
+					return err
+				}
+				<-done
+				_ = reg.Unregister()
 			}
 		}
 	default:
