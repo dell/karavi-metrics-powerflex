@@ -221,7 +221,6 @@ func (mw *MetricsWrapper) Record(_ context.Context, meta interface{},
 		metrics.ReadLatency,
 		metrics.WriteLatency,
 	)
-
 	if err != nil {
 		return err
 	}
