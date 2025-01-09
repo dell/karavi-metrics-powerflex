@@ -19,11 +19,13 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /go/src/service /go/src/$APP_NAME/$CMD_
 
 # Build the sdk image
 FROM $BASEIMAGE as final
-LABEL vendor="Dell Inc." \
+LABEL vendor="Dell Technologies" \
+      maintainer="Dell Technologies" \
       name="csm-metrics-powerflex" \
       summary="Dell Container Storage Modules (CSM) for Observability - Metrics for PowerFlex" \
       description="Provides insight into storage usage and performance as it relates to the CSI (Container Storage Interface) Driver for Dell PowerFlex" \
-      version="2.0.0" \
+      release="1.13.0" \
+      version="1.11.0" \
       license="Apache-2.0"
 COPY /licenses /licenses
 COPY --from=builder /go/src/service /
