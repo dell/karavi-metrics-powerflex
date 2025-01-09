@@ -107,7 +107,7 @@ func (mw *MetricsWrapper) initCapacityMetrics(prefix, metaID string, _ []attribu
 
 	logicalCapacityInUse, _ := mw.Meter.Float64ObservableUpDownCounter(prefix + "logical_capacity_in_use_gigabytes")
 
-	logicalProvisioned, _ := mw.Meter.Float64ObservableUpDownCounter(prefix + "logical_used_gigabytes")
+	logicalProvisioned, _ := mw.Meter.Float64ObservableUpDownCounter(prefix + "logical_provisioned_gigabytes")
 
 	metrics := &CapacityMetrics{
 		TotalLogicalCapacity:     totalLogicalCapacity,
