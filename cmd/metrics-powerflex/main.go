@@ -86,23 +86,6 @@ func configure() (*entrypoint.Config, otlexporters.Otlexporter, *service.PowerFl
 		API: &k8s.API{},
 	}
 
-	updateLoggingSettings := func(logger *logrus.Logger) {
-		logFormat := viper.GetString("LOG_FORMAT")
-		if strings.EqualFold(logFormat, "json") {
-			logger.SetFormatter(&logrus.JSONFormatter{})
-		} else {
-			// use text formatter by default
-			logger.SetFormatter(&logrus.TextFormatter{})
-		}
-		logLevel := viper.GetString("LOG_LEVEL")
-		level, err := logrus.ParseLevel(logLevel)
-		if err != nil {
-			// use INFO level by default
-			level = logrus.InfoLevel
-		}
-		logger.SetLevel(level)
-	}
-
 	updateLoggingSettings(logger)
 
 	var collectorCertPath string
@@ -161,6 +144,22 @@ func onChangeUpdate(
 	updateTickIntervals(config, logger)
 	updateService(pflexSvc, logger)
 	updatePowerFlexConnection(config, sdcFinder, storageClassFinder, volumeFinder, logger)
+}
+
+func updateLoggingSettings(logger *logrus.Logger) {
+	logFormat := viper.GetString("LOG_FORMAT")
+	if strings.EqualFold(logFormat, "json") {
+		logger.SetFormatter(&logrus.JSONFormatter{})
+	} else {
+		logger.SetFormatter(&logrus.TextFormatter{})
+	}
+
+	logLevel := viper.GetString("LOG_LEVEL")
+	level, err := logrus.ParseLevel(logLevel)
+	if err != nil {
+		level = logrus.InfoLevel
+	}
+	logger.SetLevel(level)
 }
 
 func updatePowerFlexConnection(config *entrypoint.Config,

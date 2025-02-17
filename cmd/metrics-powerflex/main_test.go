@@ -246,3 +246,42 @@ func TestUpdateService(t *testing.T) {
 		})
 	}
 }
+
+func Test_updateLoggingSettings(t *testing.T) {
+	tests := []struct {
+		name          string
+		logFormat     string
+		logLevel      string
+		expectedLevel logrus.Level
+	}{
+		{
+			name:          "Valid Setting",
+			logFormat:     "json",
+			logLevel:      "INFO",
+			expectedLevel: 4,
+		},
+		{
+			name:          "Invalid Setting",
+			logFormat:     "json",
+			logLevel:      "TEST",
+			expectedLevel: 4,
+		},
+		{
+			name:          "text log format",
+			logFormat:     "text",
+			logLevel:      "INFO",
+			expectedLevel: 4,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			viper.Reset()
+			viper.Set("LOG_FORMAT", tt.logFormat)
+			viper.Set("LOG_LEVEL", tt.logLevel)
+			logger := logrus.New()
+			updateLoggingSettings(logger)
+			assert.Equal(t, tt.expectedLevel, logrus.GetLevel())
+		})
+	}
+}
