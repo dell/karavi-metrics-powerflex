@@ -285,3 +285,22 @@ func Test_updateLoggingSettings(t *testing.T) {
 		})
 	}
 }
+
+func TestGetStorageSystemArray(t *testing.T) {
+	// Call the function to get the storage system array
+	storageSystemArray, err := GetStorageSystemArray("testdata/config.yaml")
+
+	// Assert the expected values
+	expectedArray := []service.ArrayConnectionData{
+		{
+			Username:                  "admin",
+			Password:                  "password",
+			SystemID:                  "system-id-1",
+			Endpoint:                  "http://127.0.0.1",
+			SkipCertificateValidation: true,
+		},
+	}
+
+	assert.Equal(t, expectedArray, storageSystemArray)
+	assert.Nil(t, err)
+}

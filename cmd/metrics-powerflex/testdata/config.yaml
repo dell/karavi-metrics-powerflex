@@ -1,0 +1,6 @@
+---
+- username: admin
+  password: password
+  systemID: system-id-1
+  endpoint: http://127.0.0.1
+  skipCertificateValidation: true
