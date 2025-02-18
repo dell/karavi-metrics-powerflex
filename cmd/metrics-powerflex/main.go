@@ -143,7 +143,7 @@ func onChangeUpdate(
 	updateMetricsEnabled(config)
 	updateTickIntervals(config, logger)
 	updateService(pflexSvc, logger)
-	updatePowerFlexConnection(config, sdcFinder, storageClassFinder, volumeFinder, logger)
+	updatePowerFlexConnection(defaultStorageSystemConfigFile, config, sdcFinder, storageClassFinder, volumeFinder, logger)
 }
 
 func updateLoggingSettings(logger *logrus.Logger) {
@@ -162,18 +162,24 @@ func updateLoggingSettings(logger *logrus.Logger) {
 	logger.SetLevel(level)
 }
 
-func updatePowerFlexConnection(config *entrypoint.Config,
+func GetStorageSystemArray(storageSystemConfigFile string) ([]service.ArrayConnectionData, error) {
+	configReader := service.ConfigurationReader{}
+	storageSystemArray, err := configReader.GetStorageSystemConfiguration(storageSystemConfigFile)
+	if err != nil {
+		logger.WithError(err).Fatal("getting storage system configuration")
+	}
+	return storageSystemArray, err
+}
+
+func updatePowerFlexConnection(
+	storageSystemConfigFile string,
+	config *entrypoint.Config,
 	sdcFinder *k8s.SDCFinder,
 	storageClassFinder *k8s.StorageClassFinder,
 	volumeFinder *k8s.VolumeFinder,
 	logger *logrus.Logger,
 ) {
-	configReader := service.ConfigurationReader{}
-
-	storageSystemArray, err := configReader.GetStorageSystemConfiguration(defaultStorageSystemConfigFile)
-	if err != nil {
-		logger.WithError(err).Fatal("getting storage system configuration")
-	}
+	storageSystemArray, err := GetStorageSystemArray(storageSystemConfigFile)
 
 	volumeFinder.StorageSystemID = make([]k8s.StorageSystemID, len(storageSystemArray))
 	sdcFinder.StorageSystemID = make([]k8s.StorageSystemID, len(storageSystemArray))
