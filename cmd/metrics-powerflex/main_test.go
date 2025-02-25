@@ -542,31 +542,31 @@ func TestUpdatePowerFlexConnection(t *testing.T) {
 			name:              "Empty Endpoint Error",
 			config:            &entrypoint.Config{},
 			configContentFile: "testdata/config.yaml",
-			expectPanic:       false,
+			expectPanic:       true,
 		},
 		{
 			name:              "Empty Password Error",
 			config:            &entrypoint.Config{},
 			configContentFile: "testdata/config.yaml",
-			expectPanic:       false,
+			expectPanic:       true,
 		},
 		{
 			name:              "Empty System ID Error",
 			config:            &entrypoint.Config{},
 			configContentFile: "testdata/config.yaml",
-			expectPanic:       false,
+			expectPanic:       true,
 		},
 		{
 			name:              "Empty Username Error",
 			config:            &entrypoint.Config{},
 			configContentFile: "testdata/config.yaml",
-			expectPanic:       false,
+			expectPanic:       true,
 		},
 		{
 			name:              "Authentication Error",
 			config:            &entrypoint.Config{},
 			configContentFile: "testdata/config.yaml",
-			expectPanic:       false,
+			expectPanic:       true,
 		},
 		// Add more test cases here
 	}
