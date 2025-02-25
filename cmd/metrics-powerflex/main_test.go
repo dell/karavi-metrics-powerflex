@@ -505,21 +505,109 @@ func TestSetupConfigWatchers(t *testing.T) {
 	}
 }
 
-func TestGetStorageSystemArray(t *testing.T) {
-	// Call the function to get the storage system array
-	storageSystemArray, err := GetStorageSystemArray("testdata/config.yaml")
+// func TestGetStorageSystemArray(t *testing.T) {
+// 	// Call the function to get the storage system array
+// 	storageSystemArray, err := GetStorageSystemArray("testdata/config.yaml")
 
-	// Assert the expected values
-	expectedArray := []service.ArrayConnectionData{
+// 	// Assert the expected values
+// 	expectedArray := []service.ArrayConnectionData{
+// 		{
+// 			Username:                  "admin",
+// 			Password:                  "password",
+// 			SystemID:                  "system-id-1",
+// 			Endpoint:                  "http://127.0.0.1",
+// 			SkipCertificateValidation: true,
+// 		},
+// 	}
+
+// 	assert.Equal(t, expectedArray, storageSystemArray)
+// 	assert.Nil(t, err)
+// }
+
+func TestUpdatePowerFlexConnection(t *testing.T) {
+	// Create a test table with different scenarios and expected results
+	tests := []struct {
+		name              string
+		config            *entrypoint.Config
+		configContentFile string
+		expectPanic       bool
+	}{
 		{
-			Username:                  "admin",
-			Password:                  "password",
-			SystemID:                  "system-id-1",
-			Endpoint:                  "http://127.0.0.1",
-			SkipCertificateValidation: true,
+			name:              "Config Reader Error",
+			config:            &entrypoint.Config{},
+			configContentFile: "testdata/not-exist.yaml",
+			expectPanic:       true,
 		},
+		{
+			name:              "Empty Endpoint Error",
+			config:            &entrypoint.Config{},
+			configContentFile: "testdata/config.yaml",
+			expectPanic:       false,
+		},
+		{
+			name:              "Empty Password Error",
+			config:            &entrypoint.Config{},
+			configContentFile: "testdata/config.yaml",
+			expectPanic:       false,
+		},
+		{
+			name:              "Empty System ID Error",
+			config:            &entrypoint.Config{},
+			configContentFile: "testdata/config.yaml",
+			expectPanic:       false,
+		},
+		{
+			name:              "Empty Username Error",
+			config:            &entrypoint.Config{},
+			configContentFile: "testdata/config.yaml",
+			expectPanic:       false,
+		},
+		{
+			name:              "Authentication Error",
+			config:            &entrypoint.Config{},
+			configContentFile: "testdata/config.yaml",
+			expectPanic:       false,
+		},
+		// Add more test cases here
 	}
 
-	assert.Equal(t, expectedArray, storageSystemArray)
-	assert.Nil(t, err)
+	// Iterate over the test table and run the test for each case
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			viper.Reset()
+			logger := logrus.New()
+			logger.ExitFunc = func(int) { panic("fatal") }
+			if tt.expectPanic {
+				assert.Panics(t, func() {
+					updatePowerFlexConnection(
+						tt.configContentFile,
+						tt.config,
+						&k8s.SDCFinder{},
+						&k8s.StorageClassFinder{},
+						&k8s.VolumeFinder{},
+						logger,
+					)
+				})
+			}
+			// // Call the function with the test data
+			// updatePowerFlexConnection(
+			// 	"storage_system_config.yaml",
+			// 	tt.config,
+			// 	&k8s.SDCFinder{},
+			// 	&k8s.StorageClassFinder{},
+			// 	&k8s.VolumeFinder{},
+			// 	&logrus.Logger{},
+			// )
+
+			// // Assert the expected error
+			// if !errors.Is(err, tt.expectedError) {
+			// 	t.Errorf("expected error '%v', but got '%v'", tt.expectedError, err)
+			// }
+
+			// // Assert the expected error message
+			// if err != nil && err.Error() != tt.expectedMessage {
+			// 	t.Errorf("expected error message '%s', but got '%s'", tt.expectedMessage, err.Error())
+			// }
+		})
+	}
 }

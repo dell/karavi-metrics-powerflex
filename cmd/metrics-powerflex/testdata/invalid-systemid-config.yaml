@@ -1,0 +1,5 @@
+---
+- username: admin
+  password: password
+  endpoint: http://127.0.0.1
+  skipCertificateValidation: true

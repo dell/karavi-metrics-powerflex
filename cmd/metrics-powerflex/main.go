@@ -42,7 +42,10 @@ const (
 	defaultStorageSystemConfigFile = "/vxflexos-config/config"
 )
 
-var logger *logrus.Logger
+var (
+	logger          *logrus.Logger
+	goscaleioClient = goscaleio.NewClientWithArgs
+)
 
 func main() {
 	config, exporter, powerflexSvc := configure()
@@ -194,15 +197,6 @@ func setupConfigWatchers(configFileListener *viper.Viper, powerflexSvc *service.
 	})
 }
 
-func GetStorageSystemArray(storageSystemConfigFile string) ([]service.ArrayConnectionData, error) {
-	configReader := service.ConfigurationReader{}
-	storageSystemArray, err := configReader.GetStorageSystemConfiguration(storageSystemConfigFile)
-	if err != nil {
-		logger.WithError(err).Fatal("getting storage system configuration")
-	}
-	return storageSystemArray, err
-}
-
 func updatePowerFlexConnection(
 	storageSystemConfigFile string,
 	config *entrypoint.Config,
@@ -211,7 +205,11 @@ func updatePowerFlexConnection(
 	volumeFinder *k8s.VolumeFinder,
 	logger *logrus.Logger,
 ) {
-	storageSystemArray, err := GetStorageSystemArray(storageSystemConfigFile)
+	configReader := service.ConfigurationReader{}
+	storageSystemArray, err := configReader.GetStorageSystemConfiguration(storageSystemConfigFile)
+	if err != nil {
+		logger.WithError(err).Fatal("getting storage system configuration")
+	}
 
 	volumeFinder.StorageSystemID = make([]k8s.StorageSystemID, len(storageSystemArray))
 	sdcFinder.StorageSystemID = make([]k8s.StorageSystemID, len(storageSystemArray))
@@ -249,7 +247,7 @@ func updatePowerFlexConnection(
 
 		// backwards compatible with previous 'Insecure' flag
 		insecure := storageSystem.Insecure || storageSystem.SkipCertificateValidation
-		client, err := goscaleio.NewClientWithArgs(powerFlexEndpoint, "", math.MaxInt64, insecure, true)
+		client, err := goscaleioClient(powerFlexEndpoint, "", math.MaxInt64, insecure, true)
 		if err != nil {
 			logger.WithError(err).Fatal("creating powerflex client")
 		}
