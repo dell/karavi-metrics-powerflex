@@ -110,6 +110,37 @@ func TestGetCollectorCertPath(t *testing.T) {
 	})
 }
 
+func TestSetupPowerFlexService(t *testing.T) {
+	// Setup
+	logger := logrus.New()
+	sdcFinder := &k8s.SDCFinder{
+		API: &k8s.API{},
+	}
+	storageClassFinder := &k8s.StorageClassFinder{
+		API: &k8s.API{},
+	}
+	leaderElectorGetter := &k8s.LeaderElector{
+		API: &k8s.LeaderElector{},
+	}
+	volumeFinder := &k8s.VolumeFinder{
+		API:    &k8s.API{},
+		Logger: logger,
+	}
+	nodeFinder := &k8s.NodeFinder{
+		API: &k8s.API{},
+	}
+
+	// Run
+	config := setupConfig(sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder, logger)
+	exporter := &otlexporters.OtlCollectorExporter{}
+	powerflexSvc := setupPowerFlexService(logger)
+
+	// Verify
+	assert.NotNil(t, config, "Expected valid config")
+	assert.NotNil(t, exporter, "Expected valid exporter")
+	assert.NotNil(t, powerflexSvc, "Expected valid powerflex service")
+}
+
 func TestSetupConfig(t *testing.T) {
 	tests := []struct {
 		name          string
