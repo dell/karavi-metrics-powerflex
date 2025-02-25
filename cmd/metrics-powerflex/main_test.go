@@ -528,43 +528,36 @@ func TestUpdatePowerFlexConnection(t *testing.T) {
 	// Create a test table with different scenarios and expected results
 	tests := []struct {
 		name              string
-		config            *entrypoint.Config
 		configContentFile string
 		expectPanic       bool
 	}{
 		{
 			name:              "Config Reader Error",
-			config:            &entrypoint.Config{},
 			configContentFile: "testdata/not-exist.yaml",
 			expectPanic:       true,
 		},
 		{
 			name:              "Empty Endpoint Error",
-			config:            &entrypoint.Config{},
 			configContentFile: "testdata/invalid-endpoint-config.yaml",
 			expectPanic:       true,
 		},
 		{
 			name:              "Empty Password Error",
-			config:            &entrypoint.Config{},
 			configContentFile: "testdata/invalid-password-config.yaml",
 			expectPanic:       true,
 		},
 		{
 			name:              "Empty System ID Error",
-			config:            &entrypoint.Config{},
 			configContentFile: "testdata/invalid-systemid-config.yaml",
 			expectPanic:       true,
 		},
 		{
 			name:              "Empty Username Error",
-			config:            &entrypoint.Config{},
 			configContentFile: "testdata/invalid-username-config.yaml",
 			expectPanic:       true,
 		},
 		{
 			name:              "Authentication Error",
-			config:            &entrypoint.Config{},
 			configContentFile: "testdata/config.yaml",
 			expectPanic:       true,
 		},
@@ -575,16 +568,20 @@ func TestUpdatePowerFlexConnection(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			viper.Reset()
+			config := &entrypoint.Config{}
+			sdcFinder := &k8s.SDCFinder{}
+			storageClassFinder := &k8s.StorageClassFinder{}
+			volumeFinder := &k8s.VolumeFinder{}
 			logger := logrus.New()
 			logger.ExitFunc = func(int) { panic("fatal") }
 			if tt.expectPanic {
 				assert.Panics(t, func() {
 					updatePowerFlexConnection(
 						tt.configContentFile,
-						tt.config,
-						&k8s.SDCFinder{},
-						&k8s.StorageClassFinder{},
-						&k8s.VolumeFinder{},
+						config,
+						sdcFinder,
+						storageClassFinder,
+						volumeFinder,
 						logger,
 					)
 				})

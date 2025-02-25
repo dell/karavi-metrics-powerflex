@@ -2,4 +2,4 @@
 - username: admin
   password: password
   systemID: system-id-1
-  skipCertificateValidation: true
+  endpoint:

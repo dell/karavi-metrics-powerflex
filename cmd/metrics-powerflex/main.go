@@ -219,24 +219,9 @@ func updatePowerFlexConnection(
 	config.PowerFlexConfig = make(map[string]goscaleio.ConfigConnect)
 	for i, storageSystem := range storageSystemArray {
 		powerFlexEndpoint := storageSystem.Endpoint
-		if powerFlexEndpoint == "" {
-			logger.WithError(err).Fatal("powerflex endpoint was empty")
-		}
-
 		powerFlexGatewayUser := storageSystem.Username
-		if powerFlexGatewayUser == "" {
-			logger.WithError(err).Fatal("powerflex username was empty")
-		}
-
 		powerFlexGatewayPassword := storageSystem.Password
-		if powerFlexGatewayPassword == "" {
-			logger.WithError(err).Fatal("powerflex password was empty")
-		}
-
 		powerFlexSystemID := storageSystem.SystemID
-		if powerFlexSystemID == "" {
-			logger.WithError(err).Fatal("powerflex system ID was empty")
-		}
 		storageID := k8s.StorageSystemID{
 			ID:        powerFlexSystemID,
 			IsDefault: storageSystem.IsDefault,
