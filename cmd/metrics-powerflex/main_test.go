@@ -541,25 +541,25 @@ func TestUpdatePowerFlexConnection(t *testing.T) {
 		{
 			name:              "Empty Endpoint Error",
 			config:            &entrypoint.Config{},
-			configContentFile: "testdata/config.yaml",
+			configContentFile: "testdata/invalid-endpoint-config.yaml",
 			expectPanic:       true,
 		},
 		{
 			name:              "Empty Password Error",
 			config:            &entrypoint.Config{},
-			configContentFile: "testdata/config.yaml",
+			configContentFile: "testdata/invalid-password-config.yaml",
 			expectPanic:       true,
 		},
 		{
 			name:              "Empty System ID Error",
 			config:            &entrypoint.Config{},
-			configContentFile: "testdata/config.yaml",
+			configContentFile: "testdata/invalid-systemid-config.yaml",
 			expectPanic:       true,
 		},
 		{
 			name:              "Empty Username Error",
 			config:            &entrypoint.Config{},
-			configContentFile: "testdata/config.yaml",
+			configContentFile: "testdata/invalid-username-config.yaml",
 			expectPanic:       true,
 		},
 		{
@@ -589,25 +589,6 @@ func TestUpdatePowerFlexConnection(t *testing.T) {
 					)
 				})
 			}
-			// // Call the function with the test data
-			// updatePowerFlexConnection(
-			// 	"storage_system_config.yaml",
-			// 	tt.config,
-			// 	&k8s.SDCFinder{},
-			// 	&k8s.StorageClassFinder{},
-			// 	&k8s.VolumeFinder{},
-			// 	&logrus.Logger{},
-			// )
-
-			// // Assert the expected error
-			// if !errors.Is(err, tt.expectedError) {
-			// 	t.Errorf("expected error '%v', but got '%v'", tt.expectedError, err)
-			// }
-
-			// // Assert the expected error message
-			// if err != nil && err.Error() != tt.expectedMessage {
-			// 	t.Errorf("expected error message '%s', but got '%s'", tt.expectedMessage, err.Error())
-			// }
 		})
 	}
 }
