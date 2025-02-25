@@ -289,9 +289,27 @@ func TestUpdateProvisionerNames(t *testing.T) {
 			viper.Reset()
 			viper.Set("provisioner_names", tt.provisioners)
 
-			sdcFinder := &k8s.SDCFinder{}
-			volumeFinder := &k8s.VolumeFinder{}
-			storageClassFinder := &k8s.StorageClassFinder{}
+			sdcFinder := &k8s.SDCFinder{
+				StorageSystemID: []k8s.StorageSystemID{
+					{
+						ID: "system-id",
+					},
+				},
+			}
+			volumeFinder := &k8s.VolumeFinder{
+				StorageSystemID: []k8s.StorageSystemID{
+					{
+						ID: "system-id",
+					},
+				},
+			}
+			storageClassFinder := &k8s.StorageClassFinder{
+				StorageSystemID: []k8s.StorageSystemID{
+					{
+						ID: "system-id",
+					},
+				},
+			}
 			logger := logrus.New()
 			logger.ExitFunc = func(int) { panic("fatal") }
 
