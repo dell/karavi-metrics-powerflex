@@ -13,6 +13,106 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestSetupLogger(t *testing.T) {
+	tests := []struct {
+		name     string
+		logLevel string
+		wantErr  bool
+	}{
+		{"Valid log level", "info", false},
+		{"Invalid log level", "invalid", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			viper.Set("LOG_LEVEL", tt.logLevel)
+
+			logger := setupLogger()
+
+			// Test if logger is setup correctly and if any error occurs.
+			if tt.wantErr {
+				assert.Equal(t, logrus.InfoLevel, logger.Level)
+			} else {
+				assert.NotNil(t, logger)
+			}
+		})
+	}
+}
+
+func TestLoadConfig(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr bool
+	}{
+		{"Valid config", false},
+		{"Invalid config", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(_ *testing.T) {
+			// Simulating different config file conditions
+			if tt.wantErr {
+				viper.SetConfigFile("/invalid/path")
+			} else {
+				viper.SetConfigFile(defaultConfigFile)
+			}
+
+			// Call loadConfig
+			logger := logrus.New()
+			loadConfig(logger) // This will just load the config
+			// No error handling needed because loadConfig doesn't return error; it just prints it
+		})
+	}
+}
+
+func TestSetupConfigFileListener(t *testing.T) {
+	tests := []struct {
+		name          string
+		expectedError bool
+	}{
+		{"Valid Config File Listener", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			listener := setupConfigFileListener()
+			assert.NotNil(t, listener, "Expected valid config file listener")
+		})
+	}
+}
+
+func TestSetupConfig(t *testing.T) {
+	tests := []struct {
+		name          string
+		expectedError bool
+	}{
+		{"Valid Config Setup", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			logger := logrus.New()
+			sdcFinder := &k8s.SDCFinder{
+				API: &k8s.API{},
+			}
+			storageClassFinder := &k8s.StorageClassFinder{
+				API: &k8s.API{},
+			}
+			leaderElectorGetter := &k8s.LeaderElector{
+				API: &k8s.LeaderElector{},
+			}
+			volumeFinder := &k8s.VolumeFinder{
+				API:    &k8s.API{},
+				Logger: logger,
+			}
+			nodeFinder := &k8s.NodeFinder{
+				API: &k8s.API{},
+			}
+			config := setupConfig(sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder, logger)
+			assert.NotNil(t, config, "Expected valid config")
+		})
+	}
+}
+
 func TestUpdateCollectorAddress(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -282,6 +382,38 @@ func Test_updateLoggingSettings(t *testing.T) {
 			logger := logrus.New()
 			updateLoggingSettings(logger)
 			assert.Equal(t, tt.expectedLevel, logrus.GetLevel())
+		})
+	}
+}
+
+func TestSetupConfigWatchers(t *testing.T) {
+	logger := logrus.New()
+	config := &entrypoint.Config{}
+	exporter := &otlexporters.OtlCollectorExporter{}
+	powerflexSvc := &service.PowerFlexService{}
+	configFileListener := setupConfigFileListener()
+	sdcFinder := &k8s.SDCFinder{
+		API: &k8s.API{},
+	}
+	storageClassFinder := &k8s.StorageClassFinder{
+		API: &k8s.API{},
+	}
+	volumeFinder := &k8s.VolumeFinder{
+		API:    &k8s.API{},
+		Logger: logger,
+	}
+	tests := []struct {
+		name          string
+		expectedError bool
+	}{
+		{"Valid Config Watchers Setup", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.NotPanics(t, func() {
+				setupConfigWatchers(configFileListener, powerflexSvc, config, sdcFinder, storageClassFinder, volumeFinder, exporter, logger)
+			}, "Expected setupConfigWatchers to not panic")
 		})
 	}
 }

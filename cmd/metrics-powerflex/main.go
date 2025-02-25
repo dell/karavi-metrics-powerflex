@@ -45,49 +45,72 @@ const (
 var logger *logrus.Logger
 
 func main() {
-	config, exporter, pflexSvc := configure()
-	if err := entrypoint.Run(context.Background(), config, exporter, pflexSvc); err != nil {
+	config, exporter, powerflexSvc := configure()
+	if err := entrypoint.Run(context.Background(), config, exporter, powerflexSvc); err != nil {
 		logger.WithError(err).Fatal("running service")
 	}
 }
 
 func configure() (*entrypoint.Config, otlexporters.Otlexporter, *service.PowerFlexService) {
-	logger := logrus.New()
+	logger := setupLogger()
 
-	viper.SetConfigFile(defaultConfigFile)
+	loadConfig(logger)
 
-	err := viper.ReadInConfig()
-	// if unable to read configuration file, proceed in case we use environment variables
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "unable to read Config file: %v", err)
-	}
-
-	configFileListener := viper.New()
-	configFileListener.SetConfigFile(defaultStorageSystemConfigFile)
+	configFileListener := setupConfigFileListener()
 
 	sdcFinder := &k8s.SDCFinder{
 		API: &k8s.API{},
 	}
-
 	storageClassFinder := &k8s.StorageClassFinder{
 		API: &k8s.API{},
 	}
-
 	leaderElectorGetter := &k8s.LeaderElector{
 		API: &k8s.LeaderElector{},
 	}
-
 	volumeFinder := &k8s.VolumeFinder{
 		API:    &k8s.API{},
 		Logger: logger,
 	}
-
 	nodeFinder := &k8s.NodeFinder{
 		API: &k8s.API{},
 	}
 
-	updateLoggingSettings(logger)
+	config := setupConfig(sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder, logger)
 
+	exporter := &otlexporters.OtlCollectorExporter{}
+
+	powerflexSvc := setupPowerFlexService(logger)
+
+	onChangeUpdate(powerflexSvc, config, sdcFinder, exporter, storageClassFinder, volumeFinder, logger)
+
+	setupConfigWatchers(configFileListener, powerflexSvc, config, sdcFinder, storageClassFinder, volumeFinder, exporter, logger)
+
+	return config, exporter, powerflexSvc
+}
+
+func setupLogger() *logrus.Logger {
+	logger := logrus.New()
+	updateLoggingSettings(logger)
+	return logger
+}
+
+// loadConfig loads the primary configuration file.
+func loadConfig(_ *logrus.Logger) {
+	viper.SetConfigFile(defaultConfigFile)
+	if err := viper.ReadInConfig(); err != nil {
+		fmt.Fprintf(os.Stderr, "unable to read Config file: %v", err)
+	}
+}
+
+// setupConfigFileListener initializes a secondary config watcher for storage system configs.
+func setupConfigFileListener() *viper.Viper {
+	configFileListener := viper.New()
+	configFileListener.SetConfigFile(defaultStorageSystemConfigFile)
+	return configFileListener
+}
+
+// getCollectorCertPath retrieves the certificate path for the OpenTelemetry collector.
+func getCollectorCertPath() string {
 	var collectorCertPath string
 	if tls := os.Getenv("TLS_ENABLED"); tls == "true" {
 		collectorCertPath = os.Getenv("COLLECTOR_CERT_PATH")
@@ -95,42 +118,40 @@ func configure() (*entrypoint.Config, otlexporters.Otlexporter, *service.PowerFl
 			collectorCertPath = otlexporters.DefaultCollectorCertPath
 		}
 	}
+	return collectorCertPath
+}
 
-	config := &entrypoint.Config{
+// setupConfig creates the main configuration structure.
+func setupConfig(
+	sdcFinder *k8s.SDCFinder,
+	storageClassFinder *k8s.StorageClassFinder,
+	leaderElectorGetter *k8s.LeaderElector,
+	volumeFinder *k8s.VolumeFinder,
+	nodeFinder *k8s.NodeFinder,
+	logger *logrus.Logger,
+) *entrypoint.Config {
+	return &entrypoint.Config{
 		SDCFinder:          sdcFinder,
 		StorageClassFinder: storageClassFinder,
 		LeaderElector:      leaderElectorGetter,
 		VolumeFinder:       volumeFinder,
 		NodeFinder:         nodeFinder,
-		CollectorCertPath:  collectorCertPath,
+		CollectorCertPath:  getCollectorCertPath(),
 		Logger:             logger,
 	}
+}
 
-	exporter := &otlexporters.OtlCollectorExporter{}
-
-	pflexSvc := &service.PowerFlexService{
+func setupPowerFlexService(logger *logrus.Logger) *service.PowerFlexService {
+	return &service.PowerFlexService{
 		MetricsWrapper: &service.MetricsWrapper{
 			Meter: otel.Meter("powerflex/sdc"),
 		},
 		Logger: logger,
 	}
-
-	onChangeUpdate(pflexSvc, config, sdcFinder, exporter, storageClassFinder, volumeFinder, logger)
-
-	viper.WatchConfig()
-	viper.OnConfigChange(func(_ fsnotify.Event) {
-		updateLoggingSettings(logger)
-	})
-
-	configFileListener.WatchConfig()
-	configFileListener.OnConfigChange(func(_ fsnotify.Event) {
-		onChangeUpdate(pflexSvc, config, sdcFinder, exporter, storageClassFinder, volumeFinder, logger)
-	})
-	return config, exporter, pflexSvc
 }
 
 func onChangeUpdate(
-	pflexSvc *service.PowerFlexService,
+	powerflexSvc *service.PowerFlexService,
 	config *entrypoint.Config,
 	sdcFinder *k8s.SDCFinder,
 	exporter *otlexporters.OtlCollectorExporter,
@@ -142,7 +163,7 @@ func onChangeUpdate(
 	updateProvisionerNames(sdcFinder, storageClassFinder, volumeFinder, logger)
 	updateMetricsEnabled(config)
 	updateTickIntervals(config, logger)
-	updateService(pflexSvc, logger)
+	updateService(powerflexSvc, logger)
 	updatePowerFlexConnection(defaultStorageSystemConfigFile, config, sdcFinder, storageClassFinder, volumeFinder, logger)
 }
 
@@ -160,6 +181,19 @@ func updateLoggingSettings(logger *logrus.Logger) {
 		level = logrus.InfoLevel
 	}
 	logger.SetLevel(level)
+}
+
+// setupConfigWatchers sets up dynamic updates when config files change.
+func setupConfigWatchers(configFileListener *viper.Viper, powerflexSvc *service.PowerFlexService, config *entrypoint.Config, sdcFinder *k8s.SDCFinder, storageClassFinder *k8s.StorageClassFinder, volumeFinder *k8s.VolumeFinder, exporter *otlexporters.OtlCollectorExporter, logger *logrus.Logger) {
+	viper.WatchConfig()
+	viper.OnConfigChange(func(_ fsnotify.Event) {
+		updateLoggingSettings(logger)
+	})
+
+	configFileListener.WatchConfig()
+	configFileListener.OnConfigChange(func(_ fsnotify.Event) {
+		onChangeUpdate(powerflexSvc, config, sdcFinder, exporter, storageClassFinder, volumeFinder, logger)
+	})
 }
 
 func GetStorageSystemArray(storageSystemConfigFile string) ([]service.ArrayConnectionData, error) {
@@ -335,7 +369,7 @@ func updateTickIntervals(config *entrypoint.Config, logger *logrus.Logger) {
 	config.StoragePoolTickInterval = storagePoolTickInterval
 }
 
-func updateService(pflexSvc *service.PowerFlexService, logger *logrus.Logger) {
+func updateService(powerflexSvc *service.PowerFlexService, logger *logrus.Logger) {
 	maxPowerFlexConcurrentRequests := service.DefaultMaxPowerFlexConnections
 	maxPowerFlexConcurrentRequestsVar := viper.GetString("POWERFLEX_MAX_CONCURRENT_QUERIES")
 	if maxPowerFlexConcurrentRequestsVar != "" {
@@ -347,5 +381,5 @@ func updateService(pflexSvc *service.PowerFlexService, logger *logrus.Logger) {
 			logger.WithError(err).Fatal("POWERFLEX_MAX_CONCURRENT_QUERIES value was invalid (<= 0)")
 		}
 	}
-	pflexSvc.MaxPowerFlexConnections = maxPowerFlexConcurrentRequests
+	powerflexSvc.MaxPowerFlexConnections = maxPowerFlexConcurrentRequests
 }

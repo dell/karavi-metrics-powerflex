@@ -330,7 +330,7 @@ func (s *PowerFlexService) pushSDCMetrics(ctx context.Context, sdcMetrics <-chan
 				if err != nil {
 					s.Logger.WithError(err).WithField("sdc", mr.sdcMeta.ID).Error("recording statistics for sdc")
 				} else {
-					ch <- fmt.Sprintf("%s", mr.sdcMeta.ID)
+					ch <- mr.sdcMeta.ID
 				}
 			}(record)
 		}
@@ -525,7 +525,7 @@ func (s *PowerFlexService) pushVolumeMetrics(ctx context.Context, volumeMetrics 
 				if err != nil {
 					s.Logger.WithError(err).WithField("volume_id", metrics.volumeMeta.ID).Error("recording statistics for volume")
 				} else {
-					ch <- fmt.Sprintf("%s", metrics.volumeMeta.ID)
+					ch <- metrics.volumeMeta.ID
 				}
 			}(metrics)
 		}
