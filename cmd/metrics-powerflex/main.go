@@ -111,14 +111,12 @@ func setupConfigFileListener() *viper.Viper {
 
 // getCollectorCertPath retrieves the certificate path for the OpenTelemetry collector.
 func getCollectorCertPath() string {
-	var collectorCertPath string
 	if tls := os.Getenv("TLS_ENABLED"); tls == "true" {
-		collectorCertPath = os.Getenv("COLLECTOR_CERT_PATH")
-		if len(strings.TrimSpace(collectorCertPath)) < 1 {
-			collectorCertPath = otlexporters.DefaultCollectorCertPath
+		if certPath := strings.TrimSpace(os.Getenv("COLLECTOR_CERT_PATH")); certPath != "" {
+			return certPath
 		}
 	}
-	return collectorCertPath
+	return otlexporters.DefaultCollectorCertPath
 }
 
 // setupConfig creates the main configuration structure.

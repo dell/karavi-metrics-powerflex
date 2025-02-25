@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -78,6 +79,35 @@ func TestSetupConfigFileListener(t *testing.T) {
 			assert.NotNil(t, listener, "Expected valid config file listener")
 		})
 	}
+}
+
+func TestGetCollectorCertPath(t *testing.T) {
+	t.Run("Valid Cert Path", func(t *testing.T) {
+		os.Setenv("TLS_ENABLED", "true")
+		os.Setenv("COLLECTOR_CERT_PATH", "/path/to/cert")
+		path := getCollectorCertPath()
+		assert.Equal(t, "/path/to/cert", path)
+	})
+
+	t.Run("TLS Enabled But No Cert Path", func(t *testing.T) {
+		os.Setenv("TLS_ENABLED", "true")
+		os.Setenv("COLLECTOR_CERT_PATH", "") // Explicitly setting it to empty
+		path := getCollectorCertPath()
+		assert.Equal(t, otlexporters.DefaultCollectorCertPath, path)
+	})
+
+	t.Run("TLS Disabled", func(t *testing.T) {
+		os.Setenv("TLS_ENABLED", "false")
+		path := getCollectorCertPath()
+		assert.Equal(t, otlexporters.DefaultCollectorCertPath, path)
+	})
+
+	t.Run("TLS Not Set", func(t *testing.T) {
+		os.Unsetenv("TLS_ENABLED")
+		os.Unsetenv("COLLECTOR_CERT_PATH")
+		path := getCollectorCertPath()
+		assert.Equal(t, otlexporters.DefaultCollectorCertPath, path)
+	})
 }
 
 func TestSetupConfig(t *testing.T) {
@@ -274,10 +304,30 @@ func TestUpdateTickIntervals(t *testing.T) {
 			expectPanic:         false,
 		},
 		{
-			name:                "Invalid Quota",
+			name:                "Invalid SDC IO",
 			sdcIOFreq:           "invalid",
-			volumeIOFreq:        "",
-			storagePoolFreq:     "",
+			volumeIOFreq:        "25",
+			storagePoolFreq:     "15",
+			expectedSdcIO:       defaultTickInterval,
+			expectedVolumeIO:    defaultTickInterval,
+			expectedStoragePool: defaultTickInterval,
+			expectPanic:         true,
+		},
+		{
+			name:                "Invalid Volume IO",
+			sdcIOFreq:           "30",
+			volumeIOFreq:        "invalid",
+			storagePoolFreq:     "15",
+			expectedSdcIO:       defaultTickInterval,
+			expectedVolumeIO:    defaultTickInterval,
+			expectedStoragePool: defaultTickInterval,
+			expectPanic:         true,
+		},
+		{
+			name:                "Invalid Volume IO",
+			sdcIOFreq:           "30",
+			volumeIOFreq:        "10",
+			storagePoolFreq:     "invalid",
 			expectedSdcIO:       defaultTickInterval,
 			expectedVolumeIO:    defaultTickInterval,
 			expectedStoragePool: defaultTickInterval,
@@ -324,6 +374,12 @@ func TestUpdateService(t *testing.T) {
 		{
 			name:          "Invalid Value",
 			maxConcurrent: "invalid",
+			expected:      service.DefaultMaxPowerFlexConnections,
+			expectPanic:   true,
+		},
+		{
+			name:          "Null Value",
+			maxConcurrent: "0",
 			expected:      service.DefaultMaxPowerFlexConnections,
 			expectPanic:   true,
 		},
