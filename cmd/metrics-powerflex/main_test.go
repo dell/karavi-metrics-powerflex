@@ -14,6 +14,43 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestInitializeComponents(t *testing.T) {
+	tests := []struct {
+		name         string
+		provisioners string
+		expected     []string
+	}{
+		{
+			name:         "Single Provisioner",
+			provisioners: "csi-vxflexos.dellemc.com",
+			expected:     []string{"csi-vxflexos.dellemc.com"},
+		},
+		{
+			name:         "Empty Provisioners",
+			provisioners: "",
+			expected:     nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			viper.Reset()
+			viper.Set("provisioner_names", tt.provisioners)
+			logger := logrus.New()
+			sdcFinder, storageClassFinder, _, volumeFinder, _, _ := initializeComponents(logger)
+			// assert.NotPanics(t, func() { updateProvisionerNames(sdcFinder, storageClassFinder, volumeFinder, logger) })
+			for _, StorageSystemID := range sdcFinder.StorageSystemID {
+				assert.Equal(t, tt.expected, StorageSystemID.DriverNames)
+			}
+			for _, StorageSystemID := range volumeFinder.StorageSystemID {
+				assert.Equal(t, tt.expected, StorageSystemID.DriverNames)
+			}
+			for _, StorageSystemID := range storageClassFinder.StorageSystemID {
+				assert.Equal(t, tt.expected, StorageSystemID.DriverNames)
+			}
+		})
+	}
+}
+
 func TestSetupLogger(t *testing.T) {
 	tests := []struct {
 		name     string

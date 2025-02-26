@@ -56,11 +56,17 @@ func main() {
 
 func configure() (*entrypoint.Config, otlexporters.Otlexporter, *service.PowerFlexService) {
 	logger := setupLogger()
-
 	loadConfig(logger)
-
 	configFileListener := setupConfigFileListener()
+	sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder, exporter := initializeComponents(logger)
+	config := setupConfig(sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder, logger)
+	powerflexSvc := setupPowerFlexService(logger)
+	onChangeUpdate(powerflexSvc, config, sdcFinder, exporter, storageClassFinder, volumeFinder, logger)
+	setupConfigWatchers(configFileListener, powerflexSvc, config, sdcFinder, storageClassFinder, volumeFinder, exporter, logger)
+	return config, exporter, powerflexSvc
+}
 
+func initializeComponents(logger *logrus.Logger) (*k8s.SDCFinder, *k8s.StorageClassFinder, *k8s.LeaderElector, *k8s.VolumeFinder, *k8s.NodeFinder, *otlexporters.OtlCollectorExporter) {
 	sdcFinder := &k8s.SDCFinder{
 		API: &k8s.API{},
 	}
@@ -77,18 +83,8 @@ func configure() (*entrypoint.Config, otlexporters.Otlexporter, *service.PowerFl
 	nodeFinder := &k8s.NodeFinder{
 		API: &k8s.API{},
 	}
-
-	config := setupConfig(sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder, logger)
-
 	exporter := &otlexporters.OtlCollectorExporter{}
-
-	powerflexSvc := setupPowerFlexService(logger)
-
-	onChangeUpdate(powerflexSvc, config, sdcFinder, exporter, storageClassFinder, volumeFinder, logger)
-
-	setupConfigWatchers(configFileListener, powerflexSvc, config, sdcFinder, storageClassFinder, volumeFinder, exporter, logger)
-
-	return config, exporter, powerflexSvc
+	return sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder, exporter
 }
 
 func setupLogger() *logrus.Logger {
