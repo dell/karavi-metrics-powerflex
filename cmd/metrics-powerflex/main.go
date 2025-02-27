@@ -175,6 +175,7 @@ func updateLoggingSettings(logger *logrus.Logger) {
 	logLevel := viper.GetString("LOG_LEVEL")
 	level, err := logrus.ParseLevel(logLevel)
 	if err != nil {
+		logger.WithError(err).Info("invalid log level, setting the log level as INFO")
 		level = logrus.InfoLevel
 	}
 	logger.SetLevel(level)
@@ -239,9 +240,7 @@ func updatePowerFlexConnection(
 		}
 
 		config.PowerFlexClient[powerFlexSystemID] = client
-
 		config.PowerFlexConfig[powerFlexSystemID] = goscaleio.ConfigConnect{Username: powerFlexGatewayUser, Password: powerFlexGatewayPassword}
-
 		logger.WithField("storage_system_id", powerFlexSystemID).Info("set powerflex system ID")
 	}
 
@@ -318,6 +317,9 @@ func updateTickIntervals(config *entrypoint.Config, logger *logrus.Logger) {
 		if err != nil {
 			logger.WithError(err).Fatal("POWERFLEX_SDC_IO_POLL_FREQUENCY was not set to a valid number")
 		}
+		if numSeconds <= 0 {
+			logger.Fatal("POWERFLEX_SDC_IO_POLL_FREQUENCY value was invalid (<= 0)")
+		}
 		sdcTickInterval = time.Duration(numSeconds) * time.Second
 	}
 
@@ -328,6 +330,9 @@ func updateTickIntervals(config *entrypoint.Config, logger *logrus.Logger) {
 		if err != nil {
 			logger.WithError(err).Fatal("POWERFLEX_VOLUME_IO_POLL_FREQUENCY was not set to a valid number")
 		}
+		if numSeconds <= 0 {
+			logger.Fatal("POWERFLEX_VOLUME_IO_POLL_FREQUENCY value was invalid (<= 0)")
+		}
 		volumeTickInterval = time.Duration(numSeconds) * time.Second
 	}
 
@@ -337,6 +342,9 @@ func updateTickIntervals(config *entrypoint.Config, logger *logrus.Logger) {
 		numSeconds, err := strconv.Atoi(storagePoolPollFrequencySeconds)
 		if err != nil {
 			logger.WithError(err).Fatal("POWERFLEX_STORAGE_POOL_POLL_FREQUENCY was not set to a valid number")
+		}
+		if numSeconds <= 0 {
+			logger.Fatal("POWERFLEX_STORAGE_POOL_POLL_FREQUENCY value was invalid (<= 0)")
 		}
 		storagePoolTickInterval = time.Duration(numSeconds) * time.Second
 	}
