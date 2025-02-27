@@ -178,6 +178,42 @@ func TestSetupPowerFlexService(t *testing.T) {
 	assert.NotNil(t, powerflexSvc, "Expected valid powerflex service")
 }
 
+func TestOnChangeUpdate(t *testing.T) {
+	tests := []struct {
+		name        string
+		expectPanic bool
+	}{
+		{
+			name:        "Empty Address",
+			expectPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			viper.Reset()
+			logger := logrus.New()
+			logger.ExitFunc = func(int) { panic("fatal") }
+			svc := &service.PowerFlexService{}
+			sdcFinder := &k8s.SDCFinder{
+				API: &k8s.API{},
+			}
+			storageClassFinder := &k8s.StorageClassFinder{
+				API: &k8s.API{},
+			}
+			volumeFinder := &k8s.VolumeFinder{
+				API:    &k8s.API{},
+				Logger: logger,
+			}
+			config := &entrypoint.Config{Logger: logger}
+			exporter := &otlexporters.OtlCollectorExporter{}
+			if tt.expectPanic {
+				assert.Panics(t, func() { onChangeUpdate(svc, config, sdcFinder, exporter, storageClassFinder, volumeFinder, logger) })
+			}
+		})
+	}
+}
+
 func TestSetupConfig(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -259,6 +295,7 @@ func TestUpdateMetricsEnabled(t *testing.T) {
 		expectedSdcMetricsEnabled         bool
 		expectedVolumeMetricsEnabled      bool
 		expectedStoragePoolMetricsEnabled bool
+		expectPanic                       bool
 	}{
 		{
 			name:                              "All metrics enabled",
@@ -268,6 +305,7 @@ func TestUpdateMetricsEnabled(t *testing.T) {
 			expectedSdcMetricsEnabled:         true,
 			expectedVolumeMetricsEnabled:      true,
 			expectedStoragePoolMetricsEnabled: true,
+			expectPanic:                       false,
 		},
 		{
 			name:                              "All metrics disabled",
@@ -277,6 +315,37 @@ func TestUpdateMetricsEnabled(t *testing.T) {
 			expectedSdcMetricsEnabled:         false,
 			expectedVolumeMetricsEnabled:      false,
 			expectedStoragePoolMetricsEnabled: false,
+			expectPanic:                       false,
+		},
+		{
+			name:                              "sdcMetricsEnabled error",
+			sdcMetricsEnabled:                 "test",
+			volumeMetricsEnabled:              "true",
+			storagePoolMetricsEnabled:         "true",
+			expectedSdcMetricsEnabled:         true,
+			expectedVolumeMetricsEnabled:      true,
+			expectedStoragePoolMetricsEnabled: true,
+			expectPanic:                       true,
+		},
+		{
+			name:                              "volumeMetricsEnabled error",
+			sdcMetricsEnabled:                 "true",
+			volumeMetricsEnabled:              "test",
+			storagePoolMetricsEnabled:         "true",
+			expectedSdcMetricsEnabled:         true,
+			expectedVolumeMetricsEnabled:      true,
+			expectedStoragePoolMetricsEnabled: true,
+			expectPanic:                       true,
+		},
+		{
+			name:                              "storagePoolMetricsEnabled error",
+			sdcMetricsEnabled:                 "true",
+			volumeMetricsEnabled:              "true",
+			storagePoolMetricsEnabled:         "test",
+			expectedSdcMetricsEnabled:         true,
+			expectedVolumeMetricsEnabled:      true,
+			expectedStoragePoolMetricsEnabled: true,
+			expectPanic:                       true,
 		},
 	}
 
@@ -286,10 +355,14 @@ func TestUpdateMetricsEnabled(t *testing.T) {
 			viper.Set("POWERFLEX_VOLUME_METRICS_ENABLED", tt.volumeMetricsEnabled)
 			viper.Set("POWERFLEX_STORAGE_POOL_METRICS_ENABLED", tt.storagePoolMetricsEnabled)
 			config := &entrypoint.Config{}
-			updateMetricsEnabled(config)
-			assert.Equal(t, tt.expectedSdcMetricsEnabled, config.SDCMetricsEnabled, "SDC metrics enabled should be set correctly")
-			assert.Equal(t, tt.expectedVolumeMetricsEnabled, config.VolumeMetricsEnabled, "Volume metrics enabled should be set correctly")
-			assert.Equal(t, tt.expectedStoragePoolMetricsEnabled, config.SDCMetricsEnabled, "Storage metrics enabled should be set correctly")
+			if tt.expectPanic {
+				assert.Panics(t, func() { updateMetricsEnabled(config) })
+			} else {
+				assert.NotPanics(t, func() { updateMetricsEnabled(config) })
+				assert.Equal(t, tt.expectedSdcMetricsEnabled, config.SDCMetricsEnabled, "SDC metrics enabled should be set correctly")
+				assert.Equal(t, tt.expectedVolumeMetricsEnabled, config.VolumeMetricsEnabled, "Volume metrics enabled should be set correctly")
+				assert.Equal(t, tt.expectedStoragePoolMetricsEnabled, config.SDCMetricsEnabled, "Storage metrics enabled should be set correctly")
+			}
 		})
 	}
 }

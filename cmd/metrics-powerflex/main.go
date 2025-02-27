@@ -62,6 +62,7 @@ func configure() (*entrypoint.Config, otlexporters.Otlexporter, *service.PowerFl
 	config := setupConfig(sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder, logger)
 	powerflexSvc := setupPowerFlexService(logger)
 	onChangeUpdate(powerflexSvc, config, sdcFinder, exporter, storageClassFinder, volumeFinder, logger)
+	updatePowerFlexConnection(defaultStorageSystemConfigFile, config, sdcFinder, storageClassFinder, volumeFinder, logger)
 	setupConfigWatchers(configFileListener, powerflexSvc, config, sdcFinder, storageClassFinder, volumeFinder, exporter, logger)
 	return config, exporter, powerflexSvc
 }
@@ -161,7 +162,6 @@ func onChangeUpdate(
 	updateMetricsEnabled(config)
 	updateTickIntervals(config, logger)
 	updateService(powerflexSvc, logger)
-	updatePowerFlexConnection(defaultStorageSystemConfigFile, config, sdcFinder, storageClassFinder, volumeFinder, logger)
 }
 
 func updateLoggingSettings(logger *logrus.Logger) {
@@ -191,6 +191,7 @@ func setupConfigWatchers(configFileListener *viper.Viper, powerflexSvc *service.
 	configFileListener.WatchConfig()
 	configFileListener.OnConfigChange(func(_ fsnotify.Event) {
 		onChangeUpdate(powerflexSvc, config, sdcFinder, exporter, storageClassFinder, volumeFinder, logger)
+		updatePowerFlexConnection(defaultStorageSystemConfigFile, config, sdcFinder, storageClassFinder, volumeFinder, logger)
 	})
 }
 
@@ -272,15 +273,12 @@ func updateProvisionerNames(
 		logger.Fatal("PROVISIONER_NAMES is required")
 	}
 	provisionerNames := strings.Split(provisionerNamesValue, ",")
-
 	for i := range sdcFinder.StorageSystemID {
 		sdcFinder.StorageSystemID[i].DriverNames = provisionerNames
 	}
-
 	for i := range storageClassFinder.StorageSystemID {
 		storageClassFinder.StorageSystemID[i].DriverNames = provisionerNames
 	}
-
 	for i := range volumeFinder.StorageSystemID {
 		volumeFinder.StorageSystemID[i].DriverNames = provisionerNames
 	}
@@ -292,17 +290,26 @@ func updateMetricsEnabled(config *entrypoint.Config) {
 	if powerflexSdcMetricsEnabledValue == "false" {
 		powerflexSdcMetricsEnabled = false
 	}
+	if powerflexSdcMetricsEnabledValue != "true" && powerflexSdcMetricsEnabledValue != "false" {
+		logger.Fatal("POWERFLEX_SDC_METRICS_ENABLED value is invalid. valid values are true or false")
+	}
 
 	powerflexVolumeMetricsEnabled := true
 	powerflexVolumeMetricsEnabledValue := viper.GetString("POWERFLEX_VOLUME_METRICS_ENABLED")
 	if powerflexVolumeMetricsEnabledValue == "false" {
 		powerflexVolumeMetricsEnabled = false
 	}
+	if powerflexVolumeMetricsEnabledValue != "true" && powerflexVolumeMetricsEnabledValue != "false" {
+		logger.Fatal("POWERFLEX_VOLUME_METRICS_ENABLED value is invalid. valid values are true or false")
+	}
 
 	storagePoolMetricsEnabled := true
 	storagePoolMetricsEnabledValue := viper.GetString("POWERFLEX_STORAGE_POOL_METRICS_ENABLED")
 	if storagePoolMetricsEnabledValue == "false" {
 		storagePoolMetricsEnabled = false
+	}
+	if storagePoolMetricsEnabledValue != "true" && storagePoolMetricsEnabledValue != "false" {
+		logger.Fatal("POWERFLEX_STORAGE_POOL_METRICS_ENABLED value is invalid. valid values are true or false")
 	}
 	config.SDCMetricsEnabled = powerflexSdcMetricsEnabled
 	config.VolumeMetricsEnabled = powerflexVolumeMetricsEnabled
