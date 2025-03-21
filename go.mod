@@ -5,7 +5,7 @@ go 1.24
 toolchain go1.24.1
 
 require (
-	github.com/dell/goscaleio v1.18.1-0.20250307182825-586b6aef32bf
+	github.com/dell/goscaleio v1.18.1-0.20250313190335-a4cb3a199725
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/golang/mock v1.6.0
 	github.com/sirupsen/logrus v1.9.3
