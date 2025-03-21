@@ -39,24 +39,24 @@ For documentation, please visit [Container Storage Modules documentation](https:
 
 If you wish to clone and build the Metrics for PowerFlex service, a Linux host is required with the following installed:
 
-| Component       | Version   | Additional Information                                                                                                                     |
-| --------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Docker          | v19+      | [Docker installation](https://docs.docker.com/engine/install/)                                                                                                    |
-| Docker Registry |           | Access to a local/corporate [Docker registry](https://docs.docker.com/registry/)                                                           |
-| Golang          | v1.14+    | [Golang installation](https://github.com/travis-ci/gimme)                                                                                                         |
-| gosec           |           | [gosec](https://github.com/securego/gosec)                                                                                                          |
-| gomock          | v.1.4.3   | [Go Mock](https://github.com/golang/mock)                                                                                                             |
-| git             | latest    | [Git installation](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)                                                                              |
-| gcc             |           | Run ```sudo apt install build-essential```                                                                                                 |
-| kubectl         | 1.18-1.20 | Ensure you copy the kubeconfig file from the Kubernetes cluster to the linux host. [kubectl installation](https://kubernetes.io/docs/tasks/tools/install-kubectl/) |
-| Helm            | v.3.3.0   | [Helm installation](https://helm.sh/docs/intro/install/)                                                                                                        |
+| Component       | Version   | Additional Information |
+| --------------- | --------- | ---------------------- |
+| Podman          | v5.x.x    | [Podman installation](https://podman.io/docs/installation) |
+| Docker Registry |           | Access to a local/corporate [Docker registry](https://docs.docker.com/registry/) |
+| Golang          | v1.24.x   | [Golang installation](https://github.com/travis-ci/gimme) |
+| gomock          | v1.6.0    | [Go Mock](https://github.com/golang/mock) |
+| gosec           |           | [gosec](https://github.com/securego/gosec) |
+| git             | latest    | [Git installation](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) |
+| gcc             |           | Run `sudo apt install build-essential` |
+| kubectl         | 1.30-1.32 | Ensure you copy the kubeconfig file from the Kubernetes cluster to the linux host. [kubectl installation](https://kubernetes.io/docs/tasks/tools/install-kubectl/) |
+| Helm            | v3.x.x    | [Helm installation](https://helm.sh/docs/intro/install/) |
 
 Once all prerequisites are on the Linux host, follow the steps below to clone and build the metrics service:
 
 1. Clone the repository using the following command: `git clone https://github.com/dell/karavi-metrics-powerflex.git`
-1. Set the DOCKER_REPO environment variable to point to the local Docker repository, for example: `export DOCKER_REPO=<ip-address>:<port>`
-1. In the karavi-metrics-powerflex directory, run the following command to build the Docker image called csm-metrics-powerflex: `make docker`
-1. Tag (with the "latest" tag) and push the image to the local Docker repository by running the following command: `make tag push`
+2. Set the DOCKER_REPO environment variable to point to the local Docker repository, for example: `export DOCKER_REPO=<ip-address>:<port>`
+3. In the karavi-metrics-powerflex directory, run the following command to build the container image called csm-metrics-powerflex: `make podman`
+4. Tag (with the "latest" tag) and push the image to the local Docker repository by running the following command: `make tag push`
 
 __Note:__ Linux support only. If you are using a local insecure docker registry, ensure you configure the insecure registries on each of the Kubernetes worker nodes to allow access to the local docker repository.
 
