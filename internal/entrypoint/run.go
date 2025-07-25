@@ -188,6 +188,9 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 					logger.WithError(err).Error("getting volumes")
 					continue
 				}
+				for i, v := range volumes {
+					fmt.Printf("########################## from GetVolumes() i= %d v: %#v\n", i, *v)
+				}
 				pflexSvc.ExportVolumeStatistics(ctx, volumes, config.VolumeFinder)
 			}
 
