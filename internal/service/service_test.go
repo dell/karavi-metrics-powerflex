@@ -19,10 +19,11 @@ package service_test
 import (
 	"context"
 	"errors"
-	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 
 	"github.com/dell/karavi-metrics-powerflex/internal/service"
 	"github.com/dell/karavi-metrics-powerflex/internal/service/mocks"
