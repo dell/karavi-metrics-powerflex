@@ -19,6 +19,7 @@ package service_test
 import (
 	"context"
 	"errors"
+	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 	"strconv"
 	"testing"
 	"time"
@@ -27,8 +28,6 @@ import (
 	"github.com/dell/karavi-metrics-powerflex/internal/service/mocks"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
-
-	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -911,21 +910,21 @@ func Test_GetVolumes(t *testing.T) {
 	type setup struct {
 		Service *service.PowerFlexService
 	}
-	type checkFn func(*testing.T, []service.VolumeStatisticsGetter, error)
+	type checkFn func(*testing.T, []*service.VolumeMetaMetrics, error)
 	check := func(fns ...checkFn) []checkFn { return fns }
 
-	hasError := func(t *testing.T, _ []service.VolumeStatisticsGetter, err error) {
+	hasError := func(t *testing.T, _ []*service.VolumeMetaMetrics, err error) {
 		if err == nil {
 			t.Fatalf("expected error")
 		}
 	}
-	hasNoError := func(t *testing.T, _ []service.VolumeStatisticsGetter, err error) {
+	hasNoError := func(t *testing.T, _ []*service.VolumeMetaMetrics, err error) {
 		if err != nil {
 			t.Fatalf("did not expected error but got %v", err)
 		}
 	}
-	checkVolumeLength := func(length int) func(t *testing.T, vols []service.VolumeStatisticsGetter, err error) {
-		return func(t *testing.T, vols []service.VolumeStatisticsGetter, _ error) {
+	checkVolumeLength := func(length int) func(t *testing.T, vols []*service.VolumeMetaMetrics, err error) {
+		return func(t *testing.T, vols []*service.VolumeMetaMetrics, _ error) {
 			assert.Equal(t, length, len(vols))
 		}
 	}
@@ -947,21 +946,117 @@ func Test_GetVolumes(t *testing.T) {
 				{Volume: volumes[0]},
 				{Volume: volumes[1]},
 			}
+			bwc := types.BWC{NumOccured: 6856870, NumSeconds: 114, TotalWeightInKb: 1}
+			volumeMetrics := []*types.SdcVolumeMetrics{
+				{
+					VolumeID:        "1",
+					SdcID:           "60001",
+					ReadLatencyBwc:  bwc,
+					WriteLatencyBwc: bwc,
+					ReadBwc:         bwc,
+					WriteBwc:        bwc,
+					TrimLatencyBwc:  bwc,
+					TrimBwc:         bwc,
+				},
+				{
+					VolumeID:        "2",
+					SdcID:           "60002",
+					ReadLatencyBwc:  bwc,
+					WriteLatencyBwc: bwc,
+					ReadBwc:         bwc,
+					WriteBwc:        bwc,
+					TrimLatencyBwc:  bwc,
+					TrimBwc:         bwc,
+				},
+			}
 
 			sdc1 := mocks.NewMockStatisticsGetter(ctrl)
 			sdc1.EXPECT().GetVolume().Return(volumes, nil).AnyTimes()
 			sdc1.EXPECT().FindVolumes().Return(volumeClient, nil).AnyTimes()
+			sdc1.EXPECT().GetVolumeMetrics().Return(volumeMetrics[:1], nil).AnyTimes()
 			sdc2 := mocks.NewMockStatisticsGetter(ctrl)
 			sdc2.EXPECT().GetVolume().Return(volumes[:1], nil).AnyTimes()
 			sdc2.EXPECT().FindVolumes().Return(volumeClient, nil).AnyTimes()
+			sdc2.EXPECT().GetVolumeMetrics().Return(volumeMetrics[1:2], nil).AnyTimes()
 			sdc3 := mocks.NewMockStatisticsGetter(ctrl)
 			sdc3.EXPECT().GetVolume().Return(append(volumes, volumes...), nil).AnyTimes()
 			sdc3.EXPECT().FindVolumes().Return(append(volumeClient, volumeClient...), nil).AnyTimes()
+			sdc3.EXPECT().GetVolumeMetrics().Return(volumeMetrics[:1], nil).AnyTimes()
 			sdc4 := mocks.NewMockStatisticsGetter(ctrl)
 			sdc4.EXPECT().GetVolume().Return(volumes[:0], nil).AnyTimes()
 			sdc4.EXPECT().FindVolumes().Return(volumeClient[:0], nil).AnyTimes()
+			sdc4.EXPECT().GetVolumeMetrics().Return(volumeMetrics[:1], nil).AnyTimes()
 
 			sdcs := []service.StatisticsGetter{sdc1, sdc2, sdc3, sdc4}
+
+			return setup{
+				Service: &service.PowerFlexService{},
+			}, sdcs, check(hasNoError, checkVolumeLength(len(volumes))), ctrl
+		},
+		"success even with timing difference with volume stats": func(*testing.T) (setup, []service.StatisticsGetter, []checkFn, *gomock.Controller) {
+			ctrl := gomock.NewController(t)
+
+			first, _ := time.ParseDuration("100ms")
+			second, _ := time.ParseDuration("200ms")
+			third, _ := time.ParseDuration("300ms")
+
+			mappedInfos := []*types.MappedSdcInfo{
+				{SdcID: "60001", SdcIP: "10.234"},
+				{SdcID: "60002", SdcIP: "10.235"},
+				{SdcID: "60003", SdcIP: "10.236"},
+			}
+			volumes := []*types.Volume{
+				{ID: "1", Name: "name_testing1", MappedSdcInfo: mappedInfos},
+				{ID: "2", Name: "name_testing2", MappedSdcInfo: mappedInfos[:1]},
+				{ID: "3", Name: "name_testing3", MappedSdcInfo: mappedInfos[:3]},
+			}
+
+			volumeClient := []*sio.Volume{
+				{Volume: volumes[0]},
+				{Volume: volumes[1]},
+				{Volume: volumes[2]},
+			}
+
+			volumeMetrics := []*types.SdcVolumeMetrics{
+				{VolumeID: "1", SdcID: "60001"},
+				{VolumeID: "2", SdcID: "60002"},
+				{VolumeID: "3", SdcID: "60003"},
+			}
+
+			sdc1 := mocks.NewMockStatisticsGetter(ctrl)
+			sdc1.EXPECT().GetVolume().Return(volumes, nil).AnyTimes()
+			sdc1.EXPECT().FindVolumes().DoAndReturn(func() ([]*sio.Volume, error) {
+				time.Sleep(first)
+				return volumeClient, nil
+			}).Times(1)
+			sdc1.EXPECT().GetVolumeMetrics().DoAndReturn(func() ([]*types.SdcVolumeMetrics, error) {
+				time.Sleep(first)
+				return volumeMetrics[:1], nil
+			}).Times(1)
+
+			sdc2 := mocks.NewMockStatisticsGetter(ctrl)
+			sdc2.EXPECT().GetVolume().Return(volumes, nil).AnyTimes()
+			sdc2.EXPECT().FindVolumes().DoAndReturn(func() ([]*sio.Volume, error) {
+				time.Sleep(second)
+				return volumeClient, nil
+			}).Times(1)
+			sdc2.EXPECT().GetVolumeMetrics().DoAndReturn(func() ([]*types.SdcVolumeMetrics, error) {
+				time.Sleep(second)
+				return volumeMetrics[1:2], nil
+			}).Times(1)
+
+			sdc3 := mocks.NewMockStatisticsGetter(ctrl)
+			sdc3.EXPECT().GetVolume().Return(volumes, nil).AnyTimes()
+			sdc3.EXPECT().FindVolumes().DoAndReturn(func() ([]*sio.Volume, error) {
+				time.Sleep(third)
+				return volumeClient, nil
+			}).Times(1)
+			sdc3.EXPECT().GetVolumeMetrics().DoAndReturn(func() ([]*types.SdcVolumeMetrics, error) {
+				time.Sleep(third)
+				return volumeMetrics[2:], nil
+			}).Times(1)
+
+			sdcs := []service.StatisticsGetter{sdc1, sdc2, sdc3}
 
 			return setup{
 				Service: &service.PowerFlexService{},
@@ -975,6 +1070,35 @@ func Test_GetVolumes(t *testing.T) {
 			sdc1.EXPECT().FindVolumes().Return(nil, errors.New("error")).AnyTimes()
 
 			sdcs := []service.StatisticsGetter{sdc1}
+
+			return setup{
+				Service: &service.PowerFlexService{},
+			}, sdcs, check(hasError), ctrl
+		},
+		"Failed GetVolumeMetrics": func(*testing.T) (setup, []service.StatisticsGetter, []checkFn, *gomock.Controller) {
+			ctrl := gomock.NewController(t)
+
+			mappedInfos := []*types.MappedSdcInfo{
+				{SdcID: "60001", SdcIP: "10.234"},
+				{SdcID: "60002", SdcIP: "10.235"},
+			}
+
+			volumes := []*types.Volume{
+				{ID: "1", Name: "name_testing1", MappedSdcInfo: mappedInfos},
+				{ID: "2", Name: "name_testing2", MappedSdcInfo: mappedInfos[:1]},
+			}
+
+			volumeClient := []*sio.Volume{
+				{Volume: volumes[0]},
+				{Volume: volumes[1]},
+			}
+
+			// FindVolumes() returns successful volumes, but GetVolumeMetrics() returns an error
+			sdc := mocks.NewMockStatisticsGetter(ctrl)
+			sdc.EXPECT().GetVolume().Return(volumes, nil).AnyTimes()
+			sdc.EXPECT().FindVolumes().Return(volumeClient, nil).AnyTimes()
+			sdc.EXPECT().GetVolumeMetrics().Return(nil, errors.New("error")).AnyTimes()
+			sdcs := []service.StatisticsGetter{sdc}
 
 			return setup{
 				Service: &service.PowerFlexService{},
@@ -999,20 +1123,23 @@ func Test_ExportVolumeStatistics(t *testing.T) {
 		Service *service.PowerFlexService
 	}
 
-	tests := map[string]func(t *testing.T) (setup, []service.VolumeStatisticsGetter, service.VolumeFinder, *gomock.Controller){
-		"success": func(*testing.T) (setup, []service.VolumeStatisticsGetter, service.VolumeFinder, *gomock.Controller) {
+	tests := map[string]func(t *testing.T) (setup, []*service.VolumeMetaMetrics, service.VolumeFinder, *gomock.Controller){
+		"success": func(*testing.T) (setup, []*service.VolumeMetaMetrics, service.VolumeFinder, *gomock.Controller) {
 			ctrl := gomock.NewController(t)
 			metrics := mocks.NewMockMetricsRecorder(ctrl)
 			volFinder := mocks.NewMockVolumeFinder(ctrl)
 
-			vol1 := mocks.NewMockVolumeStatisticsGetter(ctrl)
-			vol1.EXPECT().GetVolumeStatistics().Return(&types.VolumeStatistics{}, nil).Times(1)
-			vol2 := mocks.NewMockVolumeStatisticsGetter(ctrl)
-			vol2.EXPECT().GetVolumeStatistics().Return(&types.VolumeStatistics{}, nil).Times(1)
-			vol3 := mocks.NewMockVolumeStatisticsGetter(ctrl)
-			vol3.EXPECT().GetVolumeStatistics().Return(&types.VolumeStatistics{}, nil).Times(1)
+			vol1 := &service.VolumeMetaMetrics{
+				ID: "vol1",
+			}
+			vol2 := &service.VolumeMetaMetrics{
+				ID: "vol2",
+			}
+			vol3 := &service.VolumeMetaMetrics{
+				ID: "vol3",
+			}
 
-			vols := []service.VolumeStatisticsGetter{vol1, vol2, vol3}
+			vols := []*service.VolumeMetaMetrics{vol1, vol2, vol3}
 
 			volFinder.EXPECT().GetPersistentVolumes().Return([]k8s.VolumeInfo{}, nil)
 
@@ -1022,41 +1149,7 @@ func Test_ExportVolumeStatistics(t *testing.T) {
 				Service: &service,
 			}, vols, volFinder, ctrl
 		},
-		"sucess even with timing difference with volume stats": func(t *testing.T) (setup, []service.VolumeStatisticsGetter, service.VolumeFinder, *gomock.Controller) {
-			ctrl := gomock.NewController(t)
-			metrics := mocks.NewMockMetricsRecorder(ctrl)
-			volFinder := mocks.NewMockVolumeFinder(ctrl)
-
-			first, _ := time.ParseDuration("100ms")
-			second, _ := time.ParseDuration("200ms")
-			third, _ := time.ParseDuration("300ms")
-			vol1 := mocks.NewMockVolumeStatisticsGetter(ctrl)
-			vol1.EXPECT().GetVolumeStatistics().DoAndReturn(func() (*types.VolumeStatistics, error) {
-				time.Sleep(first)
-				return &types.VolumeStatistics{}, nil
-			}).Times(1)
-			vol2 := mocks.NewMockVolumeStatisticsGetter(ctrl)
-			vol2.EXPECT().GetVolumeStatistics().DoAndReturn(func() (*types.VolumeStatistics, error) {
-				time.Sleep(second)
-				return &types.VolumeStatistics{}, nil
-			}).Times(1)
-			vol3 := mocks.NewMockVolumeStatisticsGetter(ctrl)
-			vol3.EXPECT().GetVolumeStatistics().DoAndReturn(func() (*types.VolumeStatistics, error) {
-				time.Sleep(third)
-				return &types.VolumeStatistics{}, nil
-			}).Times(1)
-
-			vols := []service.VolumeStatisticsGetter{vol1, vol2, vol3}
-
-			volFinder.EXPECT().GetPersistentVolumes().Return([]k8s.VolumeInfo{}, nil)
-
-			service := service.PowerFlexService{MetricsWrapper: metrics}
-			metrics.EXPECT().Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
-			return setup{
-				Service: &service,
-			}, vols, volFinder, ctrl
-		},
-		"nil list of vols": func(*testing.T) (setup, []service.VolumeStatisticsGetter, service.VolumeFinder, *gomock.Controller) {
+		"nil list of vols": func(*testing.T) (setup, []*service.VolumeMetaMetrics, service.VolumeFinder, *gomock.Controller) {
 			ctrl := gomock.NewController(t)
 			metrics := mocks.NewMockMetricsRecorder(ctrl)
 			volFinder := mocks.NewMockVolumeFinder(ctrl)
@@ -1069,37 +1162,15 @@ func Test_ExportVolumeStatistics(t *testing.T) {
 				Service: &svc,
 			}, nil, volFinder, ctrl
 		},
-		"error with 1 vol": func(*testing.T) (setup, []service.VolumeStatisticsGetter, service.VolumeFinder, *gomock.Controller) {
+		"error recording": func(*testing.T) (setup, []*service.VolumeMetaMetrics, service.VolumeFinder, *gomock.Controller) {
 			ctrl := gomock.NewController(t)
 			metrics := mocks.NewMockMetricsRecorder(ctrl)
 			volFinder := mocks.NewMockVolumeFinder(ctrl)
 
-			vol1 := mocks.NewMockVolumeStatisticsGetter(ctrl)
-			vol1.EXPECT().GetVolumeStatistics().Return(nil, errors.New("error getting statistics")).Times(1)
-			vol2 := mocks.NewMockVolumeStatisticsGetter(ctrl)
-			vol2.EXPECT().GetVolumeStatistics().Return(&types.VolumeStatistics{}, nil).Times(1)
-			vol3 := mocks.NewMockVolumeStatisticsGetter(ctrl)
-			vol3.EXPECT().GetVolumeStatistics().Return(&types.VolumeStatistics{}, nil).Times(1)
-
-			vols := []service.VolumeStatisticsGetter{vol1, vol2, vol3}
-
-			volFinder.EXPECT().GetPersistentVolumes().Return([]k8s.VolumeInfo{}, nil)
-
-			service := service.PowerFlexService{MetricsWrapper: metrics}
-			metrics.EXPECT().Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2)
-			return setup{
-				Service: &service,
-			}, vols, volFinder, ctrl
-		},
-		"error recording": func(*testing.T) (setup, []service.VolumeStatisticsGetter, service.VolumeFinder, *gomock.Controller) {
-			ctrl := gomock.NewController(t)
-			metrics := mocks.NewMockMetricsRecorder(ctrl)
-			volFinder := mocks.NewMockVolumeFinder(ctrl)
-
-			vol1 := mocks.NewMockVolumeStatisticsGetter(ctrl)
-			vol1.EXPECT().GetVolumeStatistics().Return(&types.VolumeStatistics{}, nil).Times(1)
-
-			vols := []service.VolumeStatisticsGetter{vol1}
+			vol1 := &service.VolumeMetaMetrics{
+				ID: "vol1",
+			}
+			vols := []*service.VolumeMetaMetrics{vol1}
 
 			volFinder.EXPECT().GetPersistentVolumes().Return([]k8s.VolumeInfo{}, nil)
 
@@ -1120,45 +1191,51 @@ func Test_ExportVolumeStatistics(t *testing.T) {
 	}
 }
 
-func Benchmark_ExportVolumeStatistics(b *testing.B) {
-	numOfVolumes, volumeQueryTime := 500, "100ms"
-	b.Logf("For %d volumes and assuming each volume query takes %s\n", numOfVolumes, volumeQueryTime)
-
+func Benchmark_GetVolumes(b *testing.B) {
+	numOfSDCs, sdcQueryTime := 500, "100ms"
+	b.Logf("For %d SDCs and assuming each sdc query takes %s\n", numOfSDCs, sdcQueryTime)
 	b.ReportAllocs()
 
-	type setup struct {
-		Service *service.PowerFlexService
-	}
-
-	var volumes []service.VolumeStatisticsGetter
 	ctrl := gomock.NewController(b)
 	metrics := mocks.NewMockMetricsRecorder(ctrl)
-	volFinder := mocks.NewMockVolumeFinder(ctrl)
-
-	for i := 0; i < numOfVolumes; i++ {
-		tmpVol := mocks.NewMockVolumeStatisticsGetter(ctrl)
-		tmpVol.EXPECT().GetVolumeStatistics().DoAndReturn(func() (*types.VolumeStatistics, error) {
-			dur, _ := time.ParseDuration(volumeQueryTime)
-			time.Sleep(dur)
-			return &types.VolumeStatistics{}, nil
-		})
-		volumes = append(volumes, tmpVol)
+	svc := &service.PowerFlexService{
+		Logger:         logrus.New(),
+		MetricsWrapper: metrics,
 	}
 
-	service := service.PowerFlexService{MetricsWrapper: metrics, Logger: logrus.New()}
-	metrics.EXPECT().Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(b.N * numOfVolumes)
-	volFinder.EXPECT().GetPersistentVolumes().Return([]k8s.VolumeInfo{}, nil)
+	// Create a list of StatisticsGetter
+	var sdcs []service.StatisticsGetter
+	for i := 0; i < numOfSDCs; i++ {
+		sdc := mocks.NewMockStatisticsGetter(gomock.NewController(b))
+		sdc.EXPECT().FindVolumes().Return([]*sio.Volume{
+			{Volume: &types.Volume{ID: "vol1", Name: "vol1"}},
+			{Volume: &types.Volume{ID: "vol2", Name: "vol2"}},
+		}, nil).AnyTimes()
+		sdc.EXPECT().GetVolumeMetrics().DoAndReturn(func() ([]*types.SdcVolumeMetrics, error) {
+			dur, _ := time.ParseDuration(sdcQueryTime)
+			time.Sleep(dur)
+			return []*types.SdcVolumeMetrics{
+				{VolumeID: "vol1"},
+				{VolumeID: "vol2"},
+			}, nil
+		})
+		sdcs = append(sdcs, sdc)
+	}
 
+	// Run the benchmark
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		service.ExportVolumeStatistics(context.Background(), volumes, volFinder)
+		_, err := svc.GetVolumes(context.Background(), sdcs)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
 func Test_GetVolumeBandwidth(t *testing.T) {
 	tt := []struct {
 		Name                   string
-		Statistics             *types.VolumeStatistics
+		Statistics             *service.VolumeMetaMetrics
 		ExpectedReadBandwidth  float64
 		ExpectedWriteBandwidth float64
 	}{
@@ -1170,31 +1247,31 @@ func Test_GetVolumeBandwidth(t *testing.T) {
 		},
 		{
 			"no data",
-			&types.VolumeStatistics{},
+			&service.VolumeMetaMetrics{},
 			0.0,
 			0.0,
 		},
 		{
 			"only read bandwidth",
-			&types.VolumeStatistics{
-				UserDataReadBwc: types.BWC{TotalWeightInKb: 392040, NumSeconds: 110},
+			&service.VolumeMetaMetrics{
+				ReadBwc: types.BWC{TotalWeightInKb: 392040, NumSeconds: 110},
 			},
 			3.48046875,
 			0.0,
 		},
 		{
 			"only write bandwidth",
-			&types.VolumeStatistics{
-				UserDataWriteBwc: types.BWC{TotalWeightInKb: 1958128, NumSeconds: 313},
+			&service.VolumeMetaMetrics{
+				WriteBwc: types.BWC{TotalWeightInKb: 1958128, NumSeconds: 313},
 			},
 			0.0,
 			6.109375,
 		},
 		{
 			"read and write bandwidth",
-			&types.VolumeStatistics{
-				UserDataReadBwc:  types.BWC{TotalWeightInKb: 1546272, NumSeconds: 236},
-				UserDataWriteBwc: types.BWC{TotalWeightInKb: 12838, NumSeconds: 131},
+			&service.VolumeMetaMetrics{
+				ReadBwc:  types.BWC{TotalWeightInKb: 1546272, NumSeconds: 236},
+				WriteBwc: types.BWC{TotalWeightInKb: 12838, NumSeconds: 131},
 			},
 			6.3984375,
 			0.095703125,
@@ -1213,7 +1290,7 @@ func Test_GetVolumeBandwidth(t *testing.T) {
 func Test_GetVolumeIOPS(t *testing.T) {
 	tt := []struct {
 		Name              string
-		Statistics        *types.VolumeStatistics
+		Statistics        *service.VolumeMetaMetrics
 		ExpectedReadIOPS  float64
 		ExpectedWriteIOPS float64
 	}{
@@ -1225,31 +1302,31 @@ func Test_GetVolumeIOPS(t *testing.T) {
 		},
 		{
 			"no data",
-			&types.VolumeStatistics{},
+			&service.VolumeMetaMetrics{},
 			0.0,
 			0.0,
 		},
 		{
 			"only read IOPS",
-			&types.VolumeStatistics{
-				UserDataReadBwc: types.BWC{NumOccured: 6856870, NumSeconds: 114},
+			&service.VolumeMetaMetrics{
+				ReadBwc: types.BWC{NumOccured: 6856870, NumSeconds: 114},
 			},
 			60147.982456,
 			0.0,
 		},
 		{
 			"only write IOPS",
-			&types.VolumeStatistics{
-				UserDataWriteBwc: types.BWC{NumOccured: 354139516, NumSeconds: 3131},
+			&service.VolumeMetaMetrics{
+				WriteBwc: types.BWC{NumOccured: 354139516, NumSeconds: 3131},
 			},
 			0.0,
 			113107.478760,
 		},
 		{
 			"read and write IOPS",
-			&types.VolumeStatistics{
-				UserDataReadBwc:  types.BWC{NumOccured: 94729, NumSeconds: 236},
-				UserDataWriteBwc: types.BWC{NumOccured: 68122431, NumSeconds: 131},
+			&service.VolumeMetaMetrics{
+				ReadBwc:  types.BWC{NumOccured: 94729, NumSeconds: 236},
+				WriteBwc: types.BWC{NumOccured: 68122431, NumSeconds: 131},
 			},
 			401.394068,
 			520018.557251,
@@ -1268,7 +1345,7 @@ func Test_GetVolumeIOPS(t *testing.T) {
 func Test_GetVolumeLatency(t *testing.T) {
 	tt := []struct {
 		Name                 string
-		Statistics           *types.VolumeStatistics
+		Statistics           *service.VolumeMetaMetrics
 		ExpectedReadLatency  float64
 		ExpectedWriteLatency float64
 	}{
@@ -1280,31 +1357,31 @@ func Test_GetVolumeLatency(t *testing.T) {
 		},
 		{
 			"no data",
-			&types.VolumeStatistics{},
+			&service.VolumeMetaMetrics{},
 			0.0,
 			0.0,
 		},
 		{
 			"only read latency",
-			&types.VolumeStatistics{
-				UserDataSdcReadLatency: types.BWC{TotalWeightInKb: 6856870, NumOccured: 114},
+			&service.VolumeMetaMetrics{
+				ReadLatencyBwc: types.BWC{TotalWeightInKb: 6856870, NumOccured: 114},
 			},
 			58.738264,
 			0.0,
 		},
 		{
 			"only write latency",
-			&types.VolumeStatistics{
-				UserDataSdcWriteLatency: types.BWC{TotalWeightInKb: 354139516, NumOccured: 313},
+			&service.VolumeMetaMetrics{
+				WriteLatencyBwc: types.BWC{TotalWeightInKb: 354139516, NumOccured: 313},
 			},
 			0.0,
 			1104.918119,
 		},
 		{
 			"read and write latency",
-			&types.VolumeStatistics{
-				UserDataSdcReadLatency:  types.BWC{TotalWeightInKb: 94729, NumOccured: 236},
-				UserDataSdcWriteLatency: types.BWC{TotalWeightInKb: 68122431, NumOccured: 131},
+			&service.VolumeMetaMetrics{
+				ReadLatencyBwc:  types.BWC{TotalWeightInKb: 94729, NumOccured: 236},
+				WriteLatencyBwc: types.BWC{TotalWeightInKb: 68122431, NumOccured: 131},
 			},
 			0.391986,
 			507.830622,

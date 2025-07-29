@@ -490,7 +490,7 @@ func Test_Run(t *testing.T) {
 				nil,
 			)
 			svc.EXPECT().GetVolumes(gomock.Any(), gomock.Any()).AnyTimes().Return(
-				[]pflexServices.VolumeStatisticsGetter{},
+				[]*pflexServices.VolumeMetaMetrics{},
 				nil,
 			)
 			svc.EXPECT().ExportVolumeStatistics(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
@@ -528,7 +528,7 @@ func Test_Run(t *testing.T) {
 				nil,
 			)
 			svc.EXPECT().GetVolumes(gomock.Any(), gomock.Any()).AnyTimes().Return(
-				[]pflexServices.VolumeStatisticsGetter{},
+				[]*pflexServices.VolumeMetaMetrics{},
 				errors.New("error"),
 			)
 
@@ -565,7 +565,7 @@ func Test_Run(t *testing.T) {
 				errors.New("error"),
 			)
 			svc.EXPECT().GetVolumes(gomock.Any(), gomock.Any()).AnyTimes().Return(
-				[]pflexServices.VolumeStatisticsGetter{},
+				[]*pflexServices.VolumeMetaMetrics{},
 				errors.New("error"),
 			)
 			svc.EXPECT().ExportVolumeStatistics(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()

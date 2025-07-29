@@ -382,15 +382,10 @@ func (s *PowerFlexService) GetVolumes(_ context.Context, sdcs []StatisticsGetter
 		}
 		volMetrics := make(map[string]*types.SdcVolumeMetrics, len(metrics))
 		for _, m := range metrics {
-			fmt.Printf("############## in GetVolumes() volMetrics m.VolumeID= %s m: %#v\n", m.VolumeID, m)
 			volMetrics[m.VolumeID] = m
 		}
 
-		for i, v := range vols {
-			fmt.Printf("############## in GetVolumes() i= %d v.Volume: %#v\n", i, v.Volume)
-			for _, sdcInfo := range v.Volume.MappedSdcInfo {
-				fmt.Printf("############ in GetVolumes() i= %d sdcInfo: %#v\n", i, *sdcInfo)
-			}
+		for _, v := range vols {
 			volumeMeta := getVolumeMetaMetrics(v)
 			if !visited[volumeMeta.ID] {
 				s.Logger.WithField("volume_id", volumeMeta.ID).Debug("found volume")
@@ -408,10 +403,6 @@ func (s *PowerFlexService) GetVolumes(_ context.Context, sdcs []StatisticsGetter
 		}
 	}
 
-	fmt.Printf("########### in GetVolumes() uniqueVolumes\n")
-	for i, v := range uniqueVolumes {
-		fmt.Printf("############## in GetVolumes() i= %v uniqueVolume: %#v\n", i, v)
-	}
 	return uniqueVolumes, nil
 }
 
@@ -510,15 +501,6 @@ func (s *PowerFlexService) gatherVolumeMetrics(_ context.Context, volumeFinder V
 					"read_latency":    readLatency,
 					"write_latency":   writeLatency,
 				}).Debug("volume metrics")
-
-				fmt.Printf("################# in gatherVolumeMetrics %#v\n", volumeMeta)
-				fmt.Printf("################# volumeMeta: %#v\n", *volumeMeta)
-				fmt.Printf("################# readBW: %#v\n", readBW)
-				fmt.Printf("################# writeBW: %#v\n", writeBW)
-				fmt.Printf("################# readIOPS: %#v\n", readIOPS)
-				fmt.Printf("################# writeIOPS: %#v\n", writeIOPS)
-				fmt.Printf("################# readLatency: %#v\n", readLatency)
-				fmt.Printf("################# writeLatency: %#v\n", writeLatency)
 
 				ch <- &VolumeMetricsRecord{
 					volumeMeta: volumeMeta,
