@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2020-2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+ Copyright (c) 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -1529,4 +1529,42 @@ func Test_GetLogicalProvisioned(t *testing.T) {
 			assert.InDelta(t, tc.ExpectedCapacity, capacity, 0.001)
 		})
 	}
+}
+
+func TestExportTopologyMetrics(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockVolumeFinder := mocks.NewMockVolumeFinder(ctrl)
+	mockMetricsWrapper := mocks.NewMockMetricsRecorder(ctrl)
+
+	s := &service.PowerFlexService{
+		VolumeFinder:   mockVolumeFinder,
+		MetricsWrapper: mockMetricsWrapper,
+		Logger:         logrus.New(),
+	}
+
+	ctx := context.Background()
+	volumes := []k8s.VolumeInfo{
+		{
+			Namespace:               "ns1",
+			VolumeClaimName:         "pvc1",
+			PersistentVolume:        "pv1",
+			PersistentVolumeStatus:  "Bound",
+			StorageClass:            "sc1",
+			Driver:                  "csi-driver",
+			ProvisionedSize:         "100Gi",
+			StorageSystemVolumeName: "vol1",
+			StoragePoolName:         "pool1",
+			StorageSystem:           "sys1",
+			Protocol:                "NFS",
+			CreatedTime:             "2022-01-01T00:00:00Z",
+			VolumeHandle:            "vol1-sys1",
+		},
+	}
+
+	mockVolumeFinder.EXPECT().GetPersistentVolumes().Return(volumes, nil)
+	mockMetricsWrapper.EXPECT().RecordTopologyMetrics(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+
+	s.ExportTopologyMetrics(ctx)
 }

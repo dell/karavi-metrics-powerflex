@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2020-2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+ Copyright (c) 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -53,6 +53,9 @@ type VolumeInfo struct {
 	StoragePoolName         string `json:"storage_pool_name"`
 	StorageSystemID         string `json:"storage_system_id"`
 	CreatedTime             string `json:"created_time"`
+	VolumeHandle            string `json:"volume_handle"`
+	Protocol                string `json:"protocol"`
+	StorageSystem           string `json:"storage_system"`
 }
 
 // GetPersistentVolumes will return a list of persistent volume information
@@ -94,6 +97,9 @@ func (f VolumeFinder) GetPersistentVolumes() ([]VolumeInfo, error) {
 				StoragePoolName:         volume.Spec.CSI.VolumeAttributes["StoragePoolName"],
 				StorageSystemID:         storageystemid,
 				CreatedTime:             volume.CreationTimestamp.String(),
+				VolumeHandle:            volume.Spec.CSI.VolumeHandle,
+				StorageSystem:           volume.Spec.CSI.VolumeAttributes["StorageSystem"],
+				Protocol:                volume.Spec.CSI.VolumeAttributes["Protocol"],
 			}
 			volumeInfo = append(volumeInfo, info)
 		}

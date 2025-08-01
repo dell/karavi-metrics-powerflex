@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2020-2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+ Copyright (c) 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -148,6 +148,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 					StorageSystemVolumeName: "storage-system-volume-name",
 					StorageSystemID:         "storagesystemid1",
 					CreatedTime:             t1.String(),
+					VolumeHandle:            "storagesystemid1-volumeid1",
 				},
 			})), ctrl
 		},
@@ -242,6 +243,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 					StorageSystemVolumeName: "storage-system-volume-name",
 					StorageSystemID:         "storagesystemid1",
 					CreatedTime:             t1.String(),
+					VolumeHandle:            "storagesystemid1-volumeid1",
 				},
 				{
 					Namespace:               "namespace-2",
@@ -255,6 +257,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 					StorageSystemVolumeName: "storage-system-volume-name-2",
 					StorageSystemID:         "storagesystemid1",
 					CreatedTime:             t1.String(),
+					VolumeHandle:            "storagesystemid1-volumeid1",
 				},
 			})), ctrl
 		},
@@ -384,6 +387,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 					StorageSystemVolumeName: "storage-system-volume-name",
 					StorageSystemID:         "storagesystemid1",
 					CreatedTime:             t1.String(),
+					VolumeHandle:            "storagesystemid1-volumeid1",
 				},
 			})), ctrl
 		},
@@ -474,6 +478,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 					StorageSystemVolumeName: "storage-system-volume-name1",
 					StorageSystemID:         "storagesystemid1",
 					CreatedTime:             t1.String(),
+					VolumeHandle:            "storagesystemid1-volumeid1",
 				},
 			})), ctrl
 		},

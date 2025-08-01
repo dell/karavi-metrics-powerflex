@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2020-2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+ Copyright (c) 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -34,6 +34,10 @@ import (
 )
 
 const (
+	// MaximumTickInterval is the maximum allowed interval when querying metrics
+	MaximumTickInterval = 10 * time.Minute
+	// MinimumTickInterval is the minimum allowed interval when querying metrics
+	MinimumTickInterval = 5 * time.Second
 	// MaximumSDCTickInterval is the maximum allowed interval when querying SDC metrics
 	MaximumSDCTickInterval = 10 * time.Minute
 	// MinimumSDCTickInterval is the minimum allowed interval when querying SDC metrics
@@ -53,22 +57,24 @@ var ConfigValidatorFunc = ValidateConfig
 
 // Config holds data that will be used by the service
 type Config struct {
-	SDCTickInterval           time.Duration
-	VolumeTickInterval        time.Duration
-	StoragePoolTickInterval   time.Duration
-	PowerFlexClient           map[string]pflexServices.PowerFlexClient
-	PowerFlexConfig           map[string]sio.ConfigConnect
-	SDCFinder                 service.SDCFinder
-	StorageClassFinder        service.StorageClassFinder
-	LeaderElector             service.LeaderElector
-	VolumeFinder              service.VolumeFinder
-	NodeFinder                service.NodeFinder
-	SDCMetricsEnabled         bool
-	VolumeMetricsEnabled      bool
-	StoragePoolMetricsEnabled bool
-	CollectorAddress          string
-	CollectorCertPath         string
-	Logger                    *logrus.Logger
+	SDCTickInterval             time.Duration
+	VolumeTickInterval          time.Duration
+	StoragePoolTickInterval     time.Duration
+	TopologyMetricsTickInterval time.Duration
+	PowerFlexClient             map[string]pflexServices.PowerFlexClient
+	PowerFlexConfig             map[string]sio.ConfigConnect
+	SDCFinder                   service.SDCFinder
+	StorageClassFinder          service.StorageClassFinder
+	LeaderElector               service.LeaderElector
+	VolumeFinder                service.VolumeFinder
+	NodeFinder                  service.NodeFinder
+	SDCMetricsEnabled           bool
+	VolumeMetricsEnabled        bool
+	StoragePoolMetricsEnabled   bool
+	CollectorAddress            string
+	CollectorCertPath           string
+	Logger                      *logrus.Logger
+	TopologyMetricsEnabled      bool
 }
 
 // Run is the entry point for starting the service
@@ -121,6 +127,8 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 	sdcTicker := time.NewTicker(SDCTickInterval)
 	volumeTicker := time.NewTicker(VolumeTickInterval)
 	storagePoolTicker := time.NewTicker(StoragePoolTickInterval)
+	TopologyMetricsTickInterval := config.TopologyMetricsTickInterval
+	topologyMetricsTicker := time.NewTicker(TopologyMetricsTickInterval)
 	for {
 		select {
 		case <-sdcTicker.C:
@@ -222,6 +230,17 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 				pflexSvc.GetStoragePoolStatistics(ctx, storageClassMetas)
 			}
 
+		case <-topologyMetricsTicker.C:
+			if !config.LeaderElector.IsLeader() {
+				logger.Info("not leader pod to collect metrics")
+				continue
+			}
+			if !config.TopologyMetricsEnabled {
+				logger.Info("powerflex topology metrics collection is disabled")
+				continue
+			}
+			pflexSvc.ExportTopologyMetrics(ctx)
+
 		case err := <-errCh:
 			if err == nil {
 				continue
@@ -243,6 +262,10 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 		if StoragePoolTickInterval != config.StoragePoolTickInterval {
 			StoragePoolTickInterval = config.StoragePoolTickInterval
 			storagePoolTicker = time.NewTicker(StoragePoolTickInterval)
+		}
+		if TopologyMetricsTickInterval != config.TopologyMetricsTickInterval {
+			TopologyMetricsTickInterval = config.TopologyMetricsTickInterval
+			topologyMetricsTicker = time.NewTicker(TopologyMetricsTickInterval)
 		}
 	}
 }
@@ -273,5 +296,8 @@ func ValidateConfig(config *Config) error {
 		return fmt.Errorf("Volume polling frequency not within allowed range of %v and %v", MinimumVolTickInterval.String(), MaximumVolTickInterval.String())
 	}
 
+	if config.TopologyMetricsTickInterval > MaximumTickInterval || config.TopologyMetricsTickInterval < MinimumTickInterval {
+		return fmt.Errorf("topology metrics polling frequency not within allowed range of %v and %v", MinimumTickInterval.String(), MaximumTickInterval.String())
+	}
 	return nil
 }
