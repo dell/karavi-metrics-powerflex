@@ -189,6 +189,7 @@ func TestMetricsWrapper_RecordCapacity(t *testing.T) {
 		})
 	}
 }
+
 func TestMetricsWrapper_RecordTopologyMetrics(t *testing.T) {
 	mw := &service.MetricsWrapper{
 		Meter: otel.Meter("powerflex-test"),

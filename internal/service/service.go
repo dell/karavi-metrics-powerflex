@@ -786,7 +786,6 @@ func (s *PowerFlexService) pushPoolStatistics(ctx context.Context, spMetricRecor
 
 // ExportTopologyMetrics will export topology metrics
 func (s *PowerFlexService) ExportTopologyMetrics(ctx context.Context) {
-
 	start := time.Now()
 	defer s.timeSince(start, "ExportTopologyMetrics")
 
