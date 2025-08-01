@@ -55,7 +55,7 @@ func (mr *MockServiceMockRecorder) ExportTopologyMetrics(arg0 any) *gomock.Call 
 }
 
 // ExportVolumeStatistics mocks base method.
-func (m *MockService) ExportVolumeStatistics(arg0 context.Context, arg1 []service.VolumeStatisticsGetter, arg2 service.VolumeFinder) {
+func (m *MockService) ExportVolumeStatistics(arg0 context.Context, arg1 []*service.VolumeMetaMetrics, arg2 service.VolumeFinder) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "ExportVolumeStatistics", arg0, arg1, arg2)
 }
@@ -121,10 +121,10 @@ func (mr *MockServiceMockRecorder) GetStoragePoolStatistics(ctx, storageClassMet
 }
 
 // GetVolumes mocks base method.
-func (m *MockService) GetVolumes(arg0 context.Context, arg1 []service.StatisticsGetter) ([]service.VolumeStatisticsGetter, error) {
+func (m *MockService) GetVolumes(arg0 context.Context, arg1 []service.StatisticsGetter) ([]*service.VolumeMetaMetrics, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVolumes", arg0, arg1)
-	ret0, _ := ret[0].([]service.VolumeStatisticsGetter)
+	ret0, _ := ret[0].([]*service.VolumeMetaMetrics)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

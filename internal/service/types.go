@@ -16,6 +16,8 @@
 
 package service
 
+import types "github.com/dell/goscaleio/types/v1"
+
 // MappedSDC is the summerized details of the SDCs volume is mapped to
 type MappedSDC struct {
 	SdcID string `json:"sdcId"`
@@ -31,6 +33,23 @@ type VolumeMeta struct {
 	Namespace                 string
 	StorageSystemID           string
 	MappedSDCs                []MappedSDC
+}
+
+// VolumeMetaMetrics is the details of a volume in an SDC along with the metrics
+type VolumeMetaMetrics struct {
+	ID                        string
+	Name                      string
+	PersistentVolumeName      string
+	PersistentVolumeClaimName string
+	Namespace                 string
+	StorageSystemID           string
+	MappedSDCs                []MappedSDC
+	ReadLatencyBwc            types.BWC
+	ReadBwc                   types.BWC
+	TrimBwc                   types.BWC
+	TrimLatencyBwc            types.BWC
+	WriteBwc                  types.BWC
+	WriteLatencyBwc           types.BWC
 }
 
 // SDCMeta is meta data for a specific SDC

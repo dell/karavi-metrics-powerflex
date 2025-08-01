@@ -47,8 +47,8 @@ const (
 type Service interface {
 	GetSDCs(context.Context, PowerFlexClient, SDCFinder) ([]StatisticsGetter, error)
 	GetSDCStatistics(context.Context, []corev1.Node, []StatisticsGetter)
-	GetVolumes(context.Context, []StatisticsGetter) ([]VolumeStatisticsGetter, error)
-	ExportVolumeStatistics(context.Context, []VolumeStatisticsGetter, VolumeFinder)
+	GetVolumes(context.Context, []StatisticsGetter) ([]*VolumeMetaMetrics, error)
+	ExportVolumeStatistics(context.Context, []*VolumeMetaMetrics, VolumeFinder)
 	GetStorageClasses(ctx context.Context, client PowerFlexClient, storageClassFinder StorageClassFinder) ([]StorageClassMeta, error)
 	GetStoragePoolStatistics(ctx context.Context, storageClassMetas []StorageClassMeta)
 	ExportTopologyMetrics(context.Context)
@@ -61,6 +61,7 @@ type StatisticsGetter interface {
 	GetStatistics() (*types.SdcStatistics, error)
 	GetVolume() ([]*types.Volume, error)
 	FindVolumes() ([]*sio.Volume, error)
+	GetVolumeMetrics() ([]*types.SdcVolumeMetrics, error)
 }
 
 // VolumeStatisticsGetter supports getting statistics
@@ -351,7 +352,7 @@ func (s *PowerFlexService) pushSDCMetrics(ctx context.Context, sdcMetrics <-chan
 	return ch
 }
 
-func getVolumeMeta(volume interface{}) *VolumeMeta {
+func getVolumeMetaMetrics(volume interface{}) *VolumeMetaMetrics {
 	switch v := volume.(type) {
 	case *sio.Volume:
 		var sdcsInfo []MappedSDC
@@ -360,13 +361,13 @@ func getVolumeMeta(volume interface{}) *VolumeMeta {
 				MappedSDC{SdcID: d.SdcID, SdcIP: d.SdcIP},
 			)
 		}
-		return &VolumeMeta{
+		return &VolumeMetaMetrics{
 			Name:       v.Volume.Name,
 			ID:         v.Volume.ID,
 			MappedSDCs: sdcsInfo,
 		}
 	default:
-		return &VolumeMeta{
+		return &VolumeMetaMetrics{
 			Name:       "",
 			ID:         "",
 			MappedSDCs: []MappedSDC{},
@@ -374,9 +375,9 @@ func getVolumeMeta(volume interface{}) *VolumeMeta {
 	}
 }
 
-// GetVolumes returns all unique, mapped volumes in sdcs
-func (s *PowerFlexService) GetVolumes(_ context.Context, sdcs []StatisticsGetter) ([]VolumeStatisticsGetter, error) {
-	var uniqueVolumes []VolumeStatisticsGetter
+// GetVolumes returns all unique, mapped volumes in sdcs along with their metadata and metrics
+func (s *PowerFlexService) GetVolumes(_ context.Context, sdcs []StatisticsGetter) ([]*VolumeMetaMetrics, error) {
+	var uniqueVolumes []*VolumeMetaMetrics
 	visited := make(map[string]bool)
 
 	for _, sdc := range sdcs {
@@ -384,11 +385,29 @@ func (s *PowerFlexService) GetVolumes(_ context.Context, sdcs []StatisticsGetter
 		if err != nil {
 			return nil, err
 		}
+
+		metrics, err := sdc.GetVolumeMetrics()
+		if err != nil {
+			return nil, err
+		}
+		volMetrics := make(map[string]*types.SdcVolumeMetrics, len(metrics))
+		for _, m := range metrics {
+			volMetrics[m.VolumeID] = m
+		}
+
 		for _, v := range vols {
-			volumeMeta := getVolumeMeta(v)
+			volumeMeta := getVolumeMetaMetrics(v)
 			if !visited[volumeMeta.ID] {
 				s.Logger.WithField("volume_id", volumeMeta.ID).Debug("found volume")
-				uniqueVolumes = append(uniqueVolumes, v)
+				if _, ok := volMetrics[volumeMeta.ID]; ok {
+					volumeMeta.ReadBwc = volMetrics[volumeMeta.ID].ReadBwc
+					volumeMeta.WriteBwc = volMetrics[volumeMeta.ID].WriteBwc
+					volumeMeta.ReadLatencyBwc = volMetrics[volumeMeta.ID].ReadLatencyBwc
+					volumeMeta.WriteLatencyBwc = volMetrics[volumeMeta.ID].WriteLatencyBwc
+					volumeMeta.TrimBwc = volMetrics[volumeMeta.ID].TrimBwc
+					volumeMeta.TrimLatencyBwc = volMetrics[volumeMeta.ID].TrimLatencyBwc
+				}
+				uniqueVolumes = append(uniqueVolumes, volumeMeta)
 				visited[volumeMeta.ID] = true
 			}
 		}
@@ -398,7 +417,7 @@ func (s *PowerFlexService) GetVolumes(_ context.Context, sdcs []StatisticsGetter
 }
 
 // ExportVolumeStatistics records I/O statistics for the given list of Volumes
-func (s *PowerFlexService) ExportVolumeStatistics(ctx context.Context, volumes []VolumeStatisticsGetter, volumeFinder VolumeFinder) {
+func (s *PowerFlexService) ExportVolumeStatistics(ctx context.Context, volumes []*VolumeMetaMetrics, volumeFinder VolumeFinder) {
 	start := time.Now()
 	defer s.timeSince(start, "ExportVolumeStatistics")
 
@@ -418,8 +437,8 @@ func (s *PowerFlexService) ExportVolumeStatistics(ctx context.Context, volumes [
 }
 
 // volumeServer will return a channel of volumes that can provide statistics about each volume
-func (s *PowerFlexService) volumeServer(volumes []VolumeStatisticsGetter) <-chan VolumeStatisticsGetter {
-	volumeChannel := make(chan VolumeStatisticsGetter, len(volumes))
+func (s *PowerFlexService) volumeServer(volumes []*VolumeMetaMetrics) <-chan *VolumeMetaMetrics {
+	volumeChannel := make(chan *VolumeMetaMetrics, len(volumes))
 	go func() {
 		for _, volume := range volumes {
 			volumeChannel <- volume
@@ -442,7 +461,7 @@ func (s *PowerFlexService) getVoumeInfo(_ context.Context, volumes []k8s.VolumeI
 }
 
 // gatherVolumeMetrics will return a channel of volume metrics based on the input of volumes
-func (s *PowerFlexService) gatherVolumeMetrics(_ context.Context, volumeFinder VolumeFinder, volumes <-chan VolumeStatisticsGetter) <-chan *VolumeMetricsRecord {
+func (s *PowerFlexService) gatherVolumeMetrics(_ context.Context, volumeFinder VolumeFinder, volumes <-chan *VolumeMetaMetrics) <-chan *VolumeMetricsRecord {
 	start := time.Now()
 	defer s.timeSince(start, "gatherVolumeMetrics")
 
@@ -466,29 +485,34 @@ func (s *PowerFlexService) gatherVolumeMetrics(_ context.Context, volumeFinder V
 			exported = true
 			wg.Add(1)
 			sem <- struct{}{}
-			go func(volume VolumeStatisticsGetter) {
+			go func(volume *VolumeMetaMetrics) {
 				defer func() {
 					wg.Done()
 					<-sem
 				}()
-				volumeMeta := getVolumeMeta(volume)
-				if pv, ok := persistentVolumes[volumeMeta.Name]; ok {
-					volumeMeta.PersistentVolumeName = pv.PersistentVolume
-					volumeMeta.StorageSystemID = pv.StorageSystemID
-					volumeMeta.Namespace = pv.Namespace
-					volumeMeta.PersistentVolumeClaimName = pv.VolumeClaimName
+
+				if pv, ok := persistentVolumes[volume.Name]; ok {
+					volume.PersistentVolumeName = pv.PersistentVolume
+					volume.StorageSystemID = pv.StorageSystemID
+					volume.Namespace = pv.Namespace
+					volume.PersistentVolumeClaimName = pv.VolumeClaimName
 				} else {
-					s.Logger.WithField("volume_id", volumeMeta.ID).Error("could not find a Persistent Volume that maps to storage system volume ID")
+					s.Logger.WithField("volume_id", volume.ID).Error("could not find a Persistent Volume that maps to storage system volume ID")
 				}
 
-				stats, err := volume.GetVolumeStatistics()
-				if err != nil {
-					s.Logger.WithError(err).WithField("volume_id", volumeMeta.ID).Error("getting statistics for volume")
-					return
+				readBW, writeBW := GetVolumeBandwidth(volume)
+				readIOPS, writeIOPS := GetVolumeIOPS(volume)
+				readLatency, writeLatency := GetVolumeLatency(volume)
+
+				volumeMeta := &VolumeMeta{
+					ID:                        volume.ID,
+					Name:                      volume.Name,
+					PersistentVolumeName:      volume.PersistentVolumeName,
+					PersistentVolumeClaimName: volume.PersistentVolumeClaimName,
+					Namespace:                 volume.Namespace,
+					StorageSystemID:           volume.StorageSystemID,
+					MappedSDCs:                volume.MappedSDCs,
 				}
-				readBW, writeBW := GetVolumeBandwidth(stats)
-				readIOPS, writeIOPS := GetVolumeIOPS(stats)
-				readLatency, writeLatency := GetVolumeLatency(stats)
 
 				s.Logger.WithFields(logrus.Fields{
 					"volume_meta":     volumeMeta,
@@ -925,7 +949,7 @@ func GetSDCLatency(stats *types.SdcStatistics) (readLatency float64, writeLatenc
 }
 
 // GetVolumeBandwidth returns the read and write bandwidth based on the given SDC statistics
-func GetVolumeBandwidth(stats *types.VolumeStatistics) (readBW float64, writeBW float64) {
+func GetVolumeBandwidth(stats *VolumeMetaMetrics) (readBW float64, writeBW float64) {
 	readBW = 0.0
 	writeBW = 0.0
 
@@ -933,18 +957,18 @@ func GetVolumeBandwidth(stats *types.VolumeStatistics) (readBW float64, writeBW 
 		return
 	}
 
-	if stats.UserDataReadBwc.NumSeconds > 0 {
-		readBW = float64(stats.UserDataReadBwc.TotalWeightInKb/stats.UserDataReadBwc.NumSeconds) / 1024.0
+	if stats.ReadBwc.NumSeconds > 0 {
+		readBW = float64(stats.ReadBwc.TotalWeightInKb/stats.ReadBwc.NumSeconds) / 1024.0
 	}
-	if stats.UserDataWriteBwc.NumSeconds > 0 {
-		writeBW = float64(stats.UserDataWriteBwc.TotalWeightInKb/stats.UserDataWriteBwc.NumSeconds) / 1024.0
+	if stats.WriteBwc.NumSeconds > 0 {
+		writeBW = float64(stats.WriteBwc.TotalWeightInKb/stats.WriteBwc.NumSeconds) / 1024.0
 	}
 
 	return
 }
 
 // GetVolumeIOPS returns the read and write IOPS based on the given SDC statistics
-func GetVolumeIOPS(stats *types.VolumeStatistics) (readIOPS float64, writeIOPS float64) {
+func GetVolumeIOPS(stats *VolumeMetaMetrics) (readIOPS float64, writeIOPS float64) {
 	readIOPS = 0.0
 	writeIOPS = 0.0
 
@@ -956,19 +980,19 @@ func GetVolumeIOPS(stats *types.VolumeStatistics) (readIOPS float64, writeIOPS f
 		return float64(numOccurred) / float64(numSeconds)
 	}
 
-	if stats.UserDataReadBwc.NumSeconds > 0 {
-		readIOPS = iopsCalculation(stats.UserDataReadBwc.NumOccured, stats.UserDataReadBwc.NumSeconds)
+	if stats.ReadBwc.NumSeconds > 0 {
+		readIOPS = iopsCalculation(stats.ReadBwc.NumOccured, stats.ReadBwc.NumSeconds)
 	}
 
-	if stats.UserDataWriteBwc.NumSeconds > 0 {
-		writeIOPS = iopsCalculation(stats.UserDataWriteBwc.NumOccured, stats.UserDataWriteBwc.NumSeconds)
+	if stats.WriteBwc.NumSeconds > 0 {
+		writeIOPS = iopsCalculation(stats.WriteBwc.NumOccured, stats.WriteBwc.NumSeconds)
 	}
 
 	return
 }
 
 // GetVolumeLatency returns the read and write latency based on the given SDC statistics
-func GetVolumeLatency(stats *types.VolumeStatistics) (readLatency float64, writeLatency float64) {
+func GetVolumeLatency(stats *VolumeMetaMetrics) (readLatency float64, writeLatency float64) {
 	readLatency = 0.0
 	writeLatency = 0.0
 	if stats == nil {
@@ -977,11 +1001,11 @@ func GetVolumeLatency(stats *types.VolumeStatistics) (readLatency float64, write
 	latencyCalculation := func(totalWeightInKb, numOccurred int) float64 {
 		return float64(totalWeightInKb) / float64(numOccurred) / 1024.0
 	}
-	if stats.UserDataSdcReadLatency.NumOccured > 0 {
-		readLatency = latencyCalculation(stats.UserDataSdcReadLatency.TotalWeightInKb, stats.UserDataSdcReadLatency.NumOccured)
+	if stats.ReadLatencyBwc.NumOccured > 0 {
+		readLatency = latencyCalculation(stats.ReadLatencyBwc.TotalWeightInKb, stats.ReadLatencyBwc.NumOccured)
 	}
-	if stats.UserDataSdcWriteLatency.NumOccured > 0 {
-		writeLatency = latencyCalculation(stats.UserDataSdcWriteLatency.TotalWeightInKb, stats.UserDataSdcWriteLatency.NumOccured)
+	if stats.WriteLatencyBwc.NumOccured > 0 {
+		writeLatency = latencyCalculation(stats.WriteLatencyBwc.TotalWeightInKb, stats.WriteLatencyBwc.NumOccured)
 	}
 	return
 }
