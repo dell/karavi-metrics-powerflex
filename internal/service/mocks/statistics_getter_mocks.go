@@ -79,3 +79,18 @@ func (mr *MockStatisticsGetterMockRecorder) GetVolume() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVolume", reflect.TypeOf((*MockStatisticsGetter)(nil).GetVolume))
 }
+
+// GetVolumeMetrics mocks base method.
+func (m *MockStatisticsGetter) GetVolumeMetrics() ([]*goscaleio0.SdcVolumeMetrics, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVolumeMetrics")
+	ret0, _ := ret[0].([]*goscaleio0.SdcVolumeMetrics)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVolumeMetrics indicates an expected call of GetVolumeMetrics.
+func (mr *MockStatisticsGetterMockRecorder) GetVolumeMetrics() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVolumeMetrics", reflect.TypeOf((*MockStatisticsGetter)(nil).GetVolumeMetrics))
+}
