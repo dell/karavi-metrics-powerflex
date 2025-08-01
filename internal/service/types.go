@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2020-2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+ Copyright (c) 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -57,4 +57,20 @@ type StorageClassMeta struct {
 	Driver          string
 	StorageSystemID string
 	StoragePools    map[string]StoragePoolStatisticsGetter
+}
+
+type TopologyMeta struct {
+	Namespace               string
+	PersistentVolumeClaim   string
+	PersistentVolumeStatus  string
+	VolumeClaimName         string
+	PersistentVolume        string
+	StorageClass            string
+	Driver                  string
+	ProvisionedSize         string
+	StorageSystemVolumeName string
+	StoragePoolName         string
+	StorageSystem           string
+	Protocol                string
+	CreatedTime             string
 }

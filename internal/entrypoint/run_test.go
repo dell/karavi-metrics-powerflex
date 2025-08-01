@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2020-2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+ Copyright (c) 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -73,12 +73,14 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:   map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:   map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:         sdcFinder,
-				NodeFinder:        nodeFinder,
-				LeaderElector:     leaderElector,
-				SDCMetricsEnabled: true,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				SDCFinder:                   sdcFinder,
+				NodeFinder:                  nodeFinder,
+				LeaderElector:               leaderElector,
+				SDCMetricsEnabled:           true,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -93,6 +95,7 @@ func Test_Run(t *testing.T) {
 				nil,
 			)
 			svc.EXPECT().GetSDCStatistics(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+			svc.EXPECT().ExportTopologyMetrics(gomock.Any()).AnyTimes()
 
 			return false, config, e, svc, prevConfigValidationFunc, ctrl, false
 		},
@@ -126,12 +129,14 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:   map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:   map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:         sdcFinder,
-				NodeFinder:        nodeFinder,
-				LeaderElector:     leaderElector,
-				SDCMetricsEnabled: true,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				SDCFinder:                   sdcFinder,
+				NodeFinder:                  nodeFinder,
+				LeaderElector:               leaderElector,
+				SDCMetricsEnabled:           true,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -165,12 +170,14 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:   map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:   map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:         sdcFinder,
-				NodeFinder:        nodeFinder,
-				LeaderElector:     leaderElector,
-				SDCMetricsEnabled: true,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				SDCFinder:                   sdcFinder,
+				NodeFinder:                  nodeFinder,
+				LeaderElector:               leaderElector,
+				SDCMetricsEnabled:           true,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -218,12 +225,14 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:   map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:   map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:         sdcFinder,
-				NodeFinder:        nodeFinder,
-				LeaderElector:     leaderElector,
-				SDCMetricsEnabled: false,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				SDCFinder:                   sdcFinder,
+				NodeFinder:                  nodeFinder,
+				LeaderElector:               leaderElector,
+				SDCMetricsEnabled:           false,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -242,6 +251,21 @@ func Test_Run(t *testing.T) {
 
 			return false, config, e, svc, prevConfigValidationFunc, ctrl, false
 		},
+		"topology metrics not collected if not leader": func(t *testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
+			ctrl := gomock.NewController(t)
+			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			leaderElector.EXPECT().IsLeader().Return(false).AnyTimes()
+
+			svc := mocks.NewMockService(ctrl) // No call to ExportTopologyMetrics expected
+
+			config := &entrypoint.Config{
+				LeaderElector:               leaderElector,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 10 * time.Millisecond,
+			}
+
+			return true, config, nil, svc, entrypoint.ConfigValidatorFunc, ctrl, true
+		},
 		"error no PowerFlex client": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
 			sdcFinder := mocks.NewMockSDCFinder(ctrl)
@@ -251,11 +275,13 @@ func Test_Run(t *testing.T) {
 			config := &entrypoint.Config{
 				PowerFlexClient: nil,
 				PowerFlexConfig: map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}}, SDCFinder: sdcFinder,
-				NodeFinder:         nodeFinder,
-				LeaderElector:      leaderElector,
-				SDCMetricsEnabled:  true,
-				SDCTickInterval:    validSDCTickInterval,
-				VolumeTickInterval: validVolumeTickInterval,
+				NodeFinder:                  nodeFinder,
+				LeaderElector:               leaderElector,
+				SDCMetricsEnabled:           true,
+				SDCTickInterval:             validSDCTickInterval,
+				VolumeTickInterval:          validVolumeTickInterval,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = entrypoint.ValidateConfig
@@ -277,16 +303,18 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:           map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:           map[string]sio.ConfigConnect{"wrong": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:                 sdcFinder,
-				NodeFinder:                nodeFinder,
-				LeaderElector:             leaderElector,
-				SDCMetricsEnabled:         true,
-				VolumeMetricsEnabled:      true,
-				StoragePoolMetricsEnabled: true,
-				SDCTickInterval:           validSDCTickInterval,
-				VolumeTickInterval:        validVolumeTickInterval,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"wrong": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				SDCFinder:                   sdcFinder,
+				NodeFinder:                  nodeFinder,
+				LeaderElector:               leaderElector,
+				SDCMetricsEnabled:           true,
+				VolumeMetricsEnabled:        true,
+				StoragePoolMetricsEnabled:   true,
+				SDCTickInterval:             validSDCTickInterval,
+				VolumeTickInterval:          validVolumeTickInterval,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -305,13 +333,15 @@ func Test_Run(t *testing.T) {
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:    map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:    map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:          nil,
-				LeaderElector:      leaderElector,
-				SDCMetricsEnabled:  true,
-				SDCTickInterval:    validSDCTickInterval,
-				VolumeTickInterval: validVolumeTickInterval,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				SDCFinder:                   nil,
+				LeaderElector:               leaderElector,
+				SDCMetricsEnabled:           true,
+				SDCTickInterval:             validSDCTickInterval,
+				VolumeTickInterval:          validVolumeTickInterval,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = entrypoint.ValidateConfig
@@ -329,14 +359,16 @@ func Test_Run(t *testing.T) {
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:    map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:    map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:          sdcFinder,
-				NodeFinder:         nil,
-				LeaderElector:      leaderElector,
-				SDCMetricsEnabled:  true,
-				SDCTickInterval:    validSDCTickInterval,
-				VolumeTickInterval: validVolumeTickInterval,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				SDCFinder:                   sdcFinder,
+				NodeFinder:                  nil,
+				LeaderElector:               leaderElector,
+				SDCMetricsEnabled:           true,
+				SDCTickInterval:             validSDCTickInterval,
+				VolumeTickInterval:          validVolumeTickInterval,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = entrypoint.ValidateConfig
@@ -355,14 +387,16 @@ func Test_Run(t *testing.T) {
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:    map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:    map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:          sdcFinder,
-				NodeFinder:         nodeFinder,
-				LeaderElector:      leaderElector,
-				SDCMetricsEnabled:  true,
-				SDCTickInterval:    entrypoint.MinimumSDCTickInterval - time.Second,
-				VolumeTickInterval: validVolumeTickInterval,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				SDCFinder:                   sdcFinder,
+				NodeFinder:                  nodeFinder,
+				LeaderElector:               leaderElector,
+				SDCMetricsEnabled:           true,
+				SDCTickInterval:             entrypoint.MinimumSDCTickInterval - time.Second,
+				VolumeTickInterval:          validVolumeTickInterval,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = entrypoint.ValidateConfig
@@ -380,13 +414,15 @@ func Test_Run(t *testing.T) {
 			nodeFinder := mocks.NewMockNodeFinder(ctrl)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:    map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:    map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:          sdcFinder,
-				NodeFinder:         nodeFinder,
-				SDCMetricsEnabled:  true,
-				SDCTickInterval:    validSDCTickInterval,
-				VolumeTickInterval: entrypoint.MinimumVolTickInterval - time.Second,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				SDCFinder:                   sdcFinder,
+				NodeFinder:                  nodeFinder,
+				SDCMetricsEnabled:           true,
+				SDCTickInterval:             validSDCTickInterval,
+				VolumeTickInterval:          entrypoint.MinimumVolTickInterval - time.Second,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = entrypoint.ValidateConfig
@@ -405,14 +441,16 @@ func Test_Run(t *testing.T) {
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:    map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:    map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:          sdcFinder,
-				NodeFinder:         nodeFinder,
-				LeaderElector:      leaderElector,
-				SDCMetricsEnabled:  true,
-				SDCTickInterval:    validSDCTickInterval,
-				VolumeTickInterval: entrypoint.MaximumVolTickInterval + time.Second,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				SDCFinder:                   sdcFinder,
+				NodeFinder:                  nodeFinder,
+				LeaderElector:               leaderElector,
+				SDCMetricsEnabled:           true,
+				SDCTickInterval:             validSDCTickInterval,
+				VolumeTickInterval:          entrypoint.MaximumVolTickInterval + time.Second,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = entrypoint.ValidateConfig
@@ -442,11 +480,13 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:   map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:   map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:         sdcFinder,
-				LeaderElector:     leaderElector,
-				SDCMetricsEnabled: true,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				SDCFinder:                   sdcFinder,
+				LeaderElector:               leaderElector,
+				SDCMetricsEnabled:           true,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -471,11 +511,13 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:      map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:      map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:            sdcFinder,
-				LeaderElector:        leaderElector,
-				VolumeMetricsEnabled: true,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				SDCFinder:                   sdcFinder,
+				LeaderElector:               leaderElector,
+				VolumeMetricsEnabled:        true,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -509,11 +551,13 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:      map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:      map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:            sdcFinder,
-				LeaderElector:        leaderElector,
-				VolumeMetricsEnabled: true,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				SDCFinder:                   sdcFinder,
+				LeaderElector:               leaderElector,
+				VolumeMetricsEnabled:        true,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -546,11 +590,13 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:      map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:      map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:            sdcFinder,
-				LeaderElector:        leaderElector,
-				VolumeMetricsEnabled: true,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				SDCFinder:                   sdcFinder,
+				LeaderElector:               leaderElector,
+				VolumeMetricsEnabled:        true,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -595,11 +641,13 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:           map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:           map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				StorageClassFinder:        storageClassFinder,
-				LeaderElector:             leaderElector,
-				StoragePoolMetricsEnabled: true,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				StorageClassFinder:          storageClassFinder,
+				LeaderElector:               leaderElector,
+				StoragePoolMetricsEnabled:   true,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -629,13 +677,15 @@ func Test_Run(t *testing.T) {
 			sdcFinder := mocks.NewMockSDCFinder(ctrl)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:    map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:    map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:          sdcFinder,
-				LeaderElector:      nil,
-				SDCMetricsEnabled:  true,
-				SDCTickInterval:    validSDCTickInterval,
-				VolumeTickInterval: validVolumeTickInterval,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				SDCFinder:                   sdcFinder,
+				LeaderElector:               nil,
+				SDCMetricsEnabled:           true,
+				SDCTickInterval:             validSDCTickInterval,
+				VolumeTickInterval:          validVolumeTickInterval,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = entrypoint.ValidateConfig
@@ -659,11 +709,13 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(false)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:   map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:   map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				SDCFinder:         sdcFinder,
-				LeaderElector:     leaderElector,
-				SDCMetricsEnabled: false,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				SDCFinder:                   sdcFinder,
+				LeaderElector:               leaderElector,
+				SDCMetricsEnabled:           false,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -705,11 +757,13 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				PowerFlexClient:           map[string]pflexServices.PowerFlexClient{"key": pfClient},
-				PowerFlexConfig:           map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
-				StorageClassFinder:        storageClassFinder,
-				LeaderElector:             leaderElector,
-				StoragePoolMetricsEnabled: true,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {Username: "powerFlexGatewayUser", Password: "powerFlexGatewayPassword"}},
+				StorageClassFinder:          storageClassFinder,
+				LeaderElector:               leaderElector,
+				StoragePoolMetricsEnabled:   true,
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -734,8 +788,10 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				LeaderElector:     leaderElector,
-				CollectorCertPath: "testdata/test-cert.crt",
+				LeaderElector:               leaderElector,
+				CollectorCertPath:           "testdata/test-cert.crt",
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig
@@ -756,8 +812,10 @@ func Test_Run(t *testing.T) {
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 			config := &entrypoint.Config{
-				LeaderElector:     leaderElector,
-				CollectorCertPath: "testdata/bad-cert.crt",
+				LeaderElector:               leaderElector,
+				CollectorCertPath:           "testdata/bad-cert.crt",
+				TopologyMetricsEnabled:      true,
+				TopologyMetricsTickInterval: 30 * time.Second,
 			}
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			entrypoint.ConfigValidatorFunc = noCheckConfig

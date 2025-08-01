@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2020-2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+ Copyright (c) 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -185,6 +185,40 @@ func TestMetricsWrapper_RecordCapacity(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := tt.mw.RecordCapacity(tt.args.ctx, tt.args.meta, tt.args.totalLogicalCapacity, tt.args.logicalCapacityAvailable, tt.args.logicalCapacityInUse, tt.args.logicalProvisioned); (err != nil) != tt.wantErr {
 				t.Errorf("MetricsWrapper.RecordCapacity() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+func TestMetricsWrapper_RecordTopologyMetrics(t *testing.T) {
+	mw := &service.MetricsWrapper{
+		Meter: otel.Meter("powerflex-test"),
+	}
+	tests := []struct {
+		name    string
+		meta    interface{}
+		metric  *service.TopologyMetricsRecord
+		wantErr bool
+	}{
+		{
+			name: "success",
+			meta: &service.TopologyMeta{
+				PersistentVolume: "test-pv",
+			},
+			metric:  &service.TopologyMetricsRecord{},
+			wantErr: false,
+		},
+		{
+			name:    "unknown meta data type",
+			meta:    "unknown",
+			metric:  &service.TopologyMetricsRecord{},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := mw.RecordTopologyMetrics(context.Background(), tt.meta, tt.metric); (err != nil) != tt.wantErr {
+				t.Errorf("RecordTopologyMetrics() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2020-2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+ Copyright (c) 2025  Dell Inc. or its subsidiaries. All Rights Reserved.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import (
 )
 
 const (
-	defaultTickInterval            = 5 * time.Second
+	defaultTickInterval            = 20 * time.Second
 	defaultConfigFile              = "/etc/config/karavi-metrics-powerflex.yaml"
 	defaultStorageSystemConfigFile = "/vxflexos-config/config"
 )
@@ -60,7 +60,7 @@ func configure() (*entrypoint.Config, otlexporters.Otlexporter, *service.PowerFl
 	configFileListener := setupConfigFileListener()
 	sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder, exporter := initializeComponents(logger)
 	config := setupConfig(sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder, logger)
-	powerflexSvc := setupPowerFlexService(logger)
+	powerflexSvc := setupPowerFlexService(logger, volumeFinder)
 	onChangeUpdate(powerflexSvc, config, sdcFinder, exporter, storageClassFinder, volumeFinder, logger)
 	updatePowerFlexConnection(defaultStorageSystemConfigFile, config, sdcFinder, storageClassFinder, volumeFinder, logger)
 	setupConfigWatchers(configFileListener, powerflexSvc, config, sdcFinder, storageClassFinder, volumeFinder, exporter, logger)
@@ -139,12 +139,13 @@ func setupConfig(
 	}
 }
 
-func setupPowerFlexService(logger *logrus.Logger) *service.PowerFlexService {
+func setupPowerFlexService(logger *logrus.Logger, volumeFinder *k8s.VolumeFinder) *service.PowerFlexService {
 	return &service.PowerFlexService{
 		MetricsWrapper: &service.MetricsWrapper{
 			Meter: otel.Meter("powerflex/sdc"),
 		},
-		Logger: logger,
+		Logger:       logger,
+		VolumeFinder: volumeFinder,
 	}
 }
 
@@ -314,6 +315,14 @@ func updateMetricsEnabled(config *entrypoint.Config) {
 	config.SDCMetricsEnabled = powerflexSdcMetricsEnabled
 	config.VolumeMetricsEnabled = powerflexVolumeMetricsEnabled
 	config.StoragePoolMetricsEnabled = storagePoolMetricsEnabled
+
+	powerflexTopologyMetricsEnabled := true
+	powerflexTopologyMetricsEnabledValue := viper.GetString("POWERFLEX_TOPOLOGY_METRICS_ENABLED")
+	if powerflexTopologyMetricsEnabledValue == "false" {
+		powerflexTopologyMetricsEnabled = false
+	}
+
+	config.TopologyMetricsEnabled = powerflexTopologyMetricsEnabled
 }
 
 func updateTickIntervals(config *entrypoint.Config, logger *logrus.Logger) {
@@ -359,6 +368,19 @@ func updateTickIntervals(config *entrypoint.Config, logger *logrus.Logger) {
 	config.SDCTickInterval = sdcTickInterval
 	config.VolumeTickInterval = volumeTickInterval
 	config.StoragePoolTickInterval = storagePoolTickInterval
+
+	topologyMetricsTickInterval := defaultTickInterval
+	topologyMetricsPollFrequencySeconds := viper.GetString("POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY")
+	if topologyMetricsPollFrequencySeconds != "" {
+		numSeconds, err := strconv.Atoi(topologyMetricsPollFrequencySeconds)
+		if err != nil {
+			logger.WithError(err).Fatal("POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY was not set to a valid number")
+		}
+
+		topologyMetricsTickInterval = time.Duration(numSeconds) * time.Second
+	}
+	config.TopologyMetricsTickInterval = topologyMetricsTickInterval
+	logger.WithField("cluster_performance_tick_interval", fmt.Sprintf("%v", topologyMetricsTickInterval)).Debug("setting cluster performance tick interval")
 }
 
 func updateService(powerflexSvc *service.PowerFlexService, logger *logrus.Logger) {

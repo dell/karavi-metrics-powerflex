@@ -1,3 +1,20 @@
+/*
+ Copyright (c) 2025  Dell Inc. or its subsidiaries. All Rights Reserved.
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+*/
+
+
 package main
 
 import (
@@ -170,7 +187,7 @@ func TestSetupPowerFlexService(t *testing.T) {
 	// Run
 	config := setupConfig(sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder, logger)
 	exporter := &otlexporters.OtlCollectorExporter{}
-	powerflexSvc := setupPowerFlexService(logger)
+	powerflexSvc := setupPowerFlexService(logger, volumeFinder)
 
 	// Verify
 	assert.NotNil(t, config, "Expected valid config")
@@ -288,64 +305,76 @@ func TestUpdateCollectorAddress(t *testing.T) {
 
 func TestUpdateMetricsEnabled(t *testing.T) {
 	tests := []struct {
-		name                              string
-		sdcMetricsEnabled                 string
-		volumeMetricsEnabled              string
-		storagePoolMetricsEnabled         string
-		expectedSdcMetricsEnabled         bool
-		expectedVolumeMetricsEnabled      bool
-		expectedStoragePoolMetricsEnabled bool
-		expectPanic                       bool
+		name                                    string
+		sdcMetricsEnabled                       string
+		volumeMetricsEnabled                    string
+		storagePoolMetricsEnabled               string
+		powerflexTopologyMetricsEnabled         string
+		expectedSdcMetricsEnabled               bool
+		expectedVolumeMetricsEnabled            bool
+		expectedStoragePoolMetricsEnabled       bool
+		expectedPowerflexTopologyMetricsEnabled bool
+		expectPanic                             bool
 	}{
 		{
-			name:                              "All metrics enabled",
-			sdcMetricsEnabled:                 "true",
-			volumeMetricsEnabled:              "true",
-			storagePoolMetricsEnabled:         "true",
-			expectedSdcMetricsEnabled:         true,
-			expectedVolumeMetricsEnabled:      true,
-			expectedStoragePoolMetricsEnabled: true,
-			expectPanic:                       false,
+			name:                                    "All metrics enabled",
+			sdcMetricsEnabled:                       "true",
+			volumeMetricsEnabled:                    "true",
+			storagePoolMetricsEnabled:               "true",
+			powerflexTopologyMetricsEnabled:         "true",
+			expectedSdcMetricsEnabled:               true,
+			expectedVolumeMetricsEnabled:            true,
+			expectedStoragePoolMetricsEnabled:       true,
+			expectPanic:                             false,
+			expectedPowerflexTopologyMetricsEnabled: true,
 		},
 		{
-			name:                              "All metrics disabled",
-			sdcMetricsEnabled:                 "false",
-			volumeMetricsEnabled:              "false",
-			storagePoolMetricsEnabled:         "false",
-			expectedSdcMetricsEnabled:         false,
-			expectedVolumeMetricsEnabled:      false,
-			expectedStoragePoolMetricsEnabled: false,
-			expectPanic:                       false,
+			name:                                    "All metrics disabled",
+			sdcMetricsEnabled:                       "false",
+			volumeMetricsEnabled:                    "false",
+			storagePoolMetricsEnabled:               "false",
+			powerflexTopologyMetricsEnabled:         "true",
+			expectedPowerflexTopologyMetricsEnabled: true,
+			expectedSdcMetricsEnabled:               false,
+			expectedVolumeMetricsEnabled:            false,
+			expectedStoragePoolMetricsEnabled:       false,
+			expectPanic:                             false,
 		},
 		{
-			name:                              "sdcMetricsEnabled error",
-			sdcMetricsEnabled:                 "test",
-			volumeMetricsEnabled:              "true",
-			storagePoolMetricsEnabled:         "true",
-			expectedSdcMetricsEnabled:         true,
-			expectedVolumeMetricsEnabled:      true,
-			expectedStoragePoolMetricsEnabled: true,
-			expectPanic:                       true,
+			name:                                    "sdcMetricsEnabled error",
+			sdcMetricsEnabled:                       "test",
+			volumeMetricsEnabled:                    "true",
+			storagePoolMetricsEnabled:               "true",
+			powerflexTopologyMetricsEnabled:         "true",
+			expectedPowerflexTopologyMetricsEnabled: true,
+			expectedSdcMetricsEnabled:               true,
+			expectedVolumeMetricsEnabled:            true,
+			expectedStoragePoolMetricsEnabled:       true,
+			expectPanic:                             true,
 		},
 		{
-			name:                              "volumeMetricsEnabled error",
-			sdcMetricsEnabled:                 "true",
-			volumeMetricsEnabled:              "test",
-			storagePoolMetricsEnabled:         "true",
-			expectedSdcMetricsEnabled:         true,
-			expectedVolumeMetricsEnabled:      true,
-			expectedStoragePoolMetricsEnabled: true,
-			expectPanic:                       true,
+			name:                                    "volumeMetricsEnabled error",
+			sdcMetricsEnabled:                       "true",
+			volumeMetricsEnabled:                    "test",
+			storagePoolMetricsEnabled:               "true",
+			powerflexTopologyMetricsEnabled:         "true",
+			expectedPowerflexTopologyMetricsEnabled: true,
+			expectedSdcMetricsEnabled:               true,
+			expectedVolumeMetricsEnabled:            true,
+			expectedStoragePoolMetricsEnabled:       true,
+			expectPanic:                             true,
 		},
 		{
-			name:                              "storagePoolMetricsEnabled error",
-			sdcMetricsEnabled:                 "true",
-			volumeMetricsEnabled:              "true",
-			storagePoolMetricsEnabled:         "test",
-			expectedSdcMetricsEnabled:         true,
-			expectedVolumeMetricsEnabled:      true,
-			expectedStoragePoolMetricsEnabled: true,
-			expectPanic:                       true,
+			name:                                    "storagePoolMetricsEnabled error",
+			sdcMetricsEnabled:                       "true",
+			volumeMetricsEnabled:                    "true",
+			storagePoolMetricsEnabled:               "test",
+			powerflexTopologyMetricsEnabled:         "true",
+			expectedPowerflexTopologyMetricsEnabled: true,
+			expectedSdcMetricsEnabled:               true,
+			expectedVolumeMetricsEnabled:            true,
+			expectedStoragePoolMetricsEnabled:       true,
+			expectPanic:                             true,
 		},
 	}
 
@@ -354,7 +383,9 @@ func TestUpdateMetricsEnabled(t *testing.T) {
 			viper.Set("POWERFLEX_SDC_METRICS_ENABLED", tt.sdcMetricsEnabled)
 			viper.Set("POWERFLEX_VOLUME_METRICS_ENABLED", tt.volumeMetricsEnabled)
 			viper.Set("POWERFLEX_STORAGE_POOL_METRICS_ENABLED", tt.storagePoolMetricsEnabled)
-			config := &entrypoint.Config{}
+			viper.Set("POWERFLEX_TOPOLOGY_METRICS_ENABLED", tt.powerflexTopologyMetricsEnabled)
+			logger := logrus.New()
+			config := &entrypoint.Config{Logger: logger}
 			if tt.expectPanic {
 				assert.Panics(t, func() { updateMetricsEnabled(config) })
 			} else {
@@ -447,6 +478,7 @@ func TestUpdateTickIntervals(t *testing.T) {
 		sdcIOFreq           string
 		volumeIOFreq        string
 		storagePoolFreq     string
+		topologyMetricFreq  string
 		expectedSdcIO       time.Duration
 		expectedVolumeIO    time.Duration
 		expectedStoragePool time.Duration
@@ -457,6 +489,7 @@ func TestUpdateTickIntervals(t *testing.T) {
 			sdcIOFreq:           "30",
 			volumeIOFreq:        "25",
 			storagePoolFreq:     "15",
+			topologyMetricFreq:  "5",
 			expectedSdcIO:       30 * time.Second,
 			expectedVolumeIO:    25 * time.Second,
 			expectedStoragePool: 15 * time.Second,
@@ -467,6 +500,7 @@ func TestUpdateTickIntervals(t *testing.T) {
 			sdcIOFreq:           "invalid",
 			volumeIOFreq:        "25",
 			storagePoolFreq:     "15",
+			topologyMetricFreq:  "invalid",
 			expectedSdcIO:       defaultTickInterval,
 			expectedVolumeIO:    defaultTickInterval,
 			expectedStoragePool: defaultTickInterval,
@@ -477,6 +511,7 @@ func TestUpdateTickIntervals(t *testing.T) {
 			sdcIOFreq:           "30",
 			volumeIOFreq:        "invalid",
 			storagePoolFreq:     "15",
+			topologyMetricFreq:  "invalid",
 			expectedSdcIO:       defaultTickInterval,
 			expectedVolumeIO:    defaultTickInterval,
 			expectedStoragePool: defaultTickInterval,
@@ -487,6 +522,7 @@ func TestUpdateTickIntervals(t *testing.T) {
 			sdcIOFreq:           "30",
 			volumeIOFreq:        "10",
 			storagePoolFreq:     "invalid",
+			topologyMetricFreq:  "invalid",
 			expectedSdcIO:       defaultTickInterval,
 			expectedVolumeIO:    defaultTickInterval,
 			expectedStoragePool: defaultTickInterval,
@@ -497,6 +533,7 @@ func TestUpdateTickIntervals(t *testing.T) {
 			sdcIOFreq:           "-1",
 			volumeIOFreq:        "25",
 			storagePoolFreq:     "15",
+			topologyMetricFreq:  "invalid",
 			expectedSdcIO:       defaultTickInterval,
 			expectedVolumeIO:    defaultTickInterval,
 			expectedStoragePool: defaultTickInterval,
@@ -530,6 +567,7 @@ func TestUpdateTickIntervals(t *testing.T) {
 			viper.Set("POWERFLEX_SDC_IO_POLL_FREQUENCY", tt.sdcIOFreq)
 			viper.Set("POWERFLEX_VOLUME_IO_POLL_FREQUENCY", tt.volumeIOFreq)
 			viper.Set("POWERFLEX_STORAGE_POOL_POLL_FREQUENCY", tt.storagePoolFreq)
+			viper.Set("POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY", tt.topologyMetricFreq)
 
 			config := &entrypoint.Config{}
 			logger := logrus.New()
