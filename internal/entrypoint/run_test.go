@@ -251,20 +251,40 @@ func Test_Run(t *testing.T) {
 
 			return false, config, e, svc, prevConfigValidationFunc, ctrl, false
 		},
-		"topology metrics not collected if not leader": func(t *testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
+		"topology metrics not collected if not leader": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			leaderElector.EXPECT().IsLeader().Return(false).AnyTimes()
+			leaderElector.EXPECT().InitLeaderElection(gomock.Any(), gomock.Any()).Return(nil)
+			leaderElector.EXPECT().IsLeader().AnyTimes().Return(false)
 
-			svc := mocks.NewMockService(ctrl) // No call to ExportTopologyMetrics expected
+			// Service should not receive ExportTopologyMetrics call
+			svc := mocks.NewMockService(ctrl)
+			// no EXPECT() on ExportTopologyMetrics means if it's called test will fail
+
+			exporter := exportermocks.NewMockOtlexporter(ctrl)
+			exporter.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
+			exporter.EXPECT().StopExporter().Return(nil)
 
 			config := &entrypoint.Config{
 				LeaderElector:               leaderElector,
+				SDCMetricsEnabled:           false,
+				VolumeMetricsEnabled:        false,
+				StoragePoolMetricsEnabled:   false,
 				TopologyMetricsEnabled:      true,
-				TopologyMetricsTickInterval: 10 * time.Millisecond,
+				SDCTickInterval:             100 * time.Millisecond,
+				VolumeTickInterval:          100 * time.Millisecond,
+				StoragePoolTickInterval:     100 * time.Millisecond,
+				TopologyMetricsTickInterval: 100 * time.Millisecond,
+				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": nil},
+				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {}},
+				SDCFinder:                   mocks.NewMockSDCFinder(ctrl),
+				NodeFinder:                  mocks.NewMockNodeFinder(ctrl),
 			}
 
-			return true, config, nil, svc, entrypoint.ConfigValidatorFunc, ctrl, true
+			prev := entrypoint.ConfigValidatorFunc
+			entrypoint.ConfigValidatorFunc = noCheckConfig
+
+			return false, config, exporter, svc, prev, ctrl, false
 		},
 		"error no PowerFlex client": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
@@ -858,4 +878,38 @@ func Test_Run(t *testing.T) {
 
 func noCheckConfig(_ *entrypoint.Config) error {
 	return nil
+}
+
+func Test_ValidateConfig_TopologyTickInterval_OutOfRange(t *testing.T) {
+	tooSmall := &entrypoint.Config{
+		SDCTickInterval:             entrypoint.MinimumSDCTickInterval,
+		VolumeTickInterval:          entrypoint.MinimumSDCTickInterval,
+		TopologyMetricsTickInterval: entrypoint.MinimumTickInterval - time.Second, // too small
+		PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"k": nil},
+		SDCFinder:                   mocks.NewMockSDCFinder(gomock.NewController(t)),
+		NodeFinder:                  mocks.NewMockNodeFinder(gomock.NewController(t)),
+		LeaderElector:               mocks.NewMockLeaderElector(gomock.NewController(t)),
+		SDCMetricsEnabled:           true,
+	}
+
+	err := entrypoint.ValidateConfig(tooSmall)
+	if err == nil {
+		t.Fatalf("expected error for topology tick interval too small, got nil")
+	}
+
+	tooLarge := &entrypoint.Config{
+		SDCTickInterval:             entrypoint.MinimumSDCTickInterval,
+		VolumeTickInterval:          entrypoint.MinimumSDCTickInterval,
+		TopologyMetricsTickInterval: entrypoint.MaximumTickInterval + time.Second, // too large
+		PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"k": nil},
+		SDCFinder:                   mocks.NewMockSDCFinder(gomock.NewController(t)),
+		NodeFinder:                  mocks.NewMockNodeFinder(gomock.NewController(t)),
+		LeaderElector:               mocks.NewMockLeaderElector(gomock.NewController(t)),
+		SDCMetricsEnabled:           true,
+	}
+
+	err = entrypoint.ValidateConfig(tooLarge)
+	if err == nil {
+		t.Fatalf("expected error for topology tick interval too large, got nil")
+	}
 }

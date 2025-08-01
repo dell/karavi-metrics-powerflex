@@ -442,7 +442,7 @@ func (s *PowerFlexService) getVoumeInfo(_ context.Context, volumes []k8s.VolumeI
 }
 
 // gatherVolumeMetrics will return a channel of volume metrics based on the input of volumes
-func (s *PowerFlexService) gatherVolumeMetrics(ctx context.Context, volumeFinder VolumeFinder, volumes <-chan VolumeStatisticsGetter) <-chan *VolumeMetricsRecord {
+func (s *PowerFlexService) gatherVolumeMetrics(_ context.Context, volumeFinder VolumeFinder, volumes <-chan VolumeStatisticsGetter) <-chan *VolumeMetricsRecord {
 	start := time.Now()
 	defer s.timeSince(start, "gatherVolumeMetrics")
 
