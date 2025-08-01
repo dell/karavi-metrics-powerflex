@@ -2,7 +2,7 @@ module github.com/dell/karavi-metrics-powerflex
 
 go 1.24.0
 
-toolchain go1.24.4
+toolchain go1.24.5
 
 require (
 	github.com/dell/goscaleio v1.20.1-0.20250715115638-33606809f892
