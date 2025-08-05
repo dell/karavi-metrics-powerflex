@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2020-2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+ Copyright (c) 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ type MetricsRecorder interface {
 		readLatency, writeLatency float64) error
 	RecordCapacity(ctx context.Context, meta interface{},
 		totalLogicalCapacity, logicalCapacityAvailable, logicalCapacityInUse, logicalProvisioned float64) error
+	RecordTopologyMetrics(ctx context.Context, meta interface{}, topologyMetrics *TopologyMetricsRecord) error
 }
 
 // MeterCreater interface is used to create and provide Meter instances, which are used to report measurements.
@@ -52,6 +53,7 @@ type MetricsWrapper struct {
 	Metrics         sync.Map
 	Labels          sync.Map
 	CapacityMetrics sync.Map
+	TopologyMetrics sync.Map
 }
 
 // Metrics contains the list of metrics data that is collected
@@ -70,6 +72,11 @@ type CapacityMetrics struct {
 	LogicalCapacityAvailable metric.Float64ObservableUpDownCounter
 	LogicalCapacityInUse     metric.Float64ObservableUpDownCounter
 	LogicalProvisioned       metric.Float64ObservableUpDownCounter
+}
+
+// TopologyMetrics contains the metrics related to PV availability in the cluster.
+type TopologyMetrics struct {
+	PvAvailabilityMetric metric.Float64ObservableUpDownCounter
 }
 
 func (mw *MetricsWrapper) initMetrics(prefix, metaID string, labels []attribute.KeyValue) (*Metrics, error) {
@@ -283,5 +290,99 @@ func (mw *MetricsWrapper) RecordCapacity(_ context.Context, meta interface{},
 	default:
 		return errors.New("unknown MetaData type")
 	}
+	return nil
+}
+
+// initTopologyMetrics initializes and stores topology metrics and associated labels for a given volume.
+func (mw *MetricsWrapper) initTopologyMetrics(metaID string, labels []attribute.KeyValue) (*TopologyMetrics, error) {
+	pvcSize, err := mw.Meter.Float64ObservableUpDownCounter("karavi_topology_metrics")
+	if err != nil {
+		return nil, err
+	}
+	metrics := &TopologyMetrics{
+		PvAvailabilityMetric: pvcSize,
+	}
+
+	mw.TopologyMetrics.Store(metaID, metrics)
+	mw.Labels.Store(metaID, labels)
+
+	return metrics, nil
+}
+
+// RecordTopologyMetrics publishes topology metrics data for a given PowerStore volume.
+func (mw *MetricsWrapper) RecordTopologyMetrics(_ context.Context, meta interface{}, topologyMetrics *TopologyMetricsRecord) error {
+	var metaID string
+	var labels []attribute.KeyValue
+
+	switch v := meta.(type) {
+	case *TopologyMeta:
+		metaID = v.PersistentVolume
+		labels = []attribute.KeyValue{
+			attribute.String("Namespace", v.Namespace),
+			attribute.String("PersistentVolumeClaim", v.PersistentVolumeClaim),
+			attribute.String("PersistentVolumeStatus", v.PersistentVolumeStatus),
+			attribute.String("VolumeClaimName", v.VolumeClaimName),
+			attribute.String("PersistentVolume", v.PersistentVolume),
+			attribute.String("StorageClass", v.StorageClass),
+			attribute.String("Driver", v.Driver),
+			attribute.String("ProvisionedSize", v.ProvisionedSize),
+			attribute.String("StorageSystemVolumeName", v.StorageSystemVolumeName),
+			attribute.String("StorageSystem", v.StorageSystem),
+			attribute.String("Protocol", v.Protocol),
+			attribute.String("CreatedTime", v.CreatedTime),
+			attribute.String("PlotWithMean", "No"),
+		}
+	default:
+		return errors.New("unknown MetaData type")
+	}
+
+	metricsMapValue, ok := mw.TopologyMetrics.Load(metaID)
+	if !ok {
+		newMetrics, err := mw.initTopologyMetrics(metaID, labels)
+		if err != nil {
+			return err
+		}
+		metricsMapValue = newMetrics
+	} else {
+		currentLabels, ok := mw.Labels.Load(metaID)
+		if ok {
+			currentLabels := currentLabels.([]attribute.KeyValue)
+			updatedLabels := currentLabels
+			haveLabelsChanged := false
+			for i, current := range currentLabels {
+				for _, new := range labels {
+					if current.Key == new.Key && current.Value != new.Value {
+						updatedLabels[i].Value = new.Value
+						haveLabelsChanged = true
+					}
+				}
+			}
+			if haveLabelsChanged {
+				newMetrics, err := mw.initTopologyMetrics(metaID, updatedLabels)
+				if err != nil {
+					return err
+				}
+				metricsMapValue = newMetrics
+			}
+		}
+	}
+
+	metrics := metricsMapValue.(*TopologyMetrics)
+
+	done := make(chan struct{})
+	reg, err := mw.Meter.RegisterCallback(func(_ context.Context, obs metric.Observer) error {
+		obs.ObserveFloat64(metrics.PvAvailabilityMetric, float64(topologyMetrics.pvAvailable), metric.ObserveOption(metric.WithAttributes(labels...)))
+		go func() {
+			done <- struct{}{}
+		}()
+		return nil
+	}, metrics.PvAvailabilityMetric)
+	if err != nil {
+		return err
+	}
+
+	<-done
+	_ = reg.Unregister()
+
 	return nil
 }

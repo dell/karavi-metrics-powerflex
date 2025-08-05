@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2020-2022 Dell Inc. or its subsidiaries. All Rights Reserved.
+ Copyright (c) 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -36,6 +37,8 @@ var _ Service = (*PowerFlexService)(nil)
 const (
 	// DefaultMaxPowerFlexConnections is the number of workers that can query powerflex  at a time
 	DefaultMaxPowerFlexConnections = 10
+
+	ExpectedVolumeHandleProperties = 2
 )
 
 // Service contains operations that would be used to interact with a PowerFlex system
@@ -48,6 +51,7 @@ type Service interface {
 	ExportVolumeStatistics(context.Context, []*VolumeMetaMetrics, VolumeFinder)
 	GetStorageClasses(ctx context.Context, client PowerFlexClient, storageClassFinder StorageClassFinder) ([]StorageClassMeta, error)
 	GetStoragePoolStatistics(ctx context.Context, storageClassMetas []StorageClassMeta)
+	ExportTopologyMetrics(context.Context)
 }
 
 // StatisticsGetter supports getting statistics
@@ -89,6 +93,7 @@ type PowerFlexService struct {
 	MetricsWrapper          MetricsRecorder
 	MaxPowerFlexConnections int
 	Logger                  *logrus.Logger
+	VolumeFinder            VolumeFinder
 }
 
 // SDCFinder is used to find SDC GUIDs
@@ -132,6 +137,11 @@ type StoragePoolStatisticsGetter interface {
 type LeaderElector interface {
 	InitLeaderElection(string, string) error
 	IsLeader() bool
+}
+
+type TopologyMetricsRecord struct {
+	topologyMeta *TopologyMeta
+	pvAvailable  int64
 }
 
 // GetSDCs returns a slice of SDCs
@@ -429,6 +439,18 @@ func (s *PowerFlexService) ExportVolumeStatistics(ctx context.Context, volumes [
 // volumeServer will return a channel of volumes that can provide statistics about each volume
 func (s *PowerFlexService) volumeServer(volumes []*VolumeMetaMetrics) <-chan *VolumeMetaMetrics {
 	volumeChannel := make(chan *VolumeMetaMetrics, len(volumes))
+	go func() {
+		for _, volume := range volumes {
+			volumeChannel <- volume
+		}
+		close(volumeChannel)
+	}()
+	return volumeChannel
+}
+
+// volumeServer will return a channel of volumes that can provide  about each volume
+func (s *PowerFlexService) getVolumeInfo(_ context.Context, volumes []k8s.VolumeInfo) <-chan k8s.VolumeInfo {
+	volumeChannel := make(chan k8s.VolumeInfo, len(volumes))
 	go func() {
 		for _, volume := range volumes {
 			volumeChannel <- volume
@@ -754,6 +776,107 @@ func (s *PowerFlexService) pushPoolStatistics(ctx context.Context, spMetricRecor
 				}
 				ch <- i
 			}(i)
+		}
+		wg.Wait()
+		close(ch)
+	}()
+
+	return ch
+}
+
+// ExportTopologyMetrics will export topology metrics
+func (s *PowerFlexService) ExportTopologyMetrics(ctx context.Context) {
+	start := time.Now()
+	defer s.timeSince(start, "ExportTopologyMetrics")
+
+	if s.MetricsWrapper == nil {
+		s.Logger.Warn("no MetricsWrapper provided for getting ExportTopologyMetrics")
+		return
+	}
+
+	pvs, err := s.VolumeFinder.GetPersistentVolumes()
+	if err != nil {
+		s.Logger.WithError(err).Error("getting persistent volumes")
+		return
+	}
+
+	for range s.pushTopologyMetrics(ctx, s.gatherTopologyMetrics(s.getVolumeInfo(ctx, pvs))) {
+		// consume the channel until it is empty and closed
+	} // revive:disable-line:empty-block
+}
+
+// gatherTopologyMetrics will return a channel of topology metrics
+func (s *PowerFlexService) gatherTopologyMetrics(volumes <-chan k8s.VolumeInfo) <-chan *TopologyMetricsRecord {
+	start := time.Now()
+	defer s.timeSince(start, "gatherTopologyMetrics")
+
+	ch := make(chan *TopologyMetricsRecord)
+	var wg sync.WaitGroup
+
+	go func() {
+		for volume := range volumes {
+			wg.Add(1)
+			go func(volume k8s.VolumeInfo) {
+				defer wg.Done()
+
+				volumeProperties := strings.Split(volume.VolumeHandle, "-")
+				if len(volumeProperties) != ExpectedVolumeHandleProperties {
+					s.Logger.WithField("volume_handle", volume.VolumeHandle).Warn("unable to get VolumeID and ClusterID from volume handle")
+					return
+				}
+
+				topologyMeta := &TopologyMeta{
+					Namespace:               volume.Namespace,
+					PersistentVolumeClaim:   volume.VolumeClaimName,
+					VolumeClaimName:         volume.PersistentVolume,
+					PersistentVolumeStatus:  volume.PersistentVolumeStatus,
+					PersistentVolume:        volume.PersistentVolume,
+					StorageClass:            volume.StorageClass,
+					Driver:                  volume.Driver,
+					ProvisionedSize:         volume.ProvisionedSize,
+					StorageSystemVolumeName: volume.StorageSystemVolumeName,
+					StoragePoolName:         volume.StoragePoolName,
+					StorageSystem:           volume.StorageSystem,
+					Protocol:                volume.Protocol,
+					CreatedTime:             volume.CreatedTime,
+				}
+
+				pvAvailable := int64(1)
+
+				metric := &TopologyMetricsRecord{
+					topologyMeta: topologyMeta,
+					pvAvailable:  pvAvailable,
+				}
+
+				ch <- metric
+			}(volume)
+		}
+
+		wg.Wait()
+		close(ch)
+	}()
+	return ch
+}
+
+// pushTopologyMetrics will push the provided channel of volume metrics to a data collector
+func (s *PowerFlexService) pushTopologyMetrics(ctx context.Context, topologyMetrics <-chan *TopologyMetricsRecord) <-chan *TopologyMetricsRecord {
+	start := time.Now()
+	defer s.timeSince(start, "pushTopologyMetrics")
+	var wg sync.WaitGroup
+
+	ch := make(chan *TopologyMetricsRecord)
+	go func() {
+		for metrics := range topologyMetrics {
+			wg.Add(1)
+			go func(metrics *TopologyMetricsRecord) {
+				defer wg.Done()
+				err := s.MetricsWrapper.RecordTopologyMetrics(ctx, metrics.topologyMeta, metrics)
+				if err != nil {
+					s.Logger.WithError(err).WithField("volume_id", metrics.topologyMeta.PersistentVolume).Error("recording topology metrics for volume")
+				} else {
+					ch <- metrics
+				}
+			}(metrics)
 		}
 		wg.Wait()
 		close(ch)
