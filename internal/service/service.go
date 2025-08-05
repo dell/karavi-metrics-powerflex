@@ -449,7 +449,7 @@ func (s *PowerFlexService) volumeServer(volumes []*VolumeMetaMetrics) <-chan *Vo
 }
 
 // volumeServer will return a channel of volumes that can provide  about each volume
-func (s *PowerFlexService) getVoumeInfo(_ context.Context, volumes []k8s.VolumeInfo) <-chan k8s.VolumeInfo {
+func (s *PowerFlexService) getVolumeInfo(_ context.Context, volumes []k8s.VolumeInfo) <-chan k8s.VolumeInfo {
 	volumeChannel := make(chan k8s.VolumeInfo, len(volumes))
 	go func() {
 		for _, volume := range volumes {
@@ -800,7 +800,7 @@ func (s *PowerFlexService) ExportTopologyMetrics(ctx context.Context) {
 		return
 	}
 
-	for range s.pushTopologyMetrics(ctx, s.gatherTopologyMetrics(s.getVoumeInfo(ctx, pvs))) {
+	for range s.pushTopologyMetrics(ctx, s.gatherTopologyMetrics(s.getVolumeInfo(ctx, pvs))) {
 		// consume the channel until it is empty and closed
 	} // revive:disable-line:empty-block
 }

@@ -37,7 +37,7 @@ import (
 )
 
 const (
-	defaultTickInterval            = 20 * time.Second
+	defaultTickInterval            = 5 * time.Second
 	defaultConfigFile              = "/etc/config/karavi-metrics-powerflex.yaml"
 	defaultStorageSystemConfigFile = "/vxflexos-config/config"
 )
