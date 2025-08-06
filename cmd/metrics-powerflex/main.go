@@ -185,7 +185,6 @@ func updateLoggingSettings(logger *logrus.Logger) {
 func setupConfigWatchers(configFileListener *viper.Viper, powerflexSvc *service.PowerFlexService, config *entrypoint.Config, sdcFinder *k8s.SDCFinder, storageClassFinder *k8s.StorageClassFinder, volumeFinder *k8s.VolumeFinder, exporter *otlexporters.OtlCollectorExporter, logger *logrus.Logger) {
 	viper.WatchConfig()
 	viper.OnConfigChange(func(_ fsnotify.Event) {
-		fmt.Printf("Config cahange called in setupConfigWatchers")
 		updateLoggingSettings(logger)
 	})
 
