@@ -165,8 +165,6 @@ func onChangeUpdate(
 }
 
 func updateLoggingSettings(logger *logrus.Logger) {
-	fmt.Printf("Config cahange called in updateLoggingSettings")
-	logger.Info("SP:update logging settings")
 	logFormat := viper.GetString("LOG_FORMAT")
 	if strings.EqualFold(logFormat, "json") {
 		logger.SetFormatter(&logrus.JSONFormatter{})
