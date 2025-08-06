@@ -56,7 +56,6 @@ func main() {
 
 func configure() (*entrypoint.Config, otlexporters.Otlexporter, *service.PowerFlexService) {
 	logger := setupLogger()
-	loadConfig(logger)
 	configFileListener := setupConfigFileListener()
 	sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder, exporter := initializeComponents(logger)
 	config := setupConfig(sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder, logger)
@@ -90,6 +89,7 @@ func initializeComponents(logger *logrus.Logger) (*k8s.SDCFinder, *k8s.StorageCl
 
 func setupLogger() *logrus.Logger {
 	logger := logrus.New()
+	loadConfig(logger)
 	updateLoggingSettings(logger)
 	return logger
 }
@@ -165,6 +165,8 @@ func onChangeUpdate(
 }
 
 func updateLoggingSettings(logger *logrus.Logger) {
+	fmt.Printf("Config cahange called in updateLoggingSettings")
+	logger.Info("SP:update logging settings")
 	logFormat := viper.GetString("LOG_FORMAT")
 	if strings.EqualFold(logFormat, "json") {
 		logger.SetFormatter(&logrus.JSONFormatter{})
@@ -185,6 +187,7 @@ func updateLoggingSettings(logger *logrus.Logger) {
 func setupConfigWatchers(configFileListener *viper.Viper, powerflexSvc *service.PowerFlexService, config *entrypoint.Config, sdcFinder *k8s.SDCFinder, storageClassFinder *k8s.StorageClassFinder, volumeFinder *k8s.VolumeFinder, exporter *otlexporters.OtlCollectorExporter, logger *logrus.Logger) {
 	viper.WatchConfig()
 	viper.OnConfigChange(func(_ fsnotify.Event) {
+		fmt.Printf("Config cahange called in setupConfigWatchers")
 		updateLoggingSettings(logger)
 	})
 
