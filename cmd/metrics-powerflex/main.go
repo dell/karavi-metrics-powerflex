@@ -56,7 +56,6 @@ func main() {
 
 func configure() (*entrypoint.Config, otlexporters.Otlexporter, *service.PowerFlexService) {
 	logger := setupLogger()
-	loadConfig(logger)
 	configFileListener := setupConfigFileListener()
 	sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder, exporter := initializeComponents(logger)
 	config := setupConfig(sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder, logger)
@@ -90,6 +89,7 @@ func initializeComponents(logger *logrus.Logger) (*k8s.SDCFinder, *k8s.StorageCl
 
 func setupLogger() *logrus.Logger {
 	logger := logrus.New()
+	loadConfig(logger)
 	updateLoggingSettings(logger)
 	return logger
 }
