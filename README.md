@@ -43,12 +43,12 @@ If you wish to clone and build the Metrics for PowerFlex service, a Linux host i
 | --------------- | --------- | ---------------------- |
 | Podman          | v5.x.x    | [Podman installation](https://podman.io/docs/installation) |
 | Docker Registry |           | Access to a local/corporate [Docker registry](https://docs.docker.com/registry/) |
-| Golang          | v1.24.x   | [Golang installation](https://github.com/travis-ci/gimme) |
+| Golang          | v1.25.x   | [Golang installation](https://github.com/travis-ci/gimme) |
 | gomock          | v1.6.0    | [Go Mock](https://github.com/golang/mock) |
 | gosec           |           | [gosec](https://github.com/securego/gosec) |
 | git             | latest    | [Git installation](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) |
 | gcc             |           | Run `sudo apt install build-essential` |
-| kubectl         | 1.30-1.32 | Ensure you copy the kubeconfig file from the Kubernetes cluster to the linux host. [kubectl installation](https://kubernetes.io/docs/tasks/tools/install-kubectl/) |
+| kubectl         | 1.32-1.34 | Ensure you copy the kubeconfig file from the Kubernetes cluster to the linux host. [kubectl installation](https://kubernetes.io/docs/tasks/tools/install-kubectl/) |
 | Helm            | v3.x.x    | [Helm installation](https://helm.sh/docs/intro/install/) |
 
 Once all prerequisites are on the Linux host, follow the steps below to clone and build the metrics service:
