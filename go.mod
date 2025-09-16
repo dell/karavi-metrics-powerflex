@@ -3,7 +3,7 @@ module github.com/dell/karavi-metrics-powerflex
 go 1.25
 
 require (
-	github.com/dell/goscaleio v1.20.1-0.20250905055702-2d7a0a146cf9
+	github.com/dell/goscaleio v1.21.0
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/golang/mock v1.6.0
 	github.com/sirupsen/logrus v1.9.3
