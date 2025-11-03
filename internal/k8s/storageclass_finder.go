@@ -67,7 +67,7 @@ func (f *StorageClassFinder) GetStorageClasses() ([]StorageClass, error) {
 	return storageClasses, nil
 }
 
-func (f *StorageClassFinder) isMatch(class v1.StorageClass) bool {
+func (f *StorageClassFinder) isMatch(class v1.StorageClass) *StorageClass {
 	for _, storage := range f.StorageSystemID {
 		if !Contains(storage.DriverNames, class.Provisioner) {
 			continue
