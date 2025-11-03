@@ -109,7 +109,7 @@ func (f *StorageClassFinder) isMatch(class v1.StorageClass) *StorageClass {
 		}
 	}
 
-	return false
+	return nil
 }
 
 // GetStoragePools will return a list of storage pool names from a given Kubernetes storage class
