@@ -17,7 +17,6 @@ import (
 type MockMetricsRecorder struct {
 	ctrl     *gomock.Controller
 	recorder *MockMetricsRecorderMockRecorder
-	isgomock struct{}
 }
 
 // MockMetricsRecorderMockRecorder is the mock recorder for MockMetricsRecorder.
@@ -38,52 +37,51 @@ func (m *MockMetricsRecorder) EXPECT() *MockMetricsRecorderMockRecorder {
 }
 
 // Record mocks base method.
-func (m *MockMetricsRecorder) Record(ctx context.Context, meta any, readBW, writeBW, readIOPS, writeIOPS, readLatency, writeLatency float64) error {
+func (m *MockMetricsRecorder) Record(arg0 context.Context, arg1 interface{}, arg2, arg3, arg4, arg5, arg6, arg7 float64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Record", ctx, meta, readBW, writeBW, readIOPS, writeIOPS, readLatency, writeLatency)
+	ret := m.ctrl.Call(m, "Record", arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Record indicates an expected call of Record.
-func (mr *MockMetricsRecorderMockRecorder) Record(ctx, meta, readBW, writeBW, readIOPS, writeIOPS, readLatency, writeLatency any) *gomock.Call {
+func (mr *MockMetricsRecorderMockRecorder) Record(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Record", reflect.TypeOf((*MockMetricsRecorder)(nil).Record), ctx, meta, readBW, writeBW, readIOPS, writeIOPS, readLatency, writeLatency)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Record", reflect.TypeOf((*MockMetricsRecorder)(nil).Record), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
 }
 
 // RecordCapacity mocks base method.
-func (m *MockMetricsRecorder) RecordCapacity(ctx context.Context, meta any, totalLogicalCapacity, logicalCapacityAvailable, logicalCapacityInUse, logicalProvisioned float64) error {
+func (m *MockMetricsRecorder) RecordCapacity(arg0 context.Context, arg1 interface{}, arg2, arg3, arg4, arg5 float64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RecordCapacity", ctx, meta, totalLogicalCapacity, logicalCapacityAvailable, logicalCapacityInUse, logicalProvisioned)
+	ret := m.ctrl.Call(m, "RecordCapacity", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RecordCapacity indicates an expected call of RecordCapacity.
-func (mr *MockMetricsRecorderMockRecorder) RecordCapacity(ctx, meta, totalLogicalCapacity, logicalCapacityAvailable, logicalCapacityInUse, logicalProvisioned any) *gomock.Call {
+func (mr *MockMetricsRecorderMockRecorder) RecordCapacity(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordCapacity", reflect.TypeOf((*MockMetricsRecorder)(nil).RecordCapacity), ctx, meta, totalLogicalCapacity, logicalCapacityAvailable, logicalCapacityInUse, logicalProvisioned)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordCapacity", reflect.TypeOf((*MockMetricsRecorder)(nil).RecordCapacity), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // RecordTopologyMetrics mocks base method.
-func (m *MockMetricsRecorder) RecordTopologyMetrics(ctx context.Context, meta any, topologyMetrics *service.TopologyMetricsRecord) error {
+func (m *MockMetricsRecorder) RecordTopologyMetrics(arg0 context.Context, arg1 interface{}, arg2 *service.TopologyMetricsRecord) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RecordTopologyMetrics", ctx, meta, topologyMetrics)
+	ret := m.ctrl.Call(m, "RecordTopologyMetrics", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RecordTopologyMetrics indicates an expected call of RecordTopologyMetrics.
-func (mr *MockMetricsRecorderMockRecorder) RecordTopologyMetrics(ctx, meta, topologyMetrics any) *gomock.Call {
+func (mr *MockMetricsRecorderMockRecorder) RecordTopologyMetrics(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordTopologyMetrics", reflect.TypeOf((*MockMetricsRecorder)(nil).RecordTopologyMetrics), ctx, meta, topologyMetrics)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordTopologyMetrics", reflect.TypeOf((*MockMetricsRecorder)(nil).RecordTopologyMetrics), arg0, arg1, arg2)
 }
 
 // MockMeterCreater is a mock of MeterCreater interface.
 type MockMeterCreater struct {
 	ctrl     *gomock.Controller
 	recorder *MockMeterCreaterMockRecorder
-	isgomock struct{}
 }
 
 // MockMeterCreaterMockRecorder is the mock recorder for MockMeterCreater.

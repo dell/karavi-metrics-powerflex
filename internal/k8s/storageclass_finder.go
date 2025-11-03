@@ -17,6 +17,9 @@
 package k8s
 
 import (
+	"slices"
+
+	"github.com/dell/karavi-metrics-powerflex/internal/domain"
 	v1 "k8s.io/api/storage/v1"
 )
 
@@ -29,9 +32,10 @@ type StorageClassGetter interface {
 
 // StorageSystemID contains ID, whether is default and associated drivernames
 type StorageSystemID struct {
-	ID          string
-	IsDefault   bool
-	DriverNames []string
+	ID               string
+	IsDefault        bool
+	DriverNames      []string
+	AvailabilityZone *domain.AvailabilityZone
 }
 
 // StorageClassFinder is a storage class finder that will query the Kubernetes API for storage classes provisioned by a matching DriverName and StorageSystemID
@@ -40,9 +44,15 @@ type StorageClassFinder struct {
 	StorageSystemID []StorageSystemID
 }
 
+// StorageClass wraps a kubernetes StorageClass to include a SystemID
+type StorageClass struct {
+	v1.StorageClass
+	SystemID string
+}
+
 // GetStorageClasses will return a list of storage classes that match the given DriverName in Kubernetes
-func (f *StorageClassFinder) GetStorageClasses() ([]v1.StorageClass, error) {
-	var storageClasses []v1.StorageClass
+func (f *StorageClassFinder) GetStorageClasses() ([]StorageClass, error) {
+	var storageClasses []StorageClass
 
 	classes, err := f.API.GetStorageClasses()
 	if err != nil {
@@ -50,8 +60,8 @@ func (f *StorageClassFinder) GetStorageClasses() ([]v1.StorageClass, error) {
 	}
 
 	for _, class := range classes.Items {
-		if f.isMatch(class) {
-			storageClasses = append(storageClasses, class)
+		if sc := f.isMatch(class); sc != nil {
+			storageClasses = append(storageClasses, *sc)
 		}
 	}
 	return storageClasses, nil
@@ -63,10 +73,27 @@ func (f *StorageClassFinder) isMatch(class v1.StorageClass) bool {
 			continue
 		}
 
-		systemID := class.Parameters["systemID"]
+		systemID, ok := class.Parameters["systemID"]
+		// if the systemID field is not in the StorageClass, this could be a multi-az configuration
+		// the StorageClass is a match if a zone in the storage class is associated with the StorageSystemID
+		if !ok && storage.AvailabilityZone != nil {
+			zone := string(storage.AvailabilityZone.Name)
+			labelKey := string(storage.AvailabilityZone.LabelKey)
+
+			for _, allowedTopology := range class.AllowedTopologies {
+				for _, matchedLabelExpression := range allowedTopology.MatchLabelExpressions {
+					if matchedLabelExpression.Key == labelKey {
+						if slices.Contains(matchedLabelExpression.Values, zone) {
+							return &StorageClass{class, storage.ID}
+						}
+					}
+				}
+			}
+
+		}
 
 		if systemID == storage.ID {
-			return true
+			return &StorageClass{class, storage.ID}
 		}
 	}
 
@@ -78,7 +105,7 @@ func (f *StorageClassFinder) isMatch(class v1.StorageClass) bool {
 		systemID, systemIDExists := class.Parameters["systemID"]
 		// if a storage system is marked as default, the StorageClass is a match if either the 'systemID' key does not exist or if it matches the storage system ID
 		if storage.IsDefault && (!systemIDExists || systemID == storage.ID) {
-			return true
+			return &StorageClass{class, storage.ID}
 		}
 	}
 
@@ -86,6 +113,23 @@ func (f *StorageClassFinder) isMatch(class v1.StorageClass) bool {
 }
 
 // GetStoragePools will return a list of storage pool names from a given Kubernetes storage class
-func GetStoragePools(storageClass v1.StorageClass) []string {
-	return []string{storageClass.Parameters["storagepool"]}
+func (f *StorageClassFinder) GetStoragePools(storageClass StorageClass) []string {
+	pool, ok := storageClass.Parameters["storagepool"]
+	if ok {
+		return []string{pool}
+	}
+
+	// if the storagepool is not in the StorageClass, this is a multi-az configuration
+	// the pools must be gathered from the availablity zone
+	pools := []string{}
+	for _, storage := range f.StorageSystemID {
+		if storage.ID == storageClass.SystemID {
+			for _, protectionDomain := range storage.AvailabilityZone.ProtectionDomains {
+				for _, pool := range protectionDomain.Pools {
+					pools = append(pools, string(pool))
+				}
+			}
+		}
+	}
+	return pools
 }
