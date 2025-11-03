@@ -763,7 +763,7 @@ func Test_Run(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)
 
-		sc1 := k8s.StorageClass{
+			sc1 := k8s.StorageClass{
 				StorageClass: v1.StorageClass{
 					ObjectMeta: metav1.ObjectMeta{
 						UID:  "123",
