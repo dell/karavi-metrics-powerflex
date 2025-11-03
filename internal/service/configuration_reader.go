@@ -21,26 +21,16 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/dell/karavi-metrics-powerflex/internal/domain"
 	"sigs.k8s.io/yaml"
 )
-
-// ArrayConnectionData contains data required to connect to array
-type ArrayConnectionData struct {
-	SystemID                  string `json:"systemID"`
-	Username                  string `json:"username"`
-	Password                  string `json:"password"`
-	Endpoint                  string `json:"endpoint"`
-	Insecure                  bool   `json:"insecure,omitempty"`
-	IsDefault                 bool   `json:"isDefault,omitempty"`
-	SkipCertificateValidation bool   `json:"skipCertificateValidation,omitempty"`
-}
 
 // ConfigurationReader handles reading of the storage system configuration secret
 type ConfigurationReader struct{}
 
 // GetStorageSystemConfiguration returns a storage system from the configuration file
 // If no default system is supplied, the first system in the list is returned
-func (c *ConfigurationReader) GetStorageSystemConfiguration(file string) ([]ArrayConnectionData, error) {
+func (c *ConfigurationReader) GetStorageSystemConfiguration(file string) ([]domain.ArrayConnectionData, error) {
 	if _, err := os.Stat(file); os.IsNotExist(err) {
 		return nil, fmt.Errorf("%s", fmt.Sprintf("File %s does not exist", file))
 	}
@@ -54,7 +44,7 @@ func (c *ConfigurationReader) GetStorageSystemConfiguration(file string) ([]Arra
 		return nil, fmt.Errorf("arrays details are not provided in vxflexos-config secret")
 	}
 
-	connectionData := make([]ArrayConnectionData, 0)
+	connectionData := make([]domain.ArrayConnectionData, 0)
 	// support backward compatibility
 	config, err = yaml.JSONToYAML(config)
 	if err != nil {
@@ -80,7 +70,7 @@ func (c *ConfigurationReader) GetStorageSystemConfiguration(file string) ([]Arra
 	return connectionData, nil
 }
 
-func validateStorageSystem(system ArrayConnectionData, i int) error {
+func validateStorageSystem(system domain.ArrayConnectionData, i int) error {
 	if system.SystemID == "" {
 		return fmt.Errorf("%s", fmt.Sprintf("invalid value for system name at index %d", i))
 	}

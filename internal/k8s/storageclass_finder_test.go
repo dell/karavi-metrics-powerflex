@@ -20,32 +20,34 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/dell/karavi-metrics-powerflex/internal/domain"
 	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 	"github.com/dell/karavi-metrics-powerflex/internal/k8s/mocks"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func Test_K8sStorageClassFinder(t *testing.T) {
-	type checkFn func(*testing.T, []v1.StorageClass, error)
+	type checkFn func(*testing.T, []k8s.StorageClass, error)
 	check := func(fns ...checkFn) []checkFn { return fns }
 
-	hasNoError := func(t *testing.T, _ []v1.StorageClass, err error) {
+	hasNoError := func(t *testing.T, _ []k8s.StorageClass, err error) {
 		if err != nil {
 			t.Fatalf("expected no error")
 		}
 	}
 
-	checkExpectedOutput := func(expectedOutput []v1.StorageClass) func(t *testing.T, storageClasses []v1.StorageClass, err error) {
-		return func(t *testing.T, storageClasses []v1.StorageClass, _ error) {
+	checkExpectedOutput := func(expectedOutput []k8s.StorageClass) func(t *testing.T, storageClasses []k8s.StorageClass, err error) {
+		return func(t *testing.T, storageClasses []k8s.StorageClass, _ error) {
 			assert.Equal(t, expectedOutput, storageClasses)
 		}
 	}
 
-	hasError := func(t *testing.T, _ []v1.StorageClass, err error) {
+	hasError := func(t *testing.T, _ []k8s.StorageClass, err error) {
 		if err == nil {
 			t.Fatalf("expected error")
 		}
@@ -81,9 +83,19 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 				},
 			}
 
-			expected := &v1.StorageClassList{
-				Items: []v1.StorageClass{
-					storageClasses.Items[len(storageClasses.Items)-1],
+			expected := []k8s.StorageClass{
+				{
+					StorageClass: v1.StorageClass{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "vxflexos-xfs",
+						},
+						Provisioner: "csi-vxflexos.dellemc.com",
+						Parameters: map[string]string{
+							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
+						},
+					},
+					SystemID: "storage-system-id-1",
 				},
 			}
 
@@ -92,7 +104,7 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 			ids[0] = k8s.StorageSystemID{ID: "storage-system-id-1", DriverNames: []string{"csi-vxflexos.dellemc.com"}, IsDefault: false}
 
 			finder := k8s.StorageClassFinder{API: api, StorageSystemID: ids}
-			return finder, check(hasNoError, checkExpectedOutput(expected.Items)), ctrl
+			return finder, check(hasNoError, checkExpectedOutput(expected)), ctrl
 		},
 		"success selecting the matching driver name with storage classes": func(*testing.T) (k8s.StorageClassFinder, []checkFn, *gomock.Controller) {
 			ctrl := gomock.NewController(t)
@@ -123,12 +135,41 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 				},
 			}
 
+			expected := []k8s.StorageClass{
+				{
+					StorageClass: v1.StorageClass{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "vxflexos",
+						},
+						Provisioner: "csi-vxflexos.dellemc.com",
+						Parameters: map[string]string{
+							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
+						},
+					},
+					SystemID: "storage-system-id-1",
+				},
+				{
+					StorageClass: v1.StorageClass{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "vxflexos-xfs",
+						},
+						Provisioner: "csi-vxflexos.dellemc.com",
+						Parameters: map[string]string{
+							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
+						},
+					},
+					SystemID: "storage-system-id-1",
+				},
+			}
+
 			api.EXPECT().GetStorageClasses().Times(1).Return(storageClasses, nil)
 			ids := make([]k8s.StorageSystemID, 1)
 			ids[0] = k8s.StorageSystemID{ID: "storage-system-id-1", DriverNames: []string{"csi-vxflexos.dellemc.com"}, IsDefault: false}
 
 			finder := k8s.StorageClassFinder{API: api, StorageSystemID: ids}
-			return finder, check(hasNoError, checkExpectedOutput(storageClasses.Items)), ctrl
+			return finder, check(hasNoError, checkExpectedOutput(expected)), ctrl
 		},
 		"success selecting storage classes matching multiple driver names": func(*testing.T) (k8s.StorageClassFinder, []checkFn, *gomock.Controller) {
 			ctrl := gomock.NewController(t)
@@ -179,13 +220,68 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 				},
 			}
 
+			expected := []k8s.StorageClass{
+				{
+					StorageClass: v1.StorageClass{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "vxflexos",
+						},
+						Provisioner: "csi-vxflexos.dellemc.com",
+						Parameters: map[string]string{
+							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
+						},
+					},
+					SystemID: "storage-system-id-1",
+				},
+				{
+					StorageClass: v1.StorageClass{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "vxflexos-xfs",
+						},
+						Provisioner: "csi-vxflexos.dellemc.com",
+						Parameters: map[string]string{
+							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
+						},
+					},
+					SystemID: "storage-system-id-1",
+				},
+				{
+					StorageClass: v1.StorageClass{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "vxflexos-another",
+						},
+						Provisioner: "another-csi-driver.dellemc.com",
+						Parameters: map[string]string{
+							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
+						},
+					},
+					SystemID: "storage-system-id-1",
+				},
+				{
+					StorageClass: v1.StorageClass{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "vxflexos-xfs-another",
+						},
+						Provisioner: "another-csi-driver.dellemc.com",
+						Parameters: map[string]string{
+							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
+						},
+					},
+					SystemID: "storage-system-id-1",
+				},
+			}
+
 			api.EXPECT().GetStorageClasses().Times(1).Return(storageClasses, nil)
 			ids := make([]k8s.StorageSystemID, 1)
 			ids[0] = k8s.StorageSystemID{ID: "storage-system-id-1", DriverNames: []string{"csi-vxflexos.dellemc.com", "another-csi-driver.dellemc.com"}, IsDefault: false}
 
 			finder := k8s.StorageClassFinder{API: api, StorageSystemID: ids}
 
-			return finder, check(hasNoError, checkExpectedOutput(storageClasses.Items)), ctrl
+			return finder, check(hasNoError, checkExpectedOutput(expected)), ctrl
 		},
 		"success matching storage classes without systemID based on a default system being used": func(*testing.T) (k8s.StorageClassFinder, []checkFn, *gomock.Controller) {
 			ctrl := gomock.NewController(t)
@@ -232,25 +328,31 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 
 			finder := k8s.StorageClassFinder{API: api, StorageSystemID: ids}
 
-			return finder, check(hasNoError, checkExpectedOutput([]v1.StorageClass{
+			return finder, check(hasNoError, checkExpectedOutput([]k8s.StorageClass{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "vxflexos",
+					StorageClass: v1.StorageClass{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "vxflexos",
+						},
+						Provisioner: "csi-vxflexos.dellemc.com",
+						Parameters: map[string]string{
+							"storagepool": "mypool",
+						},
 					},
-					Provisioner: "csi-vxflexos.dellemc.com",
-					Parameters: map[string]string{
-						"storagepool": "mypool",
-					},
+					SystemID: "storage-system-id-1",
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "another-pool",
+					StorageClass: v1.StorageClass{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "another-pool",
+						},
+						Provisioner: "csi-vxflexos.dellemc.com",
+						Parameters: map[string]string{
+							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
+						},
 					},
-					Provisioner: "csi-vxflexos.dellemc.com",
-					Parameters: map[string]string{
-						"storagepool": "mypool",
-						"systemID":    "storage-system-id-1",
-					},
+					SystemID: "storage-system-id-1",
 				},
 			},
 			)), ctrl
@@ -310,27 +412,95 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 			ids[0] = k8s.StorageSystemID{ID: "storage-system-id-1", DriverNames: []string{"csi-vxflexos.dellemc.com"}}
 
 			finder := k8s.StorageClassFinder{API: api, StorageSystemID: ids}
-
-			return finder, check(hasNoError, checkExpectedOutput([]v1.StorageClass{
+			return finder, check(hasNoError, checkExpectedOutput([]k8s.StorageClass{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "vxflexos",
+					StorageClass: v1.StorageClass{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "vxflexos",
+						},
+						Provisioner: "csi-vxflexos.dellemc.com",
+						Parameters: map[string]string{
+							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
+						},
 					},
-					Provisioner: "csi-vxflexos.dellemc.com",
-					Parameters: map[string]string{
-						"storagepool": "mypool",
-						"systemID":    "storage-system-id-1",
-					},
+					SystemID: "storage-system-id-1",
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "vxflexos-xfs",
+					StorageClass: v1.StorageClass{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "vxflexos-xfs",
+						},
+						Provisioner: "csi-vxflexos.dellemc.com",
+						Parameters: map[string]string{
+							"storagepool": "mypool",
+							"systemID":    "storage-system-id-1",
+						},
 					},
-					Provisioner: "csi-vxflexos.dellemc.com",
-					Parameters: map[string]string{
-						"storagepool": "mypool",
-						"systemID":    "storage-system-id-1",
+					SystemID: "storage-system-id-1",
+				},
+			},
+			)), ctrl
+		},
+		"success matching storage classes without systemID based on availability zone": func(*testing.T) (k8s.StorageClassFinder, []checkFn, *gomock.Controller) {
+			ctrl := gomock.NewController(t)
+			api := mocks.NewMockStorageClassGetter(ctrl)
+
+			storageClasses := &v1.StorageClassList{
+				Items: []v1.StorageClass{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "vxflexos",
+						},
+						Provisioner: "csi-vxflexos.dellemc.com",
+						AllowedTopologies: []corev1.TopologySelectorTerm{
+							{
+								MatchLabelExpressions: []corev1.TopologySelectorLabelRequirement{
+									{
+										Key:    "topology.kubernetes.io/zone",
+										Values: []string{"zone1"},
+									},
+								},
+							},
+						},
 					},
+				},
+			}
+
+			api.EXPECT().GetStorageClasses().Times(1).Return(storageClasses, nil)
+
+			ids := make([]k8s.StorageSystemID, 1)
+			ids[0] = k8s.StorageSystemID{ID: "storage-system-id-1", DriverNames: []string{"csi-vxflexos.dellemc.com"}, AvailabilityZone: &domain.AvailabilityZone{
+				Name:     "zone1",
+				LabelKey: "topology.kubernetes.io/zone",
+				ProtectionDomains: []domain.ProtectionDomain{
+					{
+						Name: "zone1",
+					},
+				},
+			}}
+
+			finder := k8s.StorageClassFinder{API: api, StorageSystemID: ids}
+
+			return finder, check(hasNoError, checkExpectedOutput([]k8s.StorageClass{
+				{
+					StorageClass: v1.StorageClass{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "vxflexos",
+						},
+						Provisioner: "csi-vxflexos.dellemc.com",
+						AllowedTopologies: []corev1.TopologySelectorTerm{
+							{
+								MatchLabelExpressions: []corev1.TopologySelectorLabelRequirement{
+									{
+										Key:    "topology.kubernetes.io/zone",
+										Values: []string{"zone1"},
+									},
+								},
+							},
+						},
+					},
+					SystemID: "storage-system-id-1",
 				},
 			},
 			)), ctrl
@@ -357,18 +527,57 @@ func Test_K8sStorageClassFinder(t *testing.T) {
 
 func Test_GetStoragePools(t *testing.T) {
 	t.Run("success, single storage pool retrieved from storage class", func(t *testing.T) {
-		sc := v1.StorageClass{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "vxflexos",
+		sc := k8s.StorageClass{
+			StorageClass: v1.StorageClass{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "vxflexos",
+				},
+				Provisioner: "csi-vxflexos.dellemc.com",
+				Parameters: map[string]string{
+					"storagepool": "mypool",
+					"systemID":    "storage-system-id-1",
+				},
 			},
-			Provisioner: "csi-vxflexos.dellemc.com",
-			Parameters: map[string]string{
-				"storagepool": "mypool",
-				"systemID":    "storage-system-id-1",
+			SystemID: "storage-system-id-1",
+		}
+
+		scf := k8s.StorageClassFinder{}
+
+		storagePools := scf.GetStoragePools(sc)
+		expectedOutput := []string{"mypool"}
+		assert.Equal(t, expectedOutput, storagePools)
+	})
+
+	t.Run("it gets the storage pools from the availability zone", func(t *testing.T) {
+		sc := k8s.StorageClass{
+			StorageClass: v1.StorageClass{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "vxflexos",
+				},
+				Provisioner: "csi-vxflexos.dellemc.com",
+				Parameters:  map[string]string{},
+			},
+			SystemID: "storage-system-id-1",
+		}
+
+		scf := k8s.StorageClassFinder{
+			StorageSystemID: []k8s.StorageSystemID{
+				{
+					ID: "storage-system-id-1",
+					AvailabilityZone: &domain.AvailabilityZone{
+						ProtectionDomains: []domain.ProtectionDomain{
+							{
+								Pools: []domain.PoolName{
+									"mypool",
+								},
+							},
+						},
+					},
+				},
 			},
 		}
 
-		storagePools := k8s.GetStoragePools(sc)
+		storagePools := scf.GetStoragePools(sc)
 		expectedOutput := []string{"mypool"}
 		assert.Equal(t, expectedOutput, storagePools)
 	})

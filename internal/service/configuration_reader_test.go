@@ -19,27 +19,28 @@ package service_test
 import (
 	"testing"
 
+	"github.com/dell/karavi-metrics-powerflex/internal/domain"
 	"github.com/dell/karavi-metrics-powerflex/internal/service"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_ConfigurationReader(t *testing.T) {
-	type checkFn func(*testing.T, []service.ArrayConnectionData, error)
+	type checkFn func(*testing.T, []domain.ArrayConnectionData, error)
 	check := func(fns ...checkFn) []checkFn { return fns }
 
-	hasNoError := func(t *testing.T, _ []service.ArrayConnectionData, err error) {
+	hasNoError := func(t *testing.T, _ []domain.ArrayConnectionData, err error) {
 		if err != nil {
 			t.Fatalf("expected no error")
 		}
 	}
 
-	checkExpectedOutput := func(expectedOutput []service.ArrayConnectionData) func(t *testing.T, result []service.ArrayConnectionData, err error) {
-		return func(t *testing.T, result []service.ArrayConnectionData, _ error) {
+	checkExpectedOutput := func(expectedOutput []domain.ArrayConnectionData) func(t *testing.T, result []domain.ArrayConnectionData, err error) {
+		return func(t *testing.T, result []domain.ArrayConnectionData, _ error) {
 			assert.Equal(t, expectedOutput, result)
 		}
 	}
 
-	hasError := func(t *testing.T, _ []service.ArrayConnectionData, err error) {
+	hasError := func(t *testing.T, _ []domain.ArrayConnectionData, err error) {
 		if err == nil {
 			t.Fatalf("expected error")
 		}
@@ -50,7 +51,7 @@ func Test_ConfigurationReader(t *testing.T) {
 			file := "testdata/config-with-no-default.json"
 			configReader := service.ConfigurationReader{}
 
-			expectedResult := []service.ArrayConnectionData{
+			expectedResult := []domain.ArrayConnectionData{
 				{
 					Username:  "admin",
 					Password:  "password",
@@ -74,7 +75,7 @@ func Test_ConfigurationReader(t *testing.T) {
 			file := "testdata/config-with-no-default.yaml"
 			configReader := service.ConfigurationReader{}
 
-			expectedResult := []service.ArrayConnectionData{
+			expectedResult := []domain.ArrayConnectionData{
 				{
 					Username:  "admin",
 					Password:  "password",
@@ -98,7 +99,7 @@ func Test_ConfigurationReader(t *testing.T) {
 			file := "testdata/config-with-skipCertificateValidation.yaml"
 			configReader := service.ConfigurationReader{}
 
-			expectedResult := []service.ArrayConnectionData{
+			expectedResult := []domain.ArrayConnectionData{
 				{
 					Username:                  "admin",
 					Password:                  "password",

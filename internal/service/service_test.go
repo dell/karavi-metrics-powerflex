@@ -519,18 +519,22 @@ func Test_GetStorageClasses(t *testing.T) {
 					},
 				}, nil)
 
-			sc1 := v1.StorageClass{}
-			sc1.Provisioner = "csi-vxflexos.dellemc.com"
-			sc1.ObjectMeta = metav1.ObjectMeta{
-				UID:  "123",
-				Name: "class-1",
-			}
-			sc1.Parameters = map[string]string{
-				"storagepool": "pool-1",
+			sc1 := k8s.StorageClass{
+				StorageClass: v1.StorageClass{
+					ObjectMeta: metav1.ObjectMeta{
+						UID:  "123",
+						Name: "class-1",
+					},
+					Provisioner: "csi-vxflexos.dellemc.com",
+					Parameters: map[string]string{
+						"storagepool": "pool-1",
+					},
+				},
+				SystemID: "123",
 			}
 
 			storageClassFinder.EXPECT().GetStorageClasses().Times(1).
-				Return([]v1.StorageClass{sc1}, nil)
+				Return([]k8s.StorageClass{sc1}, nil)
 
 			powerflexClient.EXPECT().GetStoragePool("").Times(1).
 				Return([]*types.StoragePool{
@@ -556,30 +560,36 @@ func Test_GetStorageClasses(t *testing.T) {
 					},
 				}, nil)
 
-			sc1 := v1.StorageClass{}
-			sc1.Provisioner = "csi-vxflexos.dellemc.com"
-			sc1.ObjectMeta = metav1.ObjectMeta{
-				UID:  "123",
-				Name: "class-1",
-			}
-			sc1.Parameters = map[string]string{
-				"storagepool": "pool-1",
-				"systemID":    "1234",
+			sc1 := k8s.StorageClass{
+				StorageClass: v1.StorageClass{
+					ObjectMeta: metav1.ObjectMeta{
+						UID:  "123",
+						Name: "class-1",
+					},
+					Provisioner: "csi-vxflexos.dellemc.com",
+					Parameters: map[string]string{
+						"storagepool": "pool-1",
+					},
+				},
+				SystemID: "1234",
 			}
 
-			sc2 := v1.StorageClass{}
-			sc2.Provisioner = "csi-vxflexos.dellemc.com"
-			sc2.ObjectMeta = metav1.ObjectMeta{
-				UID:  "1234",
-				Name: "class-1-xfs",
-			}
-			sc2.Parameters = map[string]string{
-				"storagepool": "pool-1",
-				"systemID":    "5678",
+			sc2 := k8s.StorageClass{
+				StorageClass: v1.StorageClass{
+					ObjectMeta: metav1.ObjectMeta{
+						UID:  "123",
+						Name: "class-1-xfs",
+					},
+					Provisioner: "csi-vxflexos.dellemc.com",
+					Parameters: map[string]string{
+						"storagepool": "pool-1",
+					},
+				},
+				SystemID: "5678",
 			}
 
 			storageClassFinder.EXPECT().GetStorageClasses().Times(1).
-				Return([]v1.StorageClass{sc1, sc2}, nil)
+				Return([]k8s.StorageClass{sc1, sc2}, nil)
 
 			powerflexClient.EXPECT().GetStoragePool("").Times(1).
 				Return([]*types.StoragePool{
@@ -607,28 +617,36 @@ func Test_GetStorageClasses(t *testing.T) {
 			powerflexClient := mocks.NewMockPowerFlexClient(ctrl)
 			storageClassFinder := mocks.NewMockStorageClassFinder(ctrl)
 
-			sc1 := v1.StorageClass{}
-			sc1.Provisioner = "csi-vxflexos.dellemc.com"
-			sc1.ObjectMeta = metav1.ObjectMeta{
-				UID:  "123",
-				Name: "class-1",
-			}
-			sc1.Parameters = map[string]string{
-				"storagepool": "pool-1",
+			sc1 := k8s.StorageClass{
+				StorageClass: v1.StorageClass{
+					ObjectMeta: metav1.ObjectMeta{
+						UID:  "123",
+						Name: "class-1",
+					},
+					Provisioner: "csi-vxflexos.dellemc.com",
+					Parameters: map[string]string{
+						"storagepool": "pool-1",
+					},
+				},
+				SystemID: "123",
 			}
 
-			sc2 := v1.StorageClass{}
-			sc2.Provisioner = "csi-vxflexos.dellemc.com"
-			sc2.ObjectMeta = metav1.ObjectMeta{
-				UID:  "1234",
-				Name: "class-1-xfs",
-			}
-			sc2.Parameters = map[string]string{
-				"storagepool": "pool-1",
+			sc2 := k8s.StorageClass{
+				StorageClass: v1.StorageClass{
+					ObjectMeta: metav1.ObjectMeta{
+						UID:  "123",
+						Name: "class-1-xfs",
+					},
+					Provisioner: "csi-vxflexos.dellemc.com",
+					Parameters: map[string]string{
+						"storagepool": "pool-1",
+					},
+				},
+				SystemID: "5678",
 			}
 
 			storageClassFinder.EXPECT().GetStorageClasses().Times(1).
-				Return([]v1.StorageClass{sc1, sc2}, nil)
+				Return([]k8s.StorageClass{sc1, sc2}, nil)
 
 			powerflexClient.EXPECT().GetInstance("").Times(1).
 				Return(nil, errors.New("error"))
@@ -640,28 +658,36 @@ func Test_GetStorageClasses(t *testing.T) {
 			powerflexClient := mocks.NewMockPowerFlexClient(ctrl)
 			storageClassFinder := mocks.NewMockStorageClassFinder(ctrl)
 
-			sc1 := v1.StorageClass{}
-			sc1.Provisioner = "csi-vxflexos.dellemc.com"
-			sc1.ObjectMeta = metav1.ObjectMeta{
-				UID:  "123",
-				Name: "class-1",
-			}
-			sc1.Parameters = map[string]string{
-				"storagepool": "pool-1",
+			sc1 := k8s.StorageClass{
+				StorageClass: v1.StorageClass{
+					ObjectMeta: metav1.ObjectMeta{
+						UID:  "123",
+						Name: "class-1",
+					},
+					Provisioner: "csi-vxflexos.dellemc.com",
+					Parameters: map[string]string{
+						"storagepool": "pool-1",
+					},
+				},
+				SystemID: "1234",
 			}
 
-			sc2 := v1.StorageClass{}
-			sc2.Provisioner = "csi-vxflexos.dellemc.com"
-			sc2.ObjectMeta = metav1.ObjectMeta{
-				UID:  "1234",
-				Name: "class-1-xfs",
-			}
-			sc2.Parameters = map[string]string{
-				"storagepool": "pool-1",
+			sc2 := k8s.StorageClass{
+				StorageClass: v1.StorageClass{
+					ObjectMeta: metav1.ObjectMeta{
+						UID:  "123",
+						Name: "class-1-xfs",
+					},
+					Provisioner: "csi-vxflexos.dellemc.com",
+					Parameters: map[string]string{
+						"storagepool": "pool-1",
+					},
+				},
+				SystemID: "5678",
 			}
 
 			storageClassFinder.EXPECT().GetStorageClasses().Times(1).
-				Return([]v1.StorageClass{sc1, sc2}, nil)
+				Return([]k8s.StorageClass{sc1, sc2}, nil)
 
 			powerflexClient.EXPECT().GetInstance("").Times(1).
 				Return([]*types.System{
@@ -679,28 +705,36 @@ func Test_GetStorageClasses(t *testing.T) {
 			powerflexClient := mocks.NewMockPowerFlexClient(ctrl)
 			storageClassFinder := mocks.NewMockStorageClassFinder(ctrl)
 
-			sc1 := v1.StorageClass{}
-			sc1.Provisioner = "csi-vxflexos.dellemc.com"
-			sc1.ObjectMeta = metav1.ObjectMeta{
-				UID:  "123",
-				Name: "class-1",
-			}
-			sc1.Parameters = map[string]string{
-				"storagepool": "pool-1",
+			sc1 := k8s.StorageClass{
+				StorageClass: v1.StorageClass{
+					ObjectMeta: metav1.ObjectMeta{
+						UID:  "123",
+						Name: "class-1",
+					},
+					Provisioner: "csi-vxflexos.dellemc.com",
+					Parameters: map[string]string{
+						"storagepool": "pool-1",
+					},
+				},
+				SystemID: "1234",
 			}
 
-			sc2 := v1.StorageClass{}
-			sc2.Provisioner = "csi-vxflexos.dellemc.com"
-			sc2.ObjectMeta = metav1.ObjectMeta{
-				UID:  "1234",
-				Name: "class-1-xfs",
-			}
-			sc2.Parameters = map[string]string{
-				"storagepool": "pool-1",
+			sc2 := k8s.StorageClass{
+				StorageClass: v1.StorageClass{
+					ObjectMeta: metav1.ObjectMeta{
+						UID:  "123",
+						Name: "class-1-xfs",
+					},
+					Provisioner: "csi-vxflexos.dellemc.com",
+					Parameters: map[string]string{
+						"storagepool": "pool-1",
+					},
+				},
+				SystemID: "5678",
 			}
 
 			storageClassFinder.EXPECT().GetStorageClasses().Times(1).
-				Return([]v1.StorageClass{sc1, sc2}, nil)
+				Return([]k8s.StorageClass{sc1, sc2}, nil)
 
 			powerflexClient.EXPECT().GetInstance("").Times(1).
 				Return([]*types.System{}, nil)
@@ -713,7 +747,7 @@ func Test_GetStorageClasses(t *testing.T) {
 			storageClassFinder := mocks.NewMockStorageClassFinder(ctrl)
 
 			storageClassFinder.EXPECT().GetStorageClasses().Times(1).
-				Return([]v1.StorageClass{}, nil)
+				Return([]k8s.StorageClass{}, nil)
 
 			powerflexClient.EXPECT().GetInstance("").Times(1).
 				Return([]*types.System{

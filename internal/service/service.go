@@ -29,7 +29,6 @@ import (
 	sio "github.com/dell/goscaleio"
 	types "github.com/dell/goscaleio/types/v1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/storage/v1"
 )
 
 var _ Service = (*PowerFlexService)(nil)
@@ -107,7 +106,8 @@ type SDCFinder interface {
 //
 //go:generate mockgen -destination=mocks/storage_class_finder_mocks.go -package=mocks github.com/dell/karavi-metrics-powerflex/internal/service StorageClassFinder
 type StorageClassFinder interface {
-	GetStorageClasses() ([]v1.StorageClass, error)
+	GetStorageClasses() ([]k8s.StorageClass, error)
+	GetStoragePools(storageClass k8s.StorageClass) []string
 }
 
 // VolumeFinder is used to find volume information in kubernetes
@@ -616,7 +616,7 @@ func (s *PowerFlexService) GetStorageClasses(_ context.Context, client PowerFlex
 	for _, system := range systems {
 		s.Logger.WithField("system", system.ID).Debug("systems log")
 		for _, class := range storageClasses {
-			systemid := class.Parameters["systemID"]
+			systemid := class.SystemID
 			s.Logger.WithField("class.Parameters", systemid).Debug("systems log")
 			if system.ID == systemid {
 				storageClassInfo := StorageClassInfo{
@@ -624,7 +624,7 @@ func (s *PowerFlexService) GetStorageClasses(_ context.Context, client PowerFlex
 					Name:            class.Name,
 					Driver:          class.Provisioner,
 					StorageSystemID: systemid,
-					StoragePools:    k8s.GetStoragePools(class),
+					StoragePools:    storageClassFinder.GetStoragePools(class),
 				}
 				s.Logger.WithField("storage_class_info", storageClassInfo).Debug("found storage class")
 				storageClassInfos = append(storageClassInfos, storageClassInfo)
