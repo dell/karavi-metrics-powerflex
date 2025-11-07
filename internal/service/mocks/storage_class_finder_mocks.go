@@ -7,8 +7,8 @@ package mocks
 import (
 	reflect "reflect"
 
+	k8s "github.com/dell/karavi-metrics-powerflex/internal/k8s"
 	gomock "github.com/golang/mock/gomock"
-	v1 "k8s.io/api/storage/v1"
 )
 
 // MockStorageClassFinder is a mock of StorageClassFinder interface.
@@ -35,10 +35,10 @@ func (m *MockStorageClassFinder) EXPECT() *MockStorageClassFinderMockRecorder {
 }
 
 // GetStorageClasses mocks base method.
-func (m *MockStorageClassFinder) GetStorageClasses() ([]v1.StorageClass, error) {
+func (m *MockStorageClassFinder) GetStorageClasses() ([]k8s.StorageClass, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetStorageClasses")
-	ret0, _ := ret[0].([]v1.StorageClass)
+	ret0, _ := ret[0].([]k8s.StorageClass)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -47,4 +47,18 @@ func (m *MockStorageClassFinder) GetStorageClasses() ([]v1.StorageClass, error) 
 func (mr *MockStorageClassFinderMockRecorder) GetStorageClasses() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStorageClasses", reflect.TypeOf((*MockStorageClassFinder)(nil).GetStorageClasses))
+}
+
+// GetStoragePools mocks base method.
+func (m *MockStorageClassFinder) GetStoragePools(arg0 k8s.StorageClass) []string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetStoragePools", arg0)
+	ret0, _ := ret[0].([]string)
+	return ret0
+}
+
+// GetStoragePools indicates an expected call of GetStoragePools.
+func (mr *MockStorageClassFinderMockRecorder) GetStoragePools(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStoragePools", reflect.TypeOf((*MockStorageClassFinder)(nil).GetStoragePools), arg0)
 }

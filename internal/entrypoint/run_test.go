@@ -26,6 +26,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/dell/karavi-metrics-powerflex/internal/entrypoint"
+	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 	pflexServices "github.com/dell/karavi-metrics-powerflex/internal/service"
 	"github.com/dell/karavi-metrics-powerflex/internal/service/mocks"
 	metrics "github.com/dell/karavi-metrics-powerflex/internal/service/mocks"
@@ -642,19 +643,23 @@ func Test_Run(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)
 
-			sc1 := v1.StorageClass{}
-			sc1.Provisioner = "csi-vxflexos.dellemc.com"
-			sc1.ObjectMeta = metav1.ObjectMeta{
-				UID:  "123",
-				Name: "class-1",
-			}
-			sc1.Parameters = map[string]string{
-				"storagepool": "pool-1",
+			sc1 := k8s.StorageClass{
+				StorageClass: v1.StorageClass{
+					ObjectMeta: metav1.ObjectMeta{
+						UID:  "123",
+						Name: "class-1",
+					},
+					Provisioner: "csi-vxflexos.dellemc.com",
+					Parameters: map[string]string{
+						"storagepool": "pool-1",
+					},
+				},
+				SystemID: "123",
 			}
 
 			storageClassFinder := mocks.NewMockStorageClassFinder(ctrl)
 			storageClassFinder.EXPECT().GetStorageClasses().AnyTimes().
-				Return([]v1.StorageClass{sc1}, nil)
+				Return([]k8s.StorageClass{sc1}, nil)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
@@ -758,19 +763,23 @@ func Test_Run(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			pfClient := metrics.NewMockPowerFlexClient(ctrl)
 
-			sc1 := v1.StorageClass{}
-			sc1.Provisioner = "csi-vxflexos.dellemc.com"
-			sc1.ObjectMeta = metav1.ObjectMeta{
-				UID:  "123",
-				Name: "class-1",
-			}
-			sc1.Parameters = map[string]string{
-				"storagepool": "pool-1",
+			sc1 := k8s.StorageClass{
+				StorageClass: v1.StorageClass{
+					ObjectMeta: metav1.ObjectMeta{
+						UID:  "123",
+						Name: "class-1",
+					},
+					Provisioner: "csi-vxflexos.dellemc.com",
+					Parameters: map[string]string{
+						"storagepool": "pool-1",
+					},
+				},
+				SystemID: "123",
 			}
 
 			storageClassFinder := mocks.NewMockStorageClassFinder(ctrl)
 			storageClassFinder.EXPECT().GetStorageClasses().AnyTimes().
-				Return([]v1.StorageClass{sc1}, nil)
+				Return([]k8s.StorageClass{sc1}, nil)
 
 			leaderElector := mocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)

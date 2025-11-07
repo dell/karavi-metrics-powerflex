@@ -222,8 +222,9 @@ func updatePowerFlexConnection(
 		powerFlexGatewayPassword := storageSystem.Password
 		powerFlexSystemID := storageSystem.SystemID
 		storageID := k8s.StorageSystemID{
-			ID:        powerFlexSystemID,
-			IsDefault: storageSystem.IsDefault,
+			ID:               powerFlexSystemID,
+			AvailabilityZone: storageSystem.AvailabilityZone,
+			IsDefault:        storageSystem.IsDefault,
 		}
 		sdcFinder.StorageSystemID[i] = storageID
 		storageClassFinder.StorageSystemID[i] = storageID
