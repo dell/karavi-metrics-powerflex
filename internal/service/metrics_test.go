@@ -116,14 +116,14 @@ func TestMetricsWrapper_RecordCapacity(t *testing.T) {
 	mw := &service.MetricsWrapper{
 		Meter: otel.Meter("powerflex-test"),
 	}
-
+	retriever := newRetriever(t, "v1")
 	storageClassMeta := service.StorageClassMeta{
 		ID:              "test-id",
 		Name:            "test-name",
 		Driver:          "csi-vxflexos.dellemc.com",
 		StorageSystemID: "test-system-id",
-		StoragePools: map[string]service.StoragePoolStatisticsGetter{
-			"pool1": &MockStoragePoolStatisticsGetter{},
+		StoragePools: map[string]service.StoragePoolMetricsRetriever{
+			"pool1": retriever,
 		},
 	}
 	volumeMeta := &service.VolumeMeta{

@@ -25,8 +25,8 @@ import (
 
 	v1 "k8s.io/api/storage/v1"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func Test_K8sSDCFinder(t *testing.T) {

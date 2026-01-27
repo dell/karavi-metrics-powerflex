@@ -37,6 +37,7 @@ type VolumeMeta struct {
 
 // VolumeMetaMetrics is the details of a volume in an SDC along with the metrics
 type VolumeMetaMetrics struct {
+	GenType                   string
 	ID                        string
 	Name                      string
 	PersistentVolumeName      string
@@ -50,6 +51,14 @@ type VolumeMetaMetrics struct {
 	TrimLatencyBwc            types.BWC
 	WriteBwc                  types.BWC
 	WriteLatencyBwc           types.BWC
+
+	// these metrics are for GenType=EC
+	HostWriteBandwith   float64
+	HostReadBandwith    float64
+	HostReadIOPS        float64
+	HostWriteIOPS       float64
+	AvgHostReadLatency  float64
+	AvgHostWriteLatency float64
 }
 
 // SDCMeta is meta data for a specific SDC
@@ -75,7 +84,7 @@ type StorageClassMeta struct {
 	Name            string
 	Driver          string
 	StorageSystemID string
-	StoragePools    map[string]StoragePoolStatisticsGetter
+	StoragePools    map[string]StoragePoolMetricsRetriever
 }
 
 type TopologyMeta struct {

@@ -19,6 +19,8 @@ package service_test
 import (
 	"context"
 	"errors"
+	"fmt"
+	"reflect"
 	"strconv"
 	"testing"
 	"time"
@@ -30,23 +32,57 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	sio "github.com/dell/goscaleio"
 	types "github.com/dell/goscaleio/types/v1"
+	"github.com/agiledragon/gomonkey/v2"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// ecRetriever is a minimal test double for service.SdcMetricsRetriever that
+// returns GenTypeEC and a mock PowerFlex client for the EC branch.
+type ecRetriever struct {
+	sdc    *sio.Sdc
+	client service.PowerFlexClient
+	stats  service.StatisticsGetter
+	gen    string
+}
+
+func (e ecRetriever) GetSdc() *sio.Sdc                              { return e.sdc }
+func (e ecRetriever) GetClient() service.PowerFlexClient            { return e.client }
+func (e ecRetriever) GetGen() string                                { return e.gen }
+func (e ecRetriever) GetStatisticsGetter() service.StatisticsGetter { return e.stats }
+
+type ecPoolRetriever struct {
+	client service.PowerFlexClient
+	stats  service.StoragePoolStatisticsGetter
+	gen    string
+}
+
+func (e ecPoolRetriever) GetClient() service.PowerFlexClient                       { return e.client }
+func (e ecPoolRetriever) GetStatisticsGetter() service.StoragePoolStatisticsGetter { return e.stats }
+func (e ecPoolRetriever) GetGen() string                                           { return e.gen }
+
+type fakeSystemFinderTarget struct {
+	byGUID map[string]*sio.Sdc
+}
+
+var _ service.PowerFlexSystem = (*fakeSystemFinderTarget)(nil)
+
+type sdcToVolumes map[*sio.Sdc][]*sio.Volume
 
 func Test_GetSDCStatistics(t *testing.T) {
 	type setup struct {
 		Service *service.PowerFlexService
 	}
 
-	tests := map[string]func(t *testing.T) (setup, []service.StatisticsGetter, *gomock.Controller){
-		"success": func(*testing.T) (setup, []service.StatisticsGetter, *gomock.Controller) {
+	tests := map[string]func(t *testing.T) (setup, []service.SdcMetricsRetriever, *gomock.Controller){
+		"success": func(*testing.T) (setup, []service.SdcMetricsRetriever, *gomock.Controller) {
 			ctrl := gomock.NewController(t)
 			metrics := mocks.NewMockMetricsRecorder(ctrl)
 
@@ -56,16 +92,82 @@ func Test_GetSDCStatistics(t *testing.T) {
 			sdc2.EXPECT().GetStatistics().Return(&types.SdcStatistics{}, nil).Times(1)
 			sdc3 := mocks.NewMockStatisticsGetter(ctrl)
 			sdc3.EXPECT().GetStatistics().Return(&types.SdcStatistics{}, nil).Times(1)
+			retrievers := []service.SdcMetricsRetriever{
+				newSdcRetriever(t, ctrl, sdc1, "v1", &sio.Sdc{Sdc: &types.Sdc{
+					SdcIP:   "1.2.3.4",
+					ID:      "sdc-id-124",
+					SdcGUID: "guid-xyz-789",
+				}}),
+				newSdcRetriever(t, ctrl, sdc2, "v1", &sio.Sdc{Sdc: &types.Sdc{
+					SdcIP:   "1.2.3.5",
+					ID:      "sdc-id-125",
+					SdcGUID: "guid-xyz-790",
+				}}),
+				newSdcRetriever(t, ctrl, sdc3, "v1", &sio.Sdc{Sdc: &types.Sdc{
+					SdcIP:   "1.2.3.6",
+					ID:      "sdc-id-126",
+					SdcGUID: "guid-xyz-791",
+				}}),
+			}
+			metrics.EXPECT().
+				Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Times(3)
 
-			sdcs := []service.StatisticsGetter{sdc1, sdc2, sdc3}
-
-			service := service.PowerFlexService{MetricsWrapper: metrics}
-			metrics.EXPECT().Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
-			return setup{
-				Service: &service,
-			}, sdcs, ctrl
+			svc := service.PowerFlexService{MetricsWrapper: metrics}
+			return setup{Service: &svc}, retrievers, ctrl
 		},
-		"nil list of sdcs": func(*testing.T) (setup, []service.StatisticsGetter, *gomock.Controller) {
+		"ec metrics success": func(*testing.T) (setup, []service.SdcMetricsRetriever, *gomock.Controller) {
+			ctrl := gomock.NewController(t)
+			metrics := mocks.NewMockMetricsRecorder(ctrl)
+			client := mocks.NewMockPowerFlexClient(ctrl)
+
+			sdcID := "sdc-ec-001"
+			sdc := &sio.Sdc{Sdc: &types.Sdc{
+				SdcIP:   "9.9.9.9",
+				ID:      sdcID,
+				SdcGUID: "guid-ec-001",
+			}}
+
+			client.EXPECT().
+				GetMetrics("sdc", []string{sdcID}).
+				Return(&types.MetricsResponse{
+					Resources: []types.Resource{
+						{
+							ID: sdcID,
+							Metrics: []types.Metric{
+								{Name: "host_read_bandwidth", Values: []float64{1048576}},
+								{Name: "host_write_bandwidth", Values: []float64{2097152}},
+								{Name: "host_read_iops", Values: []float64{123}},
+								{Name: "host_write_iops", Values: []float64{456}},
+								{Name: "avg_host_read_latency", Values: []float64{5000}},
+								{Name: "avg_host_write_latency", Values: []float64{7000}},
+							},
+						},
+					},
+				}, nil).
+				Times(1)
+
+			sg := mocks.NewMockStatisticsGetter(ctrl)
+
+			retrievers := []service.SdcMetricsRetriever{
+				ecRetriever{
+					sdc:    sdc,
+					client: client,
+					stats:  sg,
+					gen:    types.GenTypeEC,
+				},
+			}
+
+			metrics.EXPECT().
+				Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Times(1)
+
+			svc := service.PowerFlexService{MetricsWrapper: metrics}
+			return setup{Service: &svc}, retrievers, ctrl
+		},
+		"nil list of sdcs": func(*testing.T) (setup, []service.SdcMetricsRetriever, *gomock.Controller) {
 			ctrl := gomock.NewController(t)
 			metrics := mocks.NewMockMetricsRecorder(ctrl)
 
@@ -75,41 +177,23 @@ func Test_GetSDCStatistics(t *testing.T) {
 				Service: &service,
 			}, nil, ctrl
 		},
-		"error with 1 sdc": func(*testing.T) (setup, []service.StatisticsGetter, *gomock.Controller) {
+		"error with 1 sdc": func(*testing.T) (setup, []service.SdcMetricsRetriever, *gomock.Controller) {
 			ctrl := gomock.NewController(t)
 			metrics := mocks.NewMockMetricsRecorder(ctrl)
 
 			sdc1 := mocks.NewMockStatisticsGetter(ctrl)
 			sdc1.EXPECT().GetStatistics().Return(nil, errors.New("error getting statistics")).Times(1)
-			sdc2 := mocks.NewMockStatisticsGetter(ctrl)
-			sdc2.EXPECT().GetStatistics().Return(&types.SdcStatistics{}, nil).Times(1)
-			sdc3 := mocks.NewMockStatisticsGetter(ctrl)
-			sdc3.EXPECT().GetStatistics().Return(&types.SdcStatistics{}, nil).Times(1)
-
-			sdcs := []service.StatisticsGetter{sdc1, sdc2, sdc3}
-
-			service := service.PowerFlexService{MetricsWrapper: metrics}
-			metrics.EXPECT().Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2)
-			return setup{
-				Service: &service,
-			}, sdcs, ctrl
+			retrievers := []service.SdcMetricsRetriever{
+				newSdcRetriever(t, ctrl, sdc1, "v1", &sio.Sdc{Sdc: &types.Sdc{
+					SdcIP:   "1.2.3.4",
+					ID:      "sdc-id-124",
+					SdcGUID: "guid-xyz-789",
+				}}),
+			}
+			svc := service.PowerFlexService{MetricsWrapper: metrics}
+			return setup{Service: &svc}, retrievers, ctrl
 		},
-		"error recording": func(*testing.T) (setup, []service.StatisticsGetter, *gomock.Controller) {
-			ctrl := gomock.NewController(t)
-			metrics := mocks.NewMockMetricsRecorder(ctrl)
-
-			sdc1 := mocks.NewMockStatisticsGetter(ctrl)
-			sdc1.EXPECT().GetStatistics().Return(&types.SdcStatistics{}, nil).Times(1)
-
-			sdcs := []service.StatisticsGetter{sdc1}
-
-			service := service.PowerFlexService{MetricsWrapper: metrics}
-			metrics.EXPECT().Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return(errors.New("error"))
-			return setup{
-				Service: &service,
-			}, sdcs, ctrl
-		},
-		"timing difference with sdc stats": func(t *testing.T) (setup, []service.StatisticsGetter, *gomock.Controller) {
+		"timing difference with sdc stats": func(t *testing.T) (setup, []service.SdcMetricsRetriever, *gomock.Controller) {
 			ctrl := gomock.NewController(t)
 			metrics := mocks.NewMockMetricsRecorder(ctrl)
 
@@ -131,14 +215,29 @@ func Test_GetSDCStatistics(t *testing.T) {
 				time.Sleep(third)
 				return &types.SdcStatistics{}, nil
 			}).Times(1)
-
-			sdcs := []service.StatisticsGetter{sdc1, sdc2, sdc3}
-
-			service := service.PowerFlexService{MetricsWrapper: metrics}
-			metrics.EXPECT().Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
-			return setup{
-				Service: &service,
-			}, sdcs, ctrl
+			metrics.EXPECT().
+				Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Times(3)
+			retrievers := []service.SdcMetricsRetriever{
+				newSdcRetriever(t, ctrl, sdc1, "v1", &sio.Sdc{Sdc: &types.Sdc{
+					SdcIP:   "1.2.3.4",
+					ID:      "sdc-id-124",
+					SdcGUID: "guid-xyz-789",
+				}}),
+				newSdcRetriever(t, ctrl, sdc2, "v1", &sio.Sdc{Sdc: &types.Sdc{
+					SdcIP:   "1.2.3.5",
+					ID:      "sdc-id-125",
+					SdcGUID: "guid-xyz-790",
+				}}),
+				newSdcRetriever(t, ctrl, sdc3, "v1", &sio.Sdc{Sdc: &types.Sdc{
+					SdcIP:   "1.2.3.6",
+					ID:      "sdc-id-126",
+					SdcGUID: "guid-xyz-791",
+				}}),
+			}
+			svc := service.PowerFlexService{MetricsWrapper: metrics}
+			return setup{Service: &svc}, retrievers, ctrl
 		},
 	}
 	for name, tc := range tests {
@@ -316,118 +415,202 @@ func Test_GetSDCLatency(t *testing.T) {
 	}
 }
 
+func (f *fakeSystemFinderTarget) FindSdc(_, value string) (*sio.Sdc, error) {
+	if s, ok := f.byGUID[value]; ok {
+		return s, nil
+	}
+	return nil, errors.New("not found")
+}
+
 func Test_GetSDCs(t *testing.T) {
-	type checkFn func(*testing.T, []service.StatisticsGetter, error)
+	type checkFn func(*testing.T, []service.SdcMetricsRetriever, error)
 	check := func(fns ...checkFn) []checkFn { return fns }
 
-	hasNoError := func(t *testing.T, _ []service.StatisticsGetter, err error) {
-		if err != nil {
-			t.Fatalf("expected no error")
+	hasError := func(t *testing.T, _ []service.SdcMetricsRetriever, err error) {
+		require.Error(t, err)
+	}
+	noErrorAndLen := func(n int) checkFn {
+		return func(t *testing.T, got []service.SdcMetricsRetriever, err error) {
+			require.NoError(t, err)
+			assert.Len(t, got, n)
 		}
 	}
 
-	checkSdcLength := func(length int) func(t *testing.T, sdcs []service.StatisticsGetter, err error) {
-		return func(t *testing.T, sdcs []service.StatisticsGetter, _ error) {
-			assert.Equal(t, length, len(sdcs))
-		}
+	tests := map[string]func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, service.SDCFinder, []checkFn, *gomock.Controller){
+		"error from SDCFinder.GetSDCGuids": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, service.SDCFinder, []checkFn, *gomock.Controller) {
+			ctrl := gomock.NewController(t)
+			finder := mocks.NewMockSDCFinder(ctrl)
+			client := mocks.NewMockPowerFlexClient(ctrl)
+
+			finder.EXPECT().GetSDCGuids().Return(nil, errors.New("boom")).Times(1)
+
+			svc := &service.PowerFlexService{Logger: logrus.New()}
+			return svc, client, finder, check(hasError), ctrl
+		},
+
+		"empty SDC GUIDs returns empty": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, service.SDCFinder, []checkFn, *gomock.Controller) {
+			ctrl := gomock.NewController(t)
+			finder := mocks.NewMockSDCFinder(ctrl)
+			client := mocks.NewMockPowerFlexClient(ctrl)
+
+			finder.EXPECT().GetSDCGuids().Return([]string{}, nil).Times(1)
+
+			svc := &service.PowerFlexService{Logger: logrus.New()}
+			return svc, client, finder, check(noErrorAndLen(0)), ctrl
+		},
+
+		"error from client.GetInstance": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, service.SDCFinder, []checkFn, *gomock.Controller) {
+			ctrl := gomock.NewController(t)
+			finder := mocks.NewMockSDCFinder(ctrl)
+			client := mocks.NewMockPowerFlexClient(ctrl)
+
+			finder.EXPECT().GetSDCGuids().Return([]string{"g1"}, nil).Times(1)
+			client.EXPECT().GetInstance("").Return(nil, errors.New("instances down")).Times(1)
+
+			svc := &service.PowerFlexService{Logger: logrus.New()}
+			return svc, client, finder, check(hasError), ctrl
+		},
+
+		"error from service.SystemFinder": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, service.SDCFinder, []checkFn, *gomock.Controller) {
+			ctrl := gomock.NewController(t)
+			finder := mocks.NewMockSDCFinder(ctrl)
+			client := mocks.NewMockPowerFlexClient(ctrl)
+
+			finder.EXPECT().GetSDCGuids().Return([]string{"g1"}, nil).Times(1)
+			client.EXPECT().GetInstance("").Return([]*types.System{{Name: "sys1", ID: "sid1"}}, nil).Times(1)
+
+			// Patch SystemFinder to fail, so we return early before FindSystem/GetGenType
+			patches := gomonkey.NewPatches()
+			patches.ApplyFunc(service.SystemFinder, func(service.PowerFlexClient, string, string, string) (service.PowerFlexSystem, error) {
+				return nil, errors.New("systemfinder oops")
+			})
+			t.Cleanup(patches.Reset)
+
+			svc := &service.PowerFlexService{Logger: logrus.New()}
+			return svc, client, finder, check(hasError), ctrl
+		},
+		"error from service.GetGenType": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, service.SDCFinder, []checkFn, *gomock.Controller) {
+			ctrl := gomock.NewController(t)
+			finder := mocks.NewMockSDCFinder(ctrl)
+			client := mocks.NewMockPowerFlexClient(ctrl)
+
+			finder.EXPECT().GetSDCGuids().Return([]string{"g1"}, nil).Times(1)
+			client.EXPECT().GetInstance("").Return([]*types.System{{Name: "sys1", ID: "sid1"}}, nil).Times(1)
+			// client.EXPECT().FindSystem("sid1", "sys1", "").Return(&types.System{}, nil).Times(1)
+			client.EXPECT().FindSystem("sid1", "sys1", "").Return((*sio.System)(nil), nil).Times(1)
+
+			patches := gomonkey.NewPatches()
+			patches.ApplyFunc(service.SystemFinder, func(service.PowerFlexClient, string, string, string) (service.PowerFlexSystem, error) {
+				var sf service.PowerFlexSystem = &fakeSystemFinderTarget{byGUID: map[string]*sio.Sdc{}}
+				return sf, nil
+			})
+			// patches.ApplyFunc(service.GetGenType, func(*types.System) (string, error) {
+			// 	return "", errors.New("gen fail")
+			// })
+			patches.ApplyFunc(service.GetGenType, func(*sio.System) (string, error) {
+				return "", errors.New("gen fail")
+			})
+			t.Cleanup(patches.Reset)
+
+			svc := &service.PowerFlexService{Logger: logrus.New()}
+			return svc, client, finder, check(hasError), ctrl
+		},
+
+		"SDC not found is skipped; found one is returned": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, service.SDCFinder, []checkFn, *gomock.Controller) {
+			ctrl := gomock.NewController(t)
+			finder := mocks.NewMockSDCFinder(ctrl)
+			client := mocks.NewMockPowerFlexClient(ctrl)
+
+			finder.EXPECT().GetSDCGuids().Return([]string{"g1", "g2"}, nil).Times(1)
+			client.EXPECT().GetInstance("").Return([]*types.System{{Name: "sys1", ID: "sid1"}}, nil).Times(1)
+			// client.EXPECT().FindSystem("sid1", "sys1", "").Return(&types.System{}, nil).Times(1)
+			client.EXPECT().FindSystem("sid1", "sys1", "").Return((*sio.System)(nil), nil).Times(1)
+
+			patches := gomonkey.NewPatches()
+			patches.ApplyFunc(service.SystemFinder, func(service.PowerFlexClient, string, string, string) (service.PowerFlexSystem, error) {
+				var sf service.PowerFlexSystem = &fakeSystemFinderTarget{
+					byGUID: map[string]*sio.Sdc{
+						"g2": {Sdc: &types.Sdc{SdcGUID: "g2", ID: "sdc-id-2", SdcIP: "1.2.3.5"}},
+					},
+				}
+				return sf, nil
+			})
+			// patches.ApplyFunc(service.GetGenType, func(*types.System) (string, error) {
+			// 	return "v1", nil
+			// })
+			patches.ApplyFunc(service.GetGenType, func(*sio.System) (string, error) {
+				return "v1", nil
+			})
+			t.Cleanup(patches.Reset)
+
+			svc := &service.PowerFlexService{Logger: logrus.New()}
+			return svc, client, finder, check(noErrorAndLen(1)), ctrl
+		},
+
+		"multiple systems and GUIDs → accumulates": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, service.SDCFinder, []checkFn, *gomock.Controller) {
+			ctrl := gomock.NewController(t)
+			finder := mocks.NewMockSDCFinder(ctrl)
+			client := mocks.NewMockPowerFlexClient(ctrl)
+
+			finder.EXPECT().GetSDCGuids().Return([]string{"g1", "g2"}, nil).Times(1)
+			client.EXPECT().GetInstance("").Return([]*types.System{
+				{Name: "sys1", ID: "sid1"},
+				{Name: "sys2", ID: "sid2"},
+			}, nil).Times(1)
+			// client.EXPECT().FindSystem("sid1", "sys1", "").Return(&types.System{}, nil).Times(1)
+			client.EXPECT().FindSystem("sid1", "sys1", "").Return((*sio.System)(nil), nil).Times(1)
+			// client.EXPECT().FindSystem("sid2", "sys2", "").Return(&types.System{}, nil).Times(1)
+			client.EXPECT().FindSystem("sid2", "sys2", "").Return((*sio.System)(nil), nil).Times(1)
+
+			patches := gomonkey.NewPatches()
+			patches.ApplyFunc(service.SystemFinder, func(service.PowerFlexClient, string, string, string) (service.PowerFlexSystem, error) {
+				var sf service.PowerFlexSystem = &fakeSystemFinderTarget{
+					byGUID: map[string]*sio.Sdc{
+						"g1": {Sdc: &types.Sdc{SdcGUID: "g1", ID: "sdc-id-1", SdcIP: "1.2.3.4"}},
+						"g2": {Sdc: &types.Sdc{SdcGUID: "g2", ID: "sdc-id-2", SdcIP: "1.2.3.5"}},
+					},
+				}
+				return sf, nil
+			})
+			// patches.ApplyFunc(service.GetGenType, func(*types.System) (string, error) {
+			// 	return "v1", nil
+			// })
+			patches.ApplyFunc(service.GetGenType, func(*sio.System) (string, error) {
+				return "v1", nil
+			})
+			t.Cleanup(patches.Reset)
+
+			svc := &service.PowerFlexService{Logger: logrus.New()}
+			// 2 systems × 2 GUIDs → 4 retrievers
+			return svc, client, finder, check(noErrorAndLen(4)), ctrl
+		},
 	}
 
-	hasError := func(t *testing.T, _ []service.StatisticsGetter, err error) {
-		if err == nil {
-			t.Fatalf("expected error")
-		}
-	}
-
-	tests := map[string]func(t *testing.T) (service.PowerFlexClient, service.SDCFinder, []checkFn, *gomock.Controller){
-		"success": func(*testing.T) (service.PowerFlexClient, service.SDCFinder, []checkFn, *gomock.Controller) {
-			ctrl := gomock.NewController(t)
-			powerflexClient := mocks.NewMockPowerFlexClient(ctrl)
-			powerflexSystem := mocks.NewMockPowerFlexSystem(ctrl)
-			service.SystemFinder = func(service.PowerFlexClient, string, string, string) (service.PowerFlexSystem, error) {
-				return powerflexSystem, nil
-			}
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
-
-			sdcFinder.EXPECT().GetSDCGuids().Times(1).Return([]string{"1", "2"}, nil)
-			powerflexClient.EXPECT().GetInstance(gomock.Any()).Times(1).Return([]*types.System{{}}, nil)
-			powerflexSystem.EXPECT().FindSdc(gomock.Any(), gomock.Any()).Times(2).Return(&sio.Sdc{}, nil)
-
-			return powerflexClient, sdcFinder, check(hasNoError, checkSdcLength(2)), ctrl
-		},
-		"error calling GetSDCGuids": func(*testing.T) (service.PowerFlexClient, service.SDCFinder, []checkFn, *gomock.Controller) {
-			ctrl := gomock.NewController(t)
-			powerflexClient := mocks.NewMockPowerFlexClient(ctrl)
-			powerflexSystem := mocks.NewMockPowerFlexSystem(ctrl)
-			service.SystemFinder = func(service.PowerFlexClient, string, string, string) (service.PowerFlexSystem, error) {
-				return powerflexSystem, nil
-			}
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
-
-			sdcFinder.EXPECT().GetSDCGuids().Times(1).Return(nil, errors.New("error"))
-
-			return powerflexClient, sdcFinder, check(hasError), ctrl
-		},
-		"error calling GetInstance": func(*testing.T) (service.PowerFlexClient, service.SDCFinder, []checkFn, *gomock.Controller) {
-			ctrl := gomock.NewController(t)
-			powerflexClient := mocks.NewMockPowerFlexClient(ctrl)
-			powerflexClient.EXPECT().GetInstance(gomock.Any()).Times(1).Return(nil, errors.New("error"))
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
-			sdcFinder.EXPECT().GetSDCGuids().Times(1).Return([]string{"1", "2"}, nil)
-			return powerflexClient, sdcFinder, check(hasError), ctrl
-		},
-		"error calling FindSystem": func(*testing.T) (service.PowerFlexClient, service.SDCFinder, []checkFn, *gomock.Controller) {
-			ctrl := gomock.NewController(t)
-			powerflexClient := mocks.NewMockPowerFlexClient(ctrl)
-			service.SystemFinder = func(service.PowerFlexClient, string, string, string) (service.PowerFlexSystem, error) {
-				return nil, errors.New("error")
-			}
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
-			sdcFinder.EXPECT().GetSDCGuids().Times(1).Return([]string{"1", "2"}, nil)
-
-			powerflexClient.EXPECT().GetInstance(gomock.Any()).Times(1).Return([]*types.System{{}}, nil)
-			return powerflexClient, sdcFinder, check(hasError), ctrl
-		},
-		"calling FindSdc with error returns 0 SDCs": func(*testing.T) (service.PowerFlexClient, service.SDCFinder, []checkFn, *gomock.Controller) {
-			ctrl := gomock.NewController(t)
-			powerflexClient := mocks.NewMockPowerFlexClient(ctrl)
-			powerflexSystem := mocks.NewMockPowerFlexSystem(ctrl)
-			service.SystemFinder = func(service.PowerFlexClient, string, string, string) (service.PowerFlexSystem, error) {
-				return powerflexSystem, nil
-			}
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
-			sdcFinder.EXPECT().GetSDCGuids().Times(1).Return([]string{"1", "2"}, nil)
-			powerflexClient.EXPECT().GetInstance(gomock.Any()).Times(1).Return([]*types.System{{}}, nil)
-			powerflexSystem.EXPECT().FindSdc(gomock.Any(), gomock.Any()).Times(2).Return(nil, errors.New("error"))
-			return powerflexClient, sdcFinder, check(hasNoError, checkSdcLength(0)), ctrl
-		},
-	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			powerflexClient, sdcFinder, checkFns, ctrl := tc(t)
-			svc := &service.PowerFlexService{
-				MetricsWrapper: &service.MetricsWrapper{
-					Meter: otel.Meter("powerflex/sdc"),
-				},
-				Logger: logrus.New(),
+			svc, client, finder, checks, ctrl := tc(t)
+			defer ctrl.Finish()
+			// NB: ctx unused by GetSDCs internally, but pass a real context.Background()
+			got, err := svc.GetSDCs(context.Background(), client, finder)
+			for _, c := range checks {
+				c(t, got, err)
 			}
-			sdcsList, err := svc.GetSDCs(context.Background(), powerflexClient, sdcFinder)
-			// powerflexClient, sdcFinder, checkFns, ctrl := tc(t)
-			// sdcsList, err := service.GetSDCs(context.Background(), powerflexClient, sdcFinder)
-			for _, checkFn := range checkFns {
-				checkFn(t, sdcsList, err)
-			}
-			ctrl.Finish()
 		})
 	}
+
+	// optional: ensure we patched function symbols of correct kind, similar to your style of sanity checks
+	assert.Equal(t, reflect.Func, reflect.ValueOf(service.SystemFinder).Kind())
+	assert.Equal(t, reflect.Func, reflect.ValueOf(service.GetGenType).Kind())
 }
 
 func Test_GetSDCMeta(t *testing.T) {
-	type checkFn func(*testing.T, *service.SDCMeta)
+	type checkFn func(*testing.T, *service.SDCMeta, error)
 	check := func(fns ...checkFn) []checkFn { return fns }
 
-	checkSdcMeta := func(expectedOutput *service.SDCMeta) func(t *testing.T, sdcMeta *service.SDCMeta) {
-		return func(t *testing.T, sdcMeta *service.SDCMeta) {
-			assert.Equal(t, sdcMeta, expectedOutput)
+	checkSdcMeta := func(expectedOutput *service.SDCMeta) func(t *testing.T, sdcMeta *service.SDCMeta, err error) {
+		return func(t *testing.T, sdcMeta *service.SDCMeta, err error) {
+			require.NoError(t, err)
+			assert.Equal(t, expectedOutput, sdcMeta)
 		}
 	}
 
@@ -435,44 +618,76 @@ func Test_GetSDCMeta(t *testing.T) {
 		"success": func(*testing.T) (*sio.Sdc, []corev1.Node, []checkFn) {
 			sdc := &sio.Sdc{
 				Sdc: &types.Sdc{
-					SdcIP: "1.2.3.4",
+					SdcIP:   "1.2.3.4",
+					ID:      "sdc-id-123",
+					SdcGUID: "guid-xyz-789",
 				},
 			}
-
 			nodes := []corev1.Node{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "node1",
-					},
+					ObjectMeta: metav1.ObjectMeta{Name: "node1"},
 					Status: corev1.NodeStatus{
-						Addresses: []corev1.NodeAddress{
-							{
-								Address: "1.2.3.4",
-							},
-						},
+						Addresses: []corev1.NodeAddress{{Address: "1.2.3.4"}},
 					},
 				},
 			}
-
 			expectedOutput := &service.SDCMeta{
-				Name: "node1",
-				IP:   "1.2.3.4",
+				Name:    "node1",
+				ID:      "sdc-id-123",
+				IP:      "1.2.3.4",
+				SdcGUID: "guid-xyz-789",
 			}
-
+			return sdc, nodes, check(checkSdcMeta(expectedOutput))
+		},
+		"no-match": func(*testing.T) (*sio.Sdc, []corev1.Node, []checkFn) {
+			sdc := &sio.Sdc{
+				Sdc: &types.Sdc{
+					SdcIP:   "5.6.7.8",
+					ID:      "sdc-id-456",
+					SdcGUID: "guid-abc-123",
+				},
+			}
+			nodes := []corev1.Node{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "node1"},
+					Status: corev1.NodeStatus{
+						Addresses: []corev1.NodeAddress{{Address: "1.2.3.4"}},
+					},
+				},
+			}
+			expectedOutput := &service.SDCMeta{
+				Name:    "",
+				ID:      "sdc-id-456",
+				IP:      "5.6.7.8",
+				SdcGUID: "guid-abc-123",
+			}
 			return sdc, nodes, check(checkSdcMeta(expectedOutput))
 		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			sdc, nodes, checkFns := tc(t)
-
-			sdcMeta := service.GetSDCMeta(sdc, nodes)
-			for _, checkFn := range checkFns {
-				checkFn(t, sdcMeta)
+			sdc, nodes, checks := tc(t)
+			sdcMeta, err := service.GetSDCMeta(sdc, nodes)
+			for _, c := range checks {
+				c(t, sdcMeta, err)
 			}
 		})
 	}
+
+	t.Run("nil sdc", func(t *testing.T) {
+		meta, err := service.GetSDCMeta(nil, nil)
+		require.Error(t, err)
+		assert.Nil(t, meta)
+	})
+
+	t.Run("unsupported sdc type", func(t *testing.T) {
+		type bogus struct{}
+		meta, err := service.GetSDCMeta(bogus{}, nil) // anything not *sio.Sdc triggers default
+		require.Error(t, err)
+		assert.Nil(t, meta)
+		assert.Contains(t, err.Error(), "unsupported sdc type")
+	})
 }
 
 func Test_GetStorageClasses(t *testing.T) {
@@ -515,6 +730,7 @@ func Test_GetStorageClasses(t *testing.T) {
 			powerflexClient.EXPECT().GetInstance("").Times(1).
 				Return([]*types.System{
 					{
+						ID:   "123",
 						Name: "test",
 					},
 				}, nil)
@@ -536,13 +752,20 @@ func Test_GetStorageClasses(t *testing.T) {
 			storageClassFinder.EXPECT().GetStorageClasses().Times(1).
 				Return([]k8s.StorageClass{sc1}, nil)
 
+			storageClassFinder.EXPECT().GetStoragePools(sc1).Times(1).
+				Return([]string{"pool-1"})
+
 			powerflexClient.EXPECT().GetStoragePool("").Times(1).
 				Return([]*types.StoragePool{
 					{
-						Name: "pool-1",
+						ID:      "pool-id-1",
+						Name:    "pool-1",
+						GenType: "v1",
 					},
 					{
-						Name: "pool-2",
+						ID:      "pool-id-2",
+						Name:    "pool-2",
+						GenType: "v1",
 					},
 				}, nil)
 
@@ -555,9 +778,8 @@ func Test_GetStorageClasses(t *testing.T) {
 
 			powerflexClient.EXPECT().GetInstance("").Times(1).
 				Return([]*types.System{
-					{
-						Name: "test",
-					},
+					{ID: "1234", Name: "sys-a"},
+					{ID: "5678", Name: "sys-b"},
 				}, nil)
 
 			sc1 := k8s.StorageClass{
@@ -591,17 +813,28 @@ func Test_GetStorageClasses(t *testing.T) {
 			storageClassFinder.EXPECT().GetStorageClasses().Times(1).
 				Return([]k8s.StorageClass{sc1, sc2}, nil)
 
+			storageClassFinder.EXPECT().GetStoragePools(sc1).Times(1).
+				Return([]string{"pool-1"})
+			storageClassFinder.EXPECT().GetStoragePools(sc2).Times(1).
+				Return([]string{"pool-1"})
+
 			powerflexClient.EXPECT().GetStoragePool("").Times(1).
 				Return([]*types.StoragePool{
 					{
-						Name: "pool-1",
+						ID:      "pool-id-1",
+						Name:    "pool-1",
+						GenType: "v1",
 					},
 					{
-						Name: "pool-2",
+						ID:      "pool-id-2",
+						Name:    "pool-2",
+						GenType: "v1",
 					},
 				}, nil)
 
-			return powerflexClient, storageClassFinder, check(hasNoError, checkPoolLength("class-1", 1), checkPoolLength("class-1-xfs", 1)), ctrl
+			return powerflexClient, storageClassFinder,
+				check(hasNoError, checkPoolLength("class-1", 1), checkPoolLength("class-1-xfs", 1)),
+				ctrl
 		},
 		"error calling GetStorageClasses": func(*testing.T) (service.PowerFlexClient, service.StorageClassFinder, []checkFn, *gomock.Controller) {
 			ctrl := gomock.NewController(t)
@@ -803,15 +1036,18 @@ func Test_GetStoragePoolStatistics(t *testing.T) {
 			sp2 := mocks.NewMockStoragePoolStatisticsGetter(ctrl)
 			sp2.EXPECT().GetStatistics().Return(&types.Statistics{}, nil).Times(1)
 
+			pool1 := newPoolRetriever(t, ctrl, sp1, "v1")
+			pool2 := newPoolRetriever(t, ctrl, sp2, "v1")
+
 			scMetas := []service.StorageClassMeta{
 				{
-					"123",
-					"class-1",
-					"driver",
-					"system1",
-					map[string]service.StoragePoolStatisticsGetter{
-						"poolID-1": sp1,
-						"poolID-2": sp2,
+					ID:              "123",
+					Name:            "class-1",
+					Driver:          "driver",
+					StorageSystemID: "system1",
+					StoragePools: map[string]service.StoragePoolMetricsRetriever{
+						"poolID-1": pool1,
+						"poolID-2": pool2,
 					},
 				},
 			}
@@ -842,15 +1078,18 @@ func Test_GetStoragePoolStatistics(t *testing.T) {
 			sp2 := mocks.NewMockStoragePoolStatisticsGetter(ctrl)
 			sp2.EXPECT().GetStatistics().Return(&types.Statistics{}, nil).Times(1)
 
+			pool1 := newPoolRetriever(t, ctrl, sp1, "v1")
+			pool2 := newPoolRetriever(t, ctrl, sp2, "v1")
+
 			scMetas := []service.StorageClassMeta{
 				{
-					"123",
-					"class-1",
-					"driver",
-					"system1",
-					map[string]service.StoragePoolStatisticsGetter{
-						"poolID-1": sp1,
-						"poolID-2": sp2,
+					ID:              "123",
+					Name:            "class-1",
+					Driver:          "driver",
+					StorageSystemID: "system1",
+					StoragePools: map[string]service.StoragePoolMetricsRetriever{
+						"poolID-1": pool1,
+						"poolID-2": pool2,
 					},
 				},
 			}
@@ -868,14 +1107,16 @@ func Test_GetStoragePoolStatistics(t *testing.T) {
 			sp1 := mocks.NewMockStoragePoolStatisticsGetter(ctrl)
 			sp1.EXPECT().GetStatistics().Return(&types.Statistics{}, nil).Times(1)
 
+			pool1 := newPoolRetriever(t, ctrl, sp1, "v1")
+
 			scMetas := []service.StorageClassMeta{
 				{
-					"123",
-					"class-1",
-					"driver",
-					"system1",
-					map[string]service.StoragePoolStatisticsGetter{
-						"poolID-1": sp1,
+					ID:              "123",
+					Name:            "class-1",
+					Driver:          "driver",
+					StorageSystemID: "system1",
+					StoragePools: map[string]service.StoragePoolMetricsRetriever{
+						"poolID-1": pool1,
 					},
 				},
 			}
@@ -885,6 +1126,61 @@ func Test_GetStoragePoolStatistics(t *testing.T) {
 			return setup{
 				Service: &service,
 			}, scMetas, ctrl
+		},
+		"EC metrics path success": func(*testing.T) (setup, []service.StorageClassMeta, *gomock.Controller) {
+			ctrl := gomock.NewController(t)
+			metrics := mocks.NewMockMetricsRecorder(ctrl)
+			pfClient := mocks.NewMockPowerFlexClient(ctrl)
+
+			// Build one EC storage pool retriever (poolID-ec)
+			// Stats getter is not used for EC path, but we provide a mock to satisfy interface.
+			spStats := mocks.NewMockStoragePoolStatisticsGetter(ctrl)
+
+			// Metrics payload for EC path (bytes → will be converted to GiB inside gatherPoolStatistics)
+			giB := float64(1 << 30)
+			pfClient.EXPECT().
+				GetMetrics("storage_pool", []string{"poolID-ec"}).
+				Return(&types.MetricsResponse{
+					Resources: []types.Resource{
+						{
+							ID: "poolID-ec",
+							Metrics: []types.Metric{
+								{Name: "physical_total", Values: []float64{100 * giB}},
+								{Name: "physical_free", Values: []float64{40 * giB}},
+								{Name: "physical_used", Values: []float64{60 * giB}},
+								{Name: "logical_provisioned", Values: []float64{120 * giB}},
+							},
+						},
+					},
+				}, nil).
+				Times(1)
+
+			// Our EC retriever (returns GenTypeEC and the mocked client)
+			ecPool := ecPoolRetriever{
+				client: pfClient,
+				stats:  spStats,
+				gen:    types.GenTypeEC,
+			}
+
+			scMetas := []service.StorageClassMeta{
+				{
+					ID:              "123",
+					Name:            "class-ec",
+					Driver:          "driver",
+					StorageSystemID: "system-ec",
+					StoragePools: map[string]service.StoragePoolMetricsRetriever{
+						"poolID-ec": ecPool,
+					},
+				},
+			}
+
+			// One pool → expect one RecordCapacity call (we don't assert its values here)
+			metrics.EXPECT().
+				RecordCapacity(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Times(1)
+
+			svc := service.PowerFlexService{MetricsWrapper: metrics}
+			return setup{Service: &svc}, scMetas, ctrl
 		},
 	}
 	for name, tc := range tests {
@@ -903,252 +1199,341 @@ func Benchmark_GetStoragePoolStatistics(b *testing.B) {
 
 	b.ReportAllocs()
 
-	type setup struct {
-		Service *service.PowerFlexService
-	}
+	ctrl := gomock.NewController(b) // gomock accepts testing.TB, so *testing.B is fine
+	b.Cleanup(ctrl.Finish)
 
-	storagePools := make(map[string]service.StoragePoolStatisticsGetter)
-	ctrl := gomock.NewController(b)
 	metrics := mocks.NewMockMetricsRecorder(ctrl)
 
+	// Build StoragePoolStatisticsGetter mocks
+	stats := make(map[string]service.StoragePoolStatisticsGetter, numOfPools)
 	for i := 0; i < numOfPools; i++ {
-		i := i
-		tmpSp := mocks.NewMockStoragePoolStatisticsGetter(ctrl)
-		tmpSp.EXPECT().GetStatistics().DoAndReturn(func() (*types.Statistics, error) {
-			dur, _ := time.ParseDuration(poolQueryTime)
-			time.Sleep(dur)
+		sg := mocks.NewMockStoragePoolStatisticsGetter(ctrl)
+		sg.EXPECT().GetStatistics().DoAndReturn(func() (*types.Statistics, error) {
+			d, _ := time.ParseDuration(poolQueryTime)
+			time.Sleep(d)
 			return &types.Statistics{}, nil
-		})
-		storagePools["poolID-"+strconv.Itoa(i)] = tmpSp
+		}).AnyTimes()
+		stats["poolID-"+strconv.Itoa(i)] = sg
+	}
+
+	// Wrap into StoragePoolMetricsRetriever
+	retr := make(map[string]service.StoragePoolMetricsRetriever, numOfPools)
+	for k, sg := range stats {
+		retr[k] = newPoolRetriever(b, ctrl, sg, "v1") // <-- b implements testing.TB
 	}
 
 	scMetas := []service.StorageClassMeta{
 		{
-			"123",
-			"class-1",
-			"driver",
-			"system1",
-			storagePools,
+			ID:              "123",
+			Name:            "class-1",
+			Driver:          "driver",
+			StorageSystemID: "system1",
+			StoragePools:    retr,
 		},
 	}
 
-	metrics.EXPECT().RecordCapacity(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(b.N * numOfPools)
-	service := service.PowerFlexService{MetricsWrapper: metrics}
+	metrics.EXPECT().
+		RecordCapacity(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		AnyTimes()
+
+	svc := service.PowerFlexService{MetricsWrapper: metrics}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		service.GetStoragePoolStatistics(context.Background(), scMetas)
+		svc.GetStoragePoolStatistics(context.Background(), scMetas)
 	}
 }
 
 func Test_GetVolumes(t *testing.T) {
-	type setup struct {
-		Service *service.PowerFlexService
-	}
-	type checkFn func(*testing.T, []*service.VolumeMetaMetrics, error)
+	type checkFn func(t *testing.T, out []*service.VolumeMetaMetrics, err error)
 	check := func(fns ...checkFn) []checkFn { return fns }
 
 	hasError := func(t *testing.T, _ []*service.VolumeMetaMetrics, err error) {
-		if err == nil {
-			t.Fatalf("expected error")
+		require.Error(t, err)
+	}
+	noErrorAndLen := func(n int) checkFn {
+		return func(t *testing.T, out []*service.VolumeMetaMetrics, err error) {
+			require.NoError(t, err)
+			assert.Len(t, out, n)
 		}
 	}
-	hasNoError := func(t *testing.T, _ []*service.VolumeMetaMetrics, err error) {
-		if err != nil {
-			t.Fatalf("did not expected error but got %v", err)
+	type ecVals struct {
+		readBW, writeBW, readIOPS, writeIOPS, readLat, writeLat float64
+	}
+	checkECValues := func(expect map[string]ecVals) checkFn {
+		return func(t *testing.T, out []*service.VolumeMetaMetrics, err error) {
+			require.NoError(t, err)
+			seen := map[string]*service.VolumeMetaMetrics{}
+			for _, m := range out {
+				seen[m.ID] = m
+			}
+			for id, exp := range expect {
+				got, ok := seen[id]
+				require.True(t, ok, "expected volume %s in results", id)
+
+				assert.InDelta(t, exp.readBW, got.HostReadBandwith, 1e-6, "read BW for %s", id)
+				assert.InDelta(t, exp.writeBW, got.HostWriteBandwith, 1e-6, "write BW for %s", id)
+				assert.InDelta(t, exp.readIOPS, got.HostReadIOPS, 1e-6, "read IOPS for %s", id)
+				assert.InDelta(t, exp.writeIOPS, got.HostWriteIOPS, 1e-6, "write IOPS for %s", id)
+				assert.InDelta(t, exp.readLat, got.AvgHostReadLatency, 1e-6, "read latency for %s", id)
+				assert.InDelta(t, exp.writeLat, got.AvgHostWriteLatency, 1e-6, "write latency for %s", id)
+				assert.Equal(t, types.GenTypeEC, got.GenType, "GenType for %s", id)
+			}
 		}
 	}
-	checkVolumeLength := func(length int) func(t *testing.T, vols []*service.VolumeMetaMetrics, err error) {
-		return func(t *testing.T, vols []*service.VolumeMetaMetrics, _ error) {
-			assert.Equal(t, length, len(vols))
+
+	mkMapped := func(ids ...string) []*types.MappedSdcInfo {
+		out := make([]*types.MappedSdcInfo, 0, len(ids))
+		for _, id := range ids {
+			out = append(out, &types.MappedSdcInfo{SdcID: id, SdcIP: "10.0.0." + id})
 		}
+		return out
 	}
 
-	tests := map[string]func(t *testing.T) (setup, []service.StatisticsGetter, []checkFn, *gomock.Controller){
-		"success": func(*testing.T) (setup, []service.StatisticsGetter, []checkFn, *gomock.Controller) {
+	vol1 := &sio.Volume{Volume: &types.Volume{ID: "1", Name: "vol-1", GenType: "", MappedSdcInfo: mkMapped("60001")}}
+	vol2 := &sio.Volume{Volume: &types.Volume{ID: "2", Name: "vol-2", GenType: "", MappedSdcInfo: mkMapped("60001", "60002")}}
+
+	ecVolNoID := &sio.Volume{Volume: &types.Volume{ID: "", Name: "ec-empty", GenType: types.GenTypeEC}}
+	ecVol1 := &sio.Volume{Volume: &types.Volume{ID: "ec1", Name: "ec-1", GenType: types.GenTypeEC}}
+	ecVol2 := &sio.Volume{Volume: &types.Volume{ID: "ec2", Name: "ec-2", GenType: types.GenTypeEC}}
+
+	bwc := types.BWC{NumOccured: 100, NumSeconds: 10, TotalWeightInKb: 2048}
+	vm1 := &types.SdcVolumeMetrics{
+		VolumeID:        "1",
+		ReadBwc:         bwc,
+		WriteBwc:        bwc,
+		ReadLatencyBwc:  bwc,
+		WriteLatencyBwc: bwc,
+		TrimBwc:         bwc,
+		TrimLatencyBwc:  bwc,
+	}
+	vm2 := &types.SdcVolumeMetrics{
+		VolumeID:        "2",
+		ReadBwc:         bwc,
+		WriteBwc:        bwc,
+		ReadLatencyBwc:  bwc,
+		WriteLatencyBwc: bwc,
+		TrimBwc:         bwc,
+		TrimLatencyBwc:  bwc,
+	}
+
+	tests := map[string]func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, []service.SdcMetricsRetriever, []checkFn, *gomock.Controller, *gomonkey.Patches){
+		"error from FindVolumes": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, []service.SdcMetricsRetriever, []checkFn, *gomock.Controller, *gomonkey.Patches) {
 			ctrl := gomock.NewController(t)
+			client := mocks.NewMockPowerFlexClient(ctrl)
 
-			mappedInfos := []*types.MappedSdcInfo{
-				{SdcID: "60001", SdcIP: "10.234"},
-				{SdcID: "60002", SdcIP: "10.235"},
-			}
-			volumes := []*types.Volume{
-				{ID: "1", Name: "name_testing1", MappedSdcInfo: mappedInfos},
-				{ID: "2", Name: "name_testing2", MappedSdcInfo: mappedInfos[:1]},
-			}
+			stats := mocks.NewMockStatisticsGetter(ctrl)
+			sdc := &sio.Sdc{Sdc: &types.Sdc{ID: "sdc-1", SdcIP: "1.1.1.1"}}
+			retr := newSdcRetriever(t, ctrl, stats, "v1", sdc)
 
-			volumeClient := []*sio.Volume{
-				{Volume: volumes[0]},
-				{Volume: volumes[1]},
-			}
-			bwc := types.BWC{NumOccured: 6856870, NumSeconds: 114, TotalWeightInKb: 1}
-			volumeMetrics := []*types.SdcVolumeMetrics{
-				{
-					VolumeID:        "1",
-					SdcID:           "60001",
-					ReadLatencyBwc:  bwc,
-					WriteLatencyBwc: bwc,
-					ReadBwc:         bwc,
-					WriteBwc:        bwc,
-					TrimLatencyBwc:  bwc,
-					TrimBwc:         bwc,
-				},
-				{
-					VolumeID:        "2",
-					SdcID:           "60002",
-					ReadLatencyBwc:  bwc,
-					WriteLatencyBwc: bwc,
-					ReadBwc:         bwc,
-					WriteBwc:        bwc,
-					TrimLatencyBwc:  bwc,
-					TrimBwc:         bwc,
-				},
-			}
+			patches := gomonkey.NewPatches()
+			patches.ApplyMethod(reflect.TypeOf(&sio.Sdc{}), "FindVolumes", func(_ *sio.Sdc) ([]*sio.Volume, error) {
+				return nil, errors.New("find-volumes-fail")
+			})
+			t.Cleanup(patches.Reset)
 
-			sdc1 := mocks.NewMockStatisticsGetter(ctrl)
-			sdc1.EXPECT().GetVolume().Return(volumes, nil).AnyTimes()
-			sdc1.EXPECT().FindVolumes().Return(volumeClient, nil).AnyTimes()
-			sdc1.EXPECT().GetVolumeMetrics().Return(volumeMetrics[:1], nil).AnyTimes()
-			sdc2 := mocks.NewMockStatisticsGetter(ctrl)
-			sdc2.EXPECT().GetVolume().Return(volumes[:1], nil).AnyTimes()
-			sdc2.EXPECT().FindVolumes().Return(volumeClient, nil).AnyTimes()
-			sdc2.EXPECT().GetVolumeMetrics().Return(volumeMetrics[1:2], nil).AnyTimes()
-			sdc3 := mocks.NewMockStatisticsGetter(ctrl)
-			sdc3.EXPECT().GetVolume().Return(append(volumes, volumes...), nil).AnyTimes()
-			sdc3.EXPECT().FindVolumes().Return(append(volumeClient, volumeClient...), nil).AnyTimes()
-			sdc3.EXPECT().GetVolumeMetrics().Return(volumeMetrics[:1], nil).AnyTimes()
-			sdc4 := mocks.NewMockStatisticsGetter(ctrl)
-			sdc4.EXPECT().GetVolume().Return(volumes[:0], nil).AnyTimes()
-			sdc4.EXPECT().FindVolumes().Return(volumeClient[:0], nil).AnyTimes()
-			sdc4.EXPECT().GetVolumeMetrics().Return(volumeMetrics[:1], nil).AnyTimes()
-
-			sdcs := []service.StatisticsGetter{sdc1, sdc2, sdc3, sdc4}
-
-			return setup{
-				Service: &service.PowerFlexService{},
-			}, sdcs, check(hasNoError, checkVolumeLength(len(volumes))), ctrl
+			svc := &service.PowerFlexService{Logger: logrus.New()}
+			return svc, client, []service.SdcMetricsRetriever{retr}, check(hasError), ctrl, patches
 		},
-		"success even with timing difference with volume stats": func(*testing.T) (setup, []service.StatisticsGetter, []checkFn, *gomock.Controller) {
+
+		"non-EC: success, metrics mapped and volumes de-duplicated across SDCs": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, []service.SdcMetricsRetriever, []checkFn, *gomock.Controller, *gomonkey.Patches) {
 			ctrl := gomock.NewController(t)
+			client := mocks.NewMockPowerFlexClient(ctrl)
 
-			first, _ := time.ParseDuration("100ms")
-			second, _ := time.ParseDuration("200ms")
-			third, _ := time.ParseDuration("300ms")
+			stats1 := mocks.NewMockStatisticsGetter(ctrl)
+			stats2 := mocks.NewMockStatisticsGetter(ctrl)
 
-			mappedInfos := []*types.MappedSdcInfo{
-				{SdcID: "60001", SdcIP: "10.234"},
-				{SdcID: "60002", SdcIP: "10.235"},
-				{SdcID: "60003", SdcIP: "10.236"},
+			sdc1 := &sio.Sdc{Sdc: &types.Sdc{ID: "sdc-1", SdcIP: "1.1.1.1"}}
+			sdc2 := &sio.Sdc{Sdc: &types.Sdc{ID: "sdc-2", SdcIP: "1.1.1.2"}}
+
+			stats1.EXPECT().GetVolumeMetrics().Return([]*types.SdcVolumeMetrics{vm1, vm2}, nil).Times(1)
+			stats2.EXPECT().GetVolumeMetrics().Return([]*types.SdcVolumeMetrics{vm1, vm2}, nil).Times(1)
+
+			r1 := newSdcRetriever(t, ctrl, stats1, "v1", sdc1)
+			r2 := newSdcRetriever(t, ctrl, stats2, "v1", sdc2)
+
+			mapping := sdcToVolumes{
+				sdc1: []*sio.Volume{vol1, vol2},
+				sdc2: []*sio.Volume{vol1},
 			}
-			volumes := []*types.Volume{
-				{ID: "1", Name: "name_testing1", MappedSdcInfo: mappedInfos},
-				{ID: "2", Name: "name_testing2", MappedSdcInfo: mappedInfos[:1]},
-				{ID: "3", Name: "name_testing3", MappedSdcInfo: mappedInfos[:3]},
-			}
+			patches := gomonkey.NewPatches()
+			patches.ApplyMethod(reflect.TypeOf(&sio.Sdc{}), "FindVolumes", func(s *sio.Sdc) ([]*sio.Volume, error) {
+				return mapping[s], nil
+			})
+			t.Cleanup(patches.Reset)
 
-			volumeClient := []*sio.Volume{
-				{Volume: volumes[0]},
-				{Volume: volumes[1]},
-				{Volume: volumes[2]},
-			}
-
-			volumeMetrics := []*types.SdcVolumeMetrics{
-				{VolumeID: "1", SdcID: "60001"},
-				{VolumeID: "2", SdcID: "60002"},
-				{VolumeID: "3", SdcID: "60003"},
-			}
-
-			sdc1 := mocks.NewMockStatisticsGetter(ctrl)
-			sdc1.EXPECT().GetVolume().Return(volumes, nil).AnyTimes()
-			sdc1.EXPECT().FindVolumes().DoAndReturn(func() ([]*sio.Volume, error) {
-				time.Sleep(first)
-				return volumeClient, nil
-			}).Times(1)
-			sdc1.EXPECT().GetVolumeMetrics().DoAndReturn(func() ([]*types.SdcVolumeMetrics, error) {
-				time.Sleep(first)
-				return volumeMetrics[:1], nil
-			}).Times(1)
-
-			sdc2 := mocks.NewMockStatisticsGetter(ctrl)
-			sdc2.EXPECT().GetVolume().Return(volumes, nil).AnyTimes()
-			sdc2.EXPECT().FindVolumes().DoAndReturn(func() ([]*sio.Volume, error) {
-				time.Sleep(second)
-				return volumeClient, nil
-			}).Times(1)
-			sdc2.EXPECT().GetVolumeMetrics().DoAndReturn(func() ([]*types.SdcVolumeMetrics, error) {
-				time.Sleep(second)
-				return volumeMetrics[1:2], nil
-			}).Times(1)
-
-			sdc3 := mocks.NewMockStatisticsGetter(ctrl)
-			sdc3.EXPECT().GetVolume().Return(volumes, nil).AnyTimes()
-			sdc3.EXPECT().FindVolumes().DoAndReturn(func() ([]*sio.Volume, error) {
-				time.Sleep(third)
-				return volumeClient, nil
-			}).Times(1)
-			sdc3.EXPECT().GetVolumeMetrics().DoAndReturn(func() ([]*types.SdcVolumeMetrics, error) {
-				time.Sleep(third)
-				return volumeMetrics[2:], nil
-			}).Times(1)
-
-			sdcs := []service.StatisticsGetter{sdc1, sdc2, sdc3}
-
-			return setup{
-				Service: &service.PowerFlexService{},
-			}, sdcs, check(hasNoError, checkVolumeLength(len(volumes))), ctrl
+			svc := &service.PowerFlexService{Logger: logrus.New()}
+			return svc, client, []service.SdcMetricsRetriever{r1, r2}, check(noErrorAndLen(2)), ctrl, patches
 		},
-		"Failed GetVolume": func(*testing.T) (setup, []service.StatisticsGetter, []checkFn, *gomock.Controller) {
+
+		"non-EC: GetVolumeMetrics error": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, []service.SdcMetricsRetriever, []checkFn, *gomock.Controller, *gomonkey.Patches) {
 			ctrl := gomock.NewController(t)
+			client := mocks.NewMockPowerFlexClient(ctrl)
 
-			sdc1 := mocks.NewMockStatisticsGetter(ctrl)
-			sdc1.EXPECT().GetVolume().Return(nil, errors.New("error")).AnyTimes()
-			sdc1.EXPECT().FindVolumes().Return(nil, errors.New("error")).AnyTimes()
+			stats := mocks.NewMockStatisticsGetter(ctrl)
+			sdc := &sio.Sdc{Sdc: &types.Sdc{ID: "sdc-1", SdcIP: "1.1.1.1"}}
+			r := newSdcRetriever(t, ctrl, stats, "v1", sdc)
 
-			sdcs := []service.StatisticsGetter{sdc1}
+			patches := gomonkey.NewPatches()
+			patches.ApplyMethod(reflect.TypeOf(&sio.Sdc{}), "FindVolumes", func(_ *sio.Sdc) ([]*sio.Volume, error) {
+				return []*sio.Volume{vol1}, nil
+			})
+			t.Cleanup(patches.Reset)
 
-			return setup{
-				Service: &service.PowerFlexService{},
-			}, sdcs, check(hasError), ctrl
+			stats.EXPECT().GetVolumeMetrics().Return(nil, errors.New("metrics-fail")).Times(1)
+
+			svc := &service.PowerFlexService{Logger: logrus.New()}
+			return svc, client, []service.SdcMetricsRetriever{r}, check(hasError), ctrl, patches
 		},
-		"Failed GetVolumeMetrics": func(*testing.T) (setup, []service.StatisticsGetter, []checkFn, *gomock.Controller) {
+
+		"EC: no valid IDs -> early return (no error, empty result)": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, []service.SdcMetricsRetriever, []checkFn, *gomock.Controller, *gomonkey.Patches) {
 			ctrl := gomock.NewController(t)
+			client := mocks.NewMockPowerFlexClient(ctrl)
 
-			mappedInfos := []*types.MappedSdcInfo{
-				{SdcID: "60001", SdcIP: "10.234"},
-				{SdcID: "60002", SdcIP: "10.235"},
+			stats := mocks.NewMockStatisticsGetter(ctrl)
+			sdc := &sio.Sdc{Sdc: &types.Sdc{ID: "sdc-ec", SdcIP: "1.1.1.3"}}
+			r := newSdcRetriever(t, ctrl, stats, "v1", sdc)
+
+			patches := gomonkey.NewPatches()
+			patches.ApplyMethod(reflect.TypeOf(&sio.Sdc{}), "FindVolumes", func(_ *sio.Sdc) ([]*sio.Volume, error) {
+				return []*sio.Volume{ecVolNoID, ecVolNoID}, nil
+			})
+			t.Cleanup(patches.Reset)
+
+			svc := &service.PowerFlexService{Logger: logrus.New()}
+			return svc, client, []service.SdcMetricsRetriever{r}, check(noErrorAndLen(0)), ctrl, patches
+		},
+
+		"EC: GetMetrics error": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, []service.SdcMetricsRetriever, []checkFn, *gomock.Controller, *gomonkey.Patches) {
+			ctrl := gomock.NewController(t)
+			client := mocks.NewMockPowerFlexClient(ctrl)
+
+			stats := mocks.NewMockStatisticsGetter(ctrl)
+			sdc := &sio.Sdc{Sdc: &types.Sdc{ID: "sdc-ec-err", SdcIP: "1.1.1.9"}}
+			r := newSdcRetriever(t, ctrl, stats, "v1", sdc)
+
+			patches := gomonkey.NewPatches()
+			patches.ApplyMethod(reflect.TypeOf(&sio.Sdc{}), "FindVolumes", func(_ *sio.Sdc) ([]*sio.Volume, error) {
+				return []*sio.Volume{ecVol1, ecVol2}, nil
+			})
+			t.Cleanup(patches.Reset)
+
+			client.EXPECT().
+				GetMetrics("volume", []string{"ec1", "ec2"}).
+				Return((*types.MetricsResponse)(nil), fmt.Errorf("metrics failed")).
+				Times(1)
+
+			svc := &service.PowerFlexService{Logger: logrus.New()}
+			return svc, client, []service.SdcMetricsRetriever{r}, check(hasError), ctrl, patches
+		},
+
+		"EC: empty resources -> returns no-volume-metrics error": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, []service.SdcMetricsRetriever, []checkFn, *gomock.Controller, *gomonkey.Patches) {
+			ctrl := gomock.NewController(t)
+			client := mocks.NewMockPowerFlexClient(ctrl)
+
+			stats := mocks.NewMockStatisticsGetter(ctrl)
+			sdc := &sio.Sdc{Sdc: &types.Sdc{ID: "sdc-ec-empty", SdcIP: "1.1.1.10"}}
+			r := newSdcRetriever(t, ctrl, stats, "v1", sdc)
+
+			patches := gomonkey.NewPatches()
+			patches.ApplyMethod(reflect.TypeOf(&sio.Sdc{}), "FindVolumes", func(_ *sio.Sdc) ([]*sio.Volume, error) {
+				return []*sio.Volume{ecVol1, ecVol2}, nil
+			})
+			t.Cleanup(patches.Reset)
+
+			client.EXPECT().
+				GetMetrics("volume", []string{"ec1", "ec2"}).
+				Return(&types.MetricsResponse{Resources: []types.Resource{}}, nil).
+				Times(1)
+
+			svc := &service.PowerFlexService{Logger: logrus.New()}
+			return svc, client, []service.SdcMetricsRetriever{r}, check(hasError), ctrl, patches
+		},
+
+		"EC: metrics success -> populates & normalizes values": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, []service.SdcMetricsRetriever, []checkFn, *gomock.Controller, *gomonkey.Patches) {
+			ctrl := gomock.NewController(t)
+			client := mocks.NewMockPowerFlexClient(ctrl)
+
+			stats := mocks.NewMockStatisticsGetter(ctrl)
+			sdc := &sio.Sdc{Sdc: &types.Sdc{ID: "sdc-ec", SdcIP: "1.1.1.11"}}
+			r := newSdcRetriever(t, ctrl, stats, "v1", sdc)
+
+			patches := gomonkey.NewPatches()
+			patches.ApplyMethod(reflect.TypeOf(&sio.Sdc{}), "FindVolumes", func(_ *sio.Sdc) ([]*sio.Volume, error) {
+				ecEmpty := &sio.Volume{Volume: &types.Volume{ID: "", Name: "ec-empty-x", GenType: types.GenTypeEC}}
+				return []*sio.Volume{ecVol1, ecVol2, ecEmpty}, nil
+			})
+			t.Cleanup(patches.Reset)
+			client.EXPECT().
+				GetMetrics("volume", []string{"ec1", "ec2"}).
+				Return(&types.MetricsResponse{
+					Resources: []types.Resource{
+						{
+							ID: "ec1",
+							Metrics: []types.Metric{
+								{Name: "host_read_bandwidth", Values: []float64{1048576}},
+								{Name: "host_write_bandwidth", Values: []float64{2097152}},
+								{Name: "host_read_iops", Values: []float64{111}},
+								{Name: "host_write_iops", Values: []float64{222}},
+								{Name: "avg_host_read_latency", Values: []float64{5000}},
+								{Name: "avg_host_write_latency", Values: []float64{7000}},
+							},
+						},
+						{
+							ID: "ec2",
+							Metrics: []types.Metric{
+								{Name: "host_read_bandwidth", Values: []float64{3145728}},
+								{Name: "host_write_bandwidth", Values: []float64{4194304}},
+								{Name: "host_read_iops", Values: []float64{333}},
+								{Name: "host_write_iops", Values: []float64{444}},
+								{Name: "avg_host_read_latency", Values: []float64{9000}},
+								{Name: "avg_host_write_latency", Values: []float64{11000}},
+							},
+						},
+					},
+				}, nil).
+				Times(1)
+
+			svc := &service.PowerFlexService{Logger: logrus.New()}
+			expect := map[string]ecVals{
+				"ec1": {readBW: 1.0, writeBW: 2.0, readIOPS: 111, writeIOPS: 222, readLat: 5.0, writeLat: 7.0},
+				"ec2": {readBW: 3.0, writeBW: 4.0, readIOPS: 333, writeIOPS: 444, readLat: 9.0, writeLat: 11.0},
 			}
-
-			volumes := []*types.Volume{
-				{ID: "1", Name: "name_testing1", MappedSdcInfo: mappedInfos},
-				{ID: "2", Name: "name_testing2", MappedSdcInfo: mappedInfos[:1]},
+			checkHasEmptyID := func() checkFn {
+				return func(t *testing.T, out []*service.VolumeMetaMetrics, err error) {
+					require.NoError(t, err)
+					found := false
+					for _, m := range out {
+						if m.ID == "" {
+							found = true
+							assert.Zero(t, m.HostReadBandwith)
+							assert.Zero(t, m.HostWriteBandwith)
+							assert.Zero(t, m.HostReadIOPS)
+							assert.Zero(t, m.HostWriteIOPS)
+							assert.Zero(t, m.AvgHostReadLatency)
+							assert.Zero(t, m.AvgHostWriteLatency)
+							assert.Empty(t, m.GenType)
+							break
+						}
+					}
+					assert.True(t, found, "expected an empty-ID volume in results")
+				}
 			}
-
-			volumeClient := []*sio.Volume{
-				{Volume: volumes[0]},
-				{Volume: volumes[1]},
-			}
-
-			// FindVolumes() returns successful volumes, but GetVolumeMetrics() returns an error
-			sdc := mocks.NewMockStatisticsGetter(ctrl)
-			sdc.EXPECT().GetVolume().Return(volumes, nil).AnyTimes()
-			sdc.EXPECT().FindVolumes().Return(volumeClient, nil).AnyTimes()
-			sdc.EXPECT().GetVolumeMetrics().Return(nil, errors.New("error")).AnyTimes()
-			sdcs := []service.StatisticsGetter{sdc}
-
-			return setup{
-				Service: &service.PowerFlexService{},
-			}, sdcs, check(hasError), ctrl
+			return svc, client, []service.SdcMetricsRetriever{r}, check(noErrorAndLen(3), checkECValues(expect), checkHasEmptyID()), ctrl, patches
 		},
 	}
+
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			setup, sdcs, checkFns, ctrl := tc(t)
-			setup.Service.Logger = logrus.New()
-			volumes, err := setup.Service.GetVolumes(context.Background(), sdcs)
-			for _, checkFn := range checkFns {
-				checkFn(t, volumes, err)
+			svc, client, sdcs, checks, ctrl, patches := tc(t)
+			defer ctrl.Finish()
+			if patches != nil {
+				defer patches.Reset()
 			}
-			ctrl.Finish()
+			out, err := svc.GetVolumes(context.Background(), client, sdcs)
+			for _, c := range checks {
+				c(t, out, err)
+			}
 		})
 	}
 }
@@ -1232,35 +1617,46 @@ func Benchmark_GetVolumes(b *testing.B) {
 	b.ReportAllocs()
 
 	ctrl := gomock.NewController(b)
-	metrics := mocks.NewMockMetricsRecorder(ctrl)
+	b.Cleanup(ctrl.Finish)
+
+	client := mocks.NewMockPowerFlexClient(ctrl)
+
 	svc := &service.PowerFlexService{
 		Logger:         logrus.New(),
-		MetricsWrapper: metrics,
+		MetricsWrapper: mocks.NewMockMetricsRecorder(ctrl),
 	}
 
-	// Create a list of StatisticsGetter
-	var sdcs []service.StatisticsGetter
+	vols := []*sio.Volume{
+		{Volume: &types.Volume{ID: "vol1", Name: "vol1", GenType: ""}},
+		{Volume: &types.Volume{ID: "vol2", Name: "vol2", GenType: ""}},
+	}
+	patches := gomonkey.NewPatches()
+	patches.ApplyMethod(reflect.TypeOf(&sio.Sdc{}), "FindVolumes", func(_ *sio.Sdc) ([]*sio.Volume, error) {
+		return vols, nil
+	})
+	b.Cleanup(patches.Reset)
+
+	retrievers := make([]service.SdcMetricsRetriever, 0, numOfSDCs)
 	for i := 0; i < numOfSDCs; i++ {
-		sdc := mocks.NewMockStatisticsGetter(gomock.NewController(b))
-		sdc.EXPECT().FindVolumes().Return([]*sio.Volume{
-			{Volume: &types.Volume{ID: "vol1", Name: "vol1"}},
-			{Volume: &types.Volume{ID: "vol2", Name: "vol2"}},
-		}, nil).AnyTimes()
-		sdc.EXPECT().GetVolumeMetrics().DoAndReturn(func() ([]*types.SdcVolumeMetrics, error) {
+		sdcStats := mocks.NewMockStatisticsGetter(gomock.NewController(b))
+		sdcStats.EXPECT().GetVolumeMetrics().DoAndReturn(func() ([]*types.SdcVolumeMetrics, error) {
 			dur, _ := time.ParseDuration(sdcQueryTime)
 			time.Sleep(dur)
 			return []*types.SdcVolumeMetrics{
 				{VolumeID: "vol1"},
 				{VolumeID: "vol2"},
 			}, nil
-		})
-		sdcs = append(sdcs, sdc)
+		}).AnyTimes()
+
+		sdcObj := &sio.Sdc{Sdc: &types.Sdc{ID: fmt.Sprintf("sdc-%d", i), SdcIP: "1.2.3.4"}}
+
+		retr := newSdcRetriever(b, ctrl, sdcStats, "v1", sdcObj)
+		retrievers = append(retrievers, retr)
 	}
 
-	// Run the benchmark
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := svc.GetVolumes(context.Background(), sdcs)
+		_, err := svc.GetVolumes(context.Background(), client, retrievers)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -1310,6 +1706,18 @@ func Test_GetVolumeBandwidth(t *testing.T) {
 			},
 			6.3984375,
 			0.095703125,
+		},
+		{
+			"EC gen type uses host bandwidths",
+			&service.VolumeMetaMetrics{
+				GenType:           types.GenTypeEC,
+				HostReadBandwith:  12.75,
+				HostWriteBandwith: 34.5,
+				ReadBwc:           types.BWC{TotalWeightInKb: 999999, NumSeconds: 1},
+				WriteBwc:          types.BWC{TotalWeightInKb: 888888, NumSeconds: 2},
+			},
+			12.75,
+			34.5,
 		},
 	}
 
@@ -1366,6 +1774,18 @@ func Test_GetVolumeIOPS(t *testing.T) {
 			401.394068,
 			520018.557251,
 		},
+		{
+			"EC gen type uses host IOPS",
+			&service.VolumeMetaMetrics{
+				GenType:       types.GenTypeEC,
+				HostReadIOPS:  12345.67,
+				HostWriteIOPS: 76543.21,
+				ReadBwc:       types.BWC{NumOccured: 999, NumSeconds: 1},
+				WriteBwc:      types.BWC{NumOccured: 888, NumSeconds: 2},
+			},
+			12345.67,
+			76543.21,
+		},
 	}
 
 	for _, tc := range tt {
@@ -1420,6 +1840,18 @@ func Test_GetVolumeLatency(t *testing.T) {
 			},
 			0.391986,
 			507.830622,
+		},
+		{
+			"EC gen type uses host latencies",
+			&service.VolumeMetaMetrics{
+				GenType:             types.GenTypeEC,
+				AvgHostReadLatency:  12.345,
+				AvgHostWriteLatency: 67.89,
+				ReadLatencyBwc:      types.BWC{TotalWeightInKb: 999999, NumOccured: 1},
+				WriteLatencyBwc:     types.BWC{TotalWeightInKb: 888888, NumOccured: 2},
+			},
+			12.345,
+			67.89,
 		},
 	}
 
@@ -1601,4 +2033,63 @@ func TestExportTopologyMetrics(t *testing.T) {
 	mockMetricsWrapper.EXPECT().RecordTopologyMetrics(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	s.ExportTopologyMetrics(ctx)
+}
+
+func Test_GetGenType(t *testing.T) {
+	t.Run("success - returns first PD GenType", func(t *testing.T) {
+		sys := &sio.System{}
+		pds := []*types.ProtectionDomain{
+			{ID: "pd-1", Name: "pd1", GenType: "v2"},
+			{ID: "pd-2", Name: "pd2", GenType: "v1"},
+		}
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+		patches.ApplyMethod(reflect.TypeOf(sys), "GetProtectionDomain",
+			func(_ *sio.System, _ string) ([]*types.ProtectionDomain, error) {
+				return pds, nil
+			})
+
+		got, err := service.GetGenType(sys)
+		require.NoError(t, err)
+		assert.Equal(t, "v2", got, "should return the GenType of the first PD")
+	})
+
+	t.Run("empty list - returns empty string with no error", func(t *testing.T) {
+		sys := &sio.System{}
+
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyMethod(reflect.TypeOf(sys), "GetProtectionDomain",
+			func(_ *sio.System, _ string) ([]*types.ProtectionDomain, error) {
+				return []*types.ProtectionDomain{}, nil
+			})
+
+		got, err := service.GetGenType(sys)
+		require.NoError(t, err)
+		assert.Equal(t, "", got)
+	})
+
+	t.Run("error from GetProtectionDomain is propagated", func(t *testing.T) {
+		sys := &sio.System{}
+
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyMethod(reflect.TypeOf(sys), "GetProtectionDomain",
+			func(_ *sio.System, _ string) ([]*types.ProtectionDomain, error) {
+				return nil, errors.New("pd call failed")
+			})
+
+		got, err := service.GetGenType(sys)
+		require.Error(t, err)
+		assert.Equal(t, "", got)
+		assert.Contains(t, err.Error(), "pd call failed")
+	})
+
+	t.Run("nil system - panics", func(t *testing.T) {
+		require.Panics(t, func() {
+			_, _ = service.GetGenType(nil)
+		})
+	})
 }

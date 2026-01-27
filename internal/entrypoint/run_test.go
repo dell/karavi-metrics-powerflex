@@ -34,7 +34,7 @@ import (
 	exportermocks "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters/mocks"
 
 	sio "github.com/dell/goscaleio"
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -92,7 +92,7 @@ func Test_Run(t *testing.T) {
 
 			svc := metrics.NewMockService(ctrl)
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
-				[]pflexServices.StatisticsGetter{},
+				[]pflexServices.SdcMetricsRetriever{},
 				nil,
 			)
 			svc.EXPECT().GetSDCStatistics(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
@@ -189,7 +189,7 @@ func Test_Run(t *testing.T) {
 
 			svc := metrics.NewMockService(ctrl)
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
-				[]pflexServices.StatisticsGetter{},
+				[]pflexServices.SdcMetricsRetriever{},
 				nil,
 			)
 			svc.EXPECT().GetSDCStatistics(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
@@ -549,10 +549,10 @@ func Test_Run(t *testing.T) {
 
 			svc := metrics.NewMockService(ctrl)
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
-				[]pflexServices.StatisticsGetter{},
+				[]pflexServices.SdcMetricsRetriever{},
 				nil,
 			)
-			svc.EXPECT().GetVolumes(gomock.Any(), gomock.Any()).AnyTimes().Return(
+			svc.EXPECT().GetVolumes(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
 				[]*pflexServices.VolumeMetaMetrics{},
 				nil,
 			)
@@ -589,10 +589,10 @@ func Test_Run(t *testing.T) {
 
 			svc := metrics.NewMockService(ctrl)
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
-				[]pflexServices.StatisticsGetter{},
+				[]pflexServices.SdcMetricsRetriever{},
 				nil,
 			)
-			svc.EXPECT().GetVolumes(gomock.Any(), gomock.Any()).AnyTimes().Return(
+			svc.EXPECT().GetVolumes(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
 				[]*pflexServices.VolumeMetaMetrics{},
 				errors.New("error"),
 			)
@@ -631,7 +631,7 @@ func Test_Run(t *testing.T) {
 				nil,
 				errors.New("error"),
 			)
-			svc.EXPECT().GetVolumes(gomock.Any(), gomock.Any()).AnyTimes().Return(
+			svc.EXPECT().GetVolumes(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
 				[]*pflexServices.VolumeMetaMetrics{},
 				errors.New("error"),
 			)
@@ -688,7 +688,7 @@ func Test_Run(t *testing.T) {
 						ID:           "123",
 						Name:         "class-1",
 						Driver:       "csi-vxflexos.dellemc.com",
-						StoragePools: map[string]pflexServices.StoragePoolStatisticsGetter{},
+						StoragePools: map[string]pflexServices.StoragePoolMetricsRetriever{},
 					},
 				}, nil).AnyTimes()
 
