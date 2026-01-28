@@ -191,7 +191,7 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 					continue
 				}
 
-				volumes, err := pflexSvc.GetVolumes(ctx, sdcs)
+				volumes, err := pflexSvc.GetVolumes(ctx, client, sdcs)
 				if err != nil {
 					logger.WithError(err).Error("getting volumes")
 					continue

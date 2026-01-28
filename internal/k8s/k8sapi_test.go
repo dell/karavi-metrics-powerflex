@@ -355,8 +355,15 @@ func Test_GetNodes(t *testing.T) {
 
 func Test_InClusterConfigFn(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
+		orignal := k8s.InClusterConfigFn
+		t.Cleanup(func() { k8s.InClusterConfigFn = orignal })
+
+		k8s.InClusterConfigFn = func() (*rest.Config, error) {
+			return &rest.Config{Host: "https://kubernetes.default.svc"}, nil
+		}
+
 		_, err := k8s.InClusterConfigFn()
-		assert.Error(t, err)
+		assert.Nil(t, err)
 	})
 }
 

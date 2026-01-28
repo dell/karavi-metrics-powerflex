@@ -8,6 +8,23 @@ You may obtain a copy of the License at
     http://www.apache.org/licenses/LICENSE-2.0
 -->
 
+# :lock: **Important Notice**
+Starting with the release of **Container Storage Modules v1.16.0**, this repository will no longer be maintained as an open source project. Future development will continue under a closed source model. This change reflects our commitment to delivering even greater value to our customers by enabling faster innovation and more deeply integrated features with the Dell storage portfolio.<br>
+For existing customers using Dell’s Container Storage Modules, you will continue to receive:
+* **Ongoing Support & Community Engagement**<br>
+       You will continue to receive high-quality support through Dell Support and our community channels. Your experience of engaging with the Dell community remains unchanged.
+* **Streamlined Deployment & Updates**<br>
+        Deployment and update processes will remain consistent, ensuring a smooth and familiar experience.
+* **Access to Documentation & Resources**<br>
+       All documentation and related materials will remain publicly accessible, providing transparency and technical guidance.
+* **Continued Access to Current Open Source Version**<br>
+       The current open-source version will remain available under its existing license for those who rely on it.
+
+Moving to a closed source model allows Dell’s development team to accelerate feature delivery and enhance integration across our Enterprise Kubernetes Storage solutions ultimately providing a more seamless and robust experience.<br>
+We deeply appreciate the contributions of the open source community and remain committed to supporting our customers through this transition.<br>
+
+For questions or access requests, please contact the maintainers via [Dell Support](https://www.dell.com/support/kbdoc/en-in/000188046/container-storage-interface-csi-drivers-and-container-storage-modules-csm-how-to-get-support).
+
 # Dell Container Storage Modules (CSM) for Observability - Metrics for PowerFlex
 
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](https://github.com/dell/csm/blob/main/docs/CODE_OF_CONDUCT.md)
@@ -26,14 +43,14 @@ For documentation, please visit [Container Storage Modules documentation](https:
 
 ## Table of Contents
 
-- [Code of Conduct](https://github.com/dell/csm/blob/main/docs/CODE_OF_CONDUCT.md)
-- [Maintainer Guide](https://github.com/dell/csm/blob/main/docs/MAINTAINER_GUIDE.md)
-- [Committer Guide](https://github.com/dell/csm/blob/main/docs/COMMITTER_GUIDE.md)
-- [Contributing Guide](https://github.com/dell/csm/blob/main/docs/CONTRIBUTING.md)
-- [List of Adopters](https://github.com/dell/csm/blob/main/docs/ADOPTERS.md)
-- [Dell support](https://www.dell.com/support/incidents-online/en-us/contactus/product/container-storage-modules)
-- [Security](https://github.com/dell/csm/blob/main/docs/SECURITY.md)
-- [About](#about)
+* [Code of Conduct](https://github.com/dell/csm/blob/main/docs/CODE_OF_CONDUCT.md)
+* [Maintainer Guide](https://github.com/dell/csm/blob/main/docs/MAINTAINER_GUIDE.md)
+* [Committer Guide](https://github.com/dell/csm/blob/main/docs/COMMITTER_GUIDE.md)
+* [Contributing Guide](https://github.com/dell/csm/blob/main/docs/CONTRIBUTING.md)
+* [List of Adopters](https://github.com/dell/csm/blob/main/docs/ADOPTERS.md)
+* [Dell support](https://www.dell.com/support/incidents-online/en-us/contactus/product/container-storage-modules)
+* [Security](https://github.com/dell/csm/blob/main/docs/SECURITY.md)
+* [About](#about)
 
 ## Building Metrics for PowerFlex
 
@@ -43,8 +60,8 @@ If you wish to clone and build the Metrics for PowerFlex service, a Linux host i
 | --------------- | --------- | ---------------------- |
 | Podman          | v5.x.x    | [Podman installation](https://podman.io/docs/installation) |
 | Docker Registry |           | Access to a local/corporate [Docker registry](https://docs.docker.com/registry/) |
-| Golang          | v1.25.x   | [Golang installation](https://github.com/travis-ci/gimme) |
-| gomock          | v1.6.0    | [Go Mock](https://github.com/golang/mock) |
+| Golang          | latest    | [Golang installation](https://github.com/travis-ci/gimme) |
+| gomock          | latest    | [Go Mock](go.uber.org/mock) |
 | gosec           |           | [gosec](https://github.com/securego/gosec) |
 | git             | latest    | [Git installation](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) |
 | gcc             |           | Run `sudo apt install build-essential` |
@@ -58,7 +75,7 @@ Once all prerequisites are on the Linux host, follow the steps below to clone an
 3. In the karavi-metrics-powerflex directory, run the following command to build the container image called csm-metrics-powerflex: `make podman`
 4. Tag (with the "latest" tag) and push the image to the local Docker repository by running the following command: `make tag push`
 
-__Note:__ Linux support only. If you are using a local insecure docker registry, ensure you configure the insecure registries on each of the Kubernetes worker nodes to allow access to the local docker repository.
+**Note:** Linux support only. If you are using a local insecure docker registry, ensure you configure the insecure registries on each of the Kubernetes worker nodes to allow access to the local docker repository.
 
 ## Testing Metrics for PowerFlex
 
@@ -79,5 +96,3 @@ This project is adhering to [Semantic Versioning](https://semver.org/).
 Dell Container Storage Modules (CSM) is 100% open source and community-driven. All components are available
 under [Apache 2 License](https://www.apache.org/licenses/LICENSE-2.0.html) on
 GitHub.
-
-

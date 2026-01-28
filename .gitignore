@@ -4,3 +4,4 @@ cmd/*/bin/
 **/.idea/
 
 csm-common.mk
+vendor/
