@@ -35,7 +35,7 @@ import (
 var _ Service = (*PowerFlexService)(nil)
 
 const (
-	// DefaultMaxPowerFlexConnections is the number of workers that can query powerflex  at a time
+	// DefaultMaxPowerFlexConnections is the number of workers that can query powerflex at a time
 	DefaultMaxPowerFlexConnections = 10
 
 	ExpectedVolumeHandleProperties = 2
@@ -446,7 +446,42 @@ func (s *PowerFlexService) gatherSDCMetrics(_ context.Context, nodes []corev1.No
 				} else {
 					stats, err := sdc.GetStatisticsGetter().GetStatistics()
 					if err != nil {
-						s.Logger.WithError(err).WithField("sdc", sdcMeta.ID).Error("getting statistics for sdc")
+						// Fallback: use the new metrics query API (PowerFlex 5.0+)
+						// The legacy /api/Sdc/relationship/Statistics link was removed in PowerFlex 5.1
+						s.Logger.WithError(err).WithField("sdc", sdcMeta.ID).Warn("legacy statistics API failed, falling back to metrics query API")
+						metricsResp, metricsErr := sdc.GetClient().GetMetrics("sdc", []string{sdc.GetSdc().Sdc.ID})
+						if metricsErr != nil {
+							s.Logger.WithError(metricsErr).WithField("sdc", sdcMeta.ID).Error("getting statistics for sdc via legacy and metrics APIs")
+							return
+						}
+						if len(metricsResp.Resources) == 0 {
+							s.Logger.WithField("sdc", sdcMeta.ID).Warn("no resources found in metrics response for SDC")
+							return
+						}
+
+						readBW := getMetric(metricsResp.Resources[0].Metrics, "host_read_bandwidth")
+						writeBW := getMetric(metricsResp.Resources[0].Metrics, "host_write_bandwidth")
+						readIOPS := getMetric(metricsResp.Resources[0].Metrics, "host_read_iops")
+						writeIOPS := getMetric(metricsResp.Resources[0].Metrics, "host_write_iops")
+						readLatency := getMetric(metricsResp.Resources[0].Metrics, "avg_host_read_latency")
+						writeLatency := getMetric(metricsResp.Resources[0].Metrics, "avg_host_write_latency")
+
+						s.Logger.WithFields(logrus.Fields{
+							"sdc_meta":        sdcMeta,
+							"read_bandwidth":  readBW,
+							"write_bandwidth": writeBW,
+							"read_iops":       readIOPS,
+							"write_iops":      writeIOPS,
+							"read_latency":    readLatency,
+							"write_latency":   writeLatency,
+						}).Debug("sdc metrics (via metrics query API fallback)")
+
+						ch <- &SDCMetricsRecord{
+							sdcMeta: sdcMeta,
+							readBW:  readBW, writeBW: writeBW,
+							readIOPS: readIOPS, writeIOPS: writeIOPS,
+							readLatency: readLatency, writeLatency: writeLatency,
+						}
 						return
 					}
 

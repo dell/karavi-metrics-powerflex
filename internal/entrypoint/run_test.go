@@ -28,8 +28,7 @@ import (
 	"github.com/dell/karavi-metrics-powerflex/internal/entrypoint"
 	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 	pflexServices "github.com/dell/karavi-metrics-powerflex/internal/service"
-	"github.com/dell/karavi-metrics-powerflex/internal/service/mocks"
-	metrics "github.com/dell/karavi-metrics-powerflex/internal/service/mocks"
+	metricsmocks "github.com/dell/karavi-metrics-powerflex/internal/service/mocks"
 	otlexporters "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters"
 	exportermocks "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters/mocks"
 
@@ -47,12 +46,12 @@ func Test_Run(t *testing.T) {
 	tests := map[string]func(t *testing.T) (expectError bool, config *entrypoint.Config, exporter otlexporters.Otlexporter, pflexSvc pflexServices.Service, prevConfigValidationFunc func(*entrypoint.Config) error, ctrl *gomock.Controller, validatingConfig bool){
 		"success": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
+			pfClient := metricsmocks.NewMockPowerFlexClient(ctrl)
 
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
+			sdcFinder := metricsmocks.NewMockSDCFinder(ctrl)
 			sdcFinder.EXPECT().GetSDCGuids().AnyTimes().Return([]string{"1.2.3.4", "1.2.3.5"}, nil)
 
-			nodeFinder := mocks.NewMockNodeFinder(ctrl)
+			nodeFinder := metricsmocks.NewMockNodeFinder(ctrl)
 			nodeFinder.EXPECT().GetNodes().AnyTimes().
 				Return([]corev1.Node{
 					{
@@ -69,7 +68,7 @@ func Test_Run(t *testing.T) {
 					},
 				}, nil)
 
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
@@ -90,7 +89,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
 				[]pflexServices.SdcMetricsRetriever{},
 				nil,
@@ -103,12 +102,12 @@ func Test_Run(t *testing.T) {
 
 		"success even if error during call to GetSDCs": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
+			pfClient := metricsmocks.NewMockPowerFlexClient(ctrl)
 
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
+			sdcFinder := metricsmocks.NewMockSDCFinder(ctrl)
 			sdcFinder.EXPECT().GetSDCGuids().AnyTimes().Return([]string{"1.2.3.4", "1.2.3.5"}, nil)
 
-			nodeFinder := mocks.NewMockNodeFinder(ctrl)
+			nodeFinder := metricsmocks.NewMockNodeFinder(ctrl)
 			nodeFinder.EXPECT().GetNodes().AnyTimes().
 				Return([]corev1.Node{
 					{
@@ -125,7 +124,7 @@ func Test_Run(t *testing.T) {
 					},
 				}, nil)
 
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
@@ -146,7 +145,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
 				nil,
 				errors.New("error"),
@@ -157,16 +156,16 @@ func Test_Run(t *testing.T) {
 		},
 		"success even if error during call to NodeFinder": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
+			pfClient := metricsmocks.NewMockPowerFlexClient(ctrl)
 
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
+			sdcFinder := metricsmocks.NewMockSDCFinder(ctrl)
 			sdcFinder.EXPECT().GetSDCGuids().AnyTimes().Return([]string{"1.2.3.4", "1.2.3.5"}, nil)
 
-			nodeFinder := mocks.NewMockNodeFinder(ctrl)
+			nodeFinder := metricsmocks.NewMockNodeFinder(ctrl)
 			nodeFinder.EXPECT().GetNodes().AnyTimes().
 				Return([]corev1.Node{}, errors.New("error"))
 
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
@@ -187,7 +186,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
 				[]pflexServices.SdcMetricsRetriever{},
 				nil,
@@ -198,13 +197,13 @@ func Test_Run(t *testing.T) {
 		},
 		"success even if SDC metrics collection is disabled": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
+			pfClient := metricsmocks.NewMockPowerFlexClient(ctrl)
 
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
+			sdcFinder := metricsmocks.NewMockSDCFinder(ctrl)
 			// GetSDCGuids should not be called because SDC metrics collection is disabled
 			sdcFinder.EXPECT().GetSDCGuids().Times(0).Return([]string{"1.2.3.4", "1.2.3.5"}, nil)
 
-			nodeFinder := mocks.NewMockNodeFinder(ctrl)
+			nodeFinder := metricsmocks.NewMockNodeFinder(ctrl)
 			nodeFinder.EXPECT().GetNodes().AnyTimes().
 				Return([]corev1.Node{
 					{
@@ -221,7 +220,7 @@ func Test_Run(t *testing.T) {
 					},
 				}, nil)
 
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
@@ -242,7 +241,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 			// GetSDCs should not be called because SDC metrics collection is disabled
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).Times(0).Return(
 				nil,
@@ -254,12 +253,12 @@ func Test_Run(t *testing.T) {
 		},
 		"topology metrics not collected if not leader": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection(gomock.Any(), gomock.Any()).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(false)
 
 			// Service should not receive ExportTopologyMetrics call
-			svc := mocks.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 			// no EXPECT() on ExportTopologyMetrics means if it's called test will fail
 
 			exporter := exportermocks.NewMockOtlexporter(ctrl)
@@ -278,8 +277,8 @@ func Test_Run(t *testing.T) {
 				TopologyMetricsTickInterval: 100 * time.Millisecond,
 				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": nil},
 				PowerFlexConfig:             map[string]sio.ConfigConnect{"key": {}},
-				SDCFinder:                   mocks.NewMockSDCFinder(ctrl),
-				NodeFinder:                  mocks.NewMockNodeFinder(ctrl),
+				SDCFinder:                   metricsmocks.NewMockSDCFinder(ctrl),
+				NodeFinder:                  metricsmocks.NewMockNodeFinder(ctrl),
 			}
 
 			prev := entrypoint.ConfigValidatorFunc
@@ -289,9 +288,9 @@ func Test_Run(t *testing.T) {
 		},
 		"error no PowerFlex client": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
-			nodeFinder := mocks.NewMockNodeFinder(ctrl)
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			sdcFinder := metricsmocks.NewMockSDCFinder(ctrl)
+			nodeFinder := metricsmocks.NewMockNodeFinder(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 
 			config := &entrypoint.Config{
 				PowerFlexClient: nil,
@@ -309,16 +308,16 @@ func Test_Run(t *testing.T) {
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, true
 		},
 		"success with no PowerFlex config": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
-			nodeFinder := mocks.NewMockNodeFinder(ctrl)
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
+			sdcFinder := metricsmocks.NewMockSDCFinder(ctrl)
+			nodeFinder := metricsmocks.NewMockNodeFinder(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
+			pfClient := metricsmocks.NewMockPowerFlexClient(ctrl)
 
 			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
@@ -344,14 +343,14 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 
 			return false, config, e, svc, prevConfigValidationFunc, ctrl, false
 		},
 		"error no SDC Finder": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			pfClient := metricsmocks.NewMockPowerFlexClient(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 
 			config := &entrypoint.Config{
 				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
@@ -369,15 +368,15 @@ func Test_Run(t *testing.T) {
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, true
 		},
 		"error no Node Finder": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			pfClient := metricsmocks.NewMockPowerFlexClient(ctrl)
+			sdcFinder := metricsmocks.NewMockSDCFinder(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 
 			config := &entrypoint.Config{
 				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
@@ -396,16 +395,16 @@ func Test_Run(t *testing.T) {
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, true
 		},
 		"error invalid SDC poll time": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
-			nodeFinder := mocks.NewMockNodeFinder(ctrl)
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			pfClient := metricsmocks.NewMockPowerFlexClient(ctrl)
+			sdcFinder := metricsmocks.NewMockSDCFinder(ctrl)
+			nodeFinder := metricsmocks.NewMockNodeFinder(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 
 			config := &entrypoint.Config{
 				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
@@ -424,15 +423,15 @@ func Test_Run(t *testing.T) {
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, true
 		},
 		"error invalid Volume poll time (too low)": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
-			nodeFinder := mocks.NewMockNodeFinder(ctrl)
+			pfClient := metricsmocks.NewMockPowerFlexClient(ctrl)
+			sdcFinder := metricsmocks.NewMockSDCFinder(ctrl)
+			nodeFinder := metricsmocks.NewMockNodeFinder(ctrl)
 
 			config := &entrypoint.Config{
 				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
@@ -450,16 +449,16 @@ func Test_Run(t *testing.T) {
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, true
 		},
 		"error invalid Volume poll time (too high)": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
-			nodeFinder := mocks.NewMockNodeFinder(ctrl)
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			pfClient := metricsmocks.NewMockPowerFlexClient(ctrl)
+			sdcFinder := metricsmocks.NewMockSDCFinder(ctrl)
+			nodeFinder := metricsmocks.NewMockNodeFinder(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 
 			config := &entrypoint.Config{
 				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
@@ -478,7 +477,7 @@ func Test_Run(t *testing.T) {
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, true
 		},
@@ -487,16 +486,16 @@ func Test_Run(t *testing.T) {
 			e := exportermocks.NewMockOtlexporter(ctrl)
 
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 
 			return true, nil, e, svc, prevConfigValidationFunc, ctrl, true
 		},
 		"error initializing exporter": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
+			pfClient := metricsmocks.NewMockPowerFlexClient(ctrl)
+			sdcFinder := metricsmocks.NewMockSDCFinder(ctrl)
 
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection(gomock.Any(), gomock.Any()).AnyTimes().Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
@@ -516,18 +515,18 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(fmt.Errorf("An error occurred while initializing the exporter"))
 			e.EXPECT().StopExporter().Return(nil)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, false
 		},
 		"success for volume metrics": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
+			pfClient := metricsmocks.NewMockPowerFlexClient(ctrl)
 
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
+			sdcFinder := metricsmocks.NewMockSDCFinder(ctrl)
 			sdcFinder.EXPECT().GetSDCGuids().AnyTimes().Return([]string{"1.2.3.4", "1.2.3.5"}, nil)
 
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
@@ -547,7 +546,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
 				[]pflexServices.SdcMetricsRetriever{},
 				nil,
@@ -562,12 +561,12 @@ func Test_Run(t *testing.T) {
 		},
 		"error getting volumes": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
+			pfClient := metricsmocks.NewMockPowerFlexClient(ctrl)
 
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
+			sdcFinder := metricsmocks.NewMockSDCFinder(ctrl)
 			sdcFinder.EXPECT().GetSDCGuids().AnyTimes().Return([]string{"1.2.3.4", "1.2.3.5"}, nil)
 
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
@@ -587,7 +586,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
 				[]pflexServices.SdcMetricsRetriever{},
 				nil,
@@ -601,12 +600,12 @@ func Test_Run(t *testing.T) {
 		},
 		"volume success even if error during call to GetSDCs": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
+			pfClient := metricsmocks.NewMockPowerFlexClient(ctrl)
 
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
+			sdcFinder := metricsmocks.NewMockSDCFinder(ctrl)
 			sdcFinder.EXPECT().GetSDCGuids().AnyTimes().Return([]string{"1.2.3.4", "1.2.3.5"}, nil)
 
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
@@ -626,7 +625,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
 				nil,
 				errors.New("error"),
@@ -641,7 +640,7 @@ func Test_Run(t *testing.T) {
 		},
 		"success for storage class/pool": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
+			pfClient := metricsmocks.NewMockPowerFlexClient(ctrl)
 
 			sc1 := k8s.StorageClass{
 				StorageClass: v1.StorageClass{
@@ -657,11 +656,11 @@ func Test_Run(t *testing.T) {
 				SystemID: "123",
 			}
 
-			storageClassFinder := mocks.NewMockStorageClassFinder(ctrl)
+			storageClassFinder := metricsmocks.NewMockStorageClassFinder(ctrl)
 			storageClassFinder.EXPECT().GetStorageClasses().AnyTimes().
 				Return([]k8s.StorageClass{sc1}, nil)
 
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
@@ -681,7 +680,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 			svc.EXPECT().GetStorageClasses(gomock.Any(), gomock.Any(), gomock.Any()).
 				Return([]pflexServices.StorageClassMeta{
 					{
@@ -698,8 +697,8 @@ func Test_Run(t *testing.T) {
 		},
 		"error no LeaderElector": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
+			pfClient := metricsmocks.NewMockPowerFlexClient(ctrl)
+			sdcFinder := metricsmocks.NewMockSDCFinder(ctrl)
 
 			config := &entrypoint.Config{
 				PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"key": pfClient},
@@ -717,19 +716,19 @@ func Test_Run(t *testing.T) {
 
 			e := exportermocks.NewMockOtlexporter(ctrl)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, false
 		},
 		"success even if is leader is false": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
+			pfClient := metricsmocks.NewMockPowerFlexClient(ctrl)
 
-			sdcFinder := mocks.NewMockSDCFinder(ctrl)
+			sdcFinder := metricsmocks.NewMockSDCFinder(ctrl)
 			// GetSDCGuids should not be called because SDC metrics collection is disabled
 			sdcFinder.EXPECT().GetSDCGuids().Times(0).Return([]string{"1.2.3.4", "1.2.3.5"}, nil)
 
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(false)
 
@@ -749,7 +748,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 			// GetSDCs should not be called because SDC metrics collection is disabled
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).Times(0).Return(
 				nil,
@@ -761,7 +760,7 @@ func Test_Run(t *testing.T) {
 		},
 		"success for storage class/pool with GetStorageClasses err": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
-			pfClient := metrics.NewMockPowerFlexClient(ctrl)
+			pfClient := metricsmocks.NewMockPowerFlexClient(ctrl)
 
 			sc1 := k8s.StorageClass{
 				StorageClass: v1.StorageClass{
@@ -777,11 +776,11 @@ func Test_Run(t *testing.T) {
 				SystemID: "123",
 			}
 
-			storageClassFinder := mocks.NewMockStorageClassFinder(ctrl)
+			storageClassFinder := metricsmocks.NewMockStorageClassFinder(ctrl)
 			storageClassFinder.EXPECT().GetStorageClasses().AnyTimes().
 				Return([]k8s.StorageClass{sc1}, nil)
 
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
@@ -801,7 +800,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 			svc.EXPECT().GetStorageClasses(gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(nil, fmt.Errorf("there was error getting the StorageClass")).AnyTimes()
 
@@ -812,7 +811,7 @@ func Test_Run(t *testing.T) {
 		"success using TLS": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
 
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").Times(1).Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
@@ -829,14 +828,14 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 
 			return false, config, e, svc, prevConfigValidationFunc, ctrl, false
 		},
 		"error reading certificate": func(*testing.T) (bool, *entrypoint.Config, otlexporters.Otlexporter, pflexServices.Service, func(*entrypoint.Config) error, *gomock.Controller, bool) {
 			ctrl := gomock.NewController(t)
 
-			leaderElector := mocks.NewMockLeaderElector(ctrl)
+			leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
 			leaderElector.EXPECT().InitLeaderElection("karavi-metrics-powerflex", "karavi").AnyTimes().Return(nil)
 			leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
@@ -853,7 +852,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().InitExporter(gomock.Any(), gomock.Any()).AnyTimes().Return(nil)
 			e.EXPECT().StopExporter().Return(nil)
 
-			svc := metrics.NewMockService(ctrl)
+			svc := metricsmocks.NewMockService(ctrl)
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, false
 		},
@@ -895,9 +894,9 @@ func Test_ValidateConfig_TopologyTickInterval_OutOfRange(t *testing.T) {
 		VolumeTickInterval:          entrypoint.MinimumSDCTickInterval,
 		TopologyMetricsTickInterval: entrypoint.MinimumTickInterval - time.Second, // too small
 		PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"k": nil},
-		SDCFinder:                   mocks.NewMockSDCFinder(gomock.NewController(t)),
-		NodeFinder:                  mocks.NewMockNodeFinder(gomock.NewController(t)),
-		LeaderElector:               mocks.NewMockLeaderElector(gomock.NewController(t)),
+		SDCFinder:                   metricsmocks.NewMockSDCFinder(gomock.NewController(t)),
+		NodeFinder:                  metricsmocks.NewMockNodeFinder(gomock.NewController(t)),
+		LeaderElector:               metricsmocks.NewMockLeaderElector(gomock.NewController(t)),
 		SDCMetricsEnabled:           true,
 	}
 
@@ -911,14 +910,224 @@ func Test_ValidateConfig_TopologyTickInterval_OutOfRange(t *testing.T) {
 		VolumeTickInterval:          entrypoint.MinimumSDCTickInterval,
 		TopologyMetricsTickInterval: entrypoint.MaximumTickInterval + time.Second, // too large
 		PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"k": nil},
-		SDCFinder:                   mocks.NewMockSDCFinder(gomock.NewController(t)),
-		NodeFinder:                  mocks.NewMockNodeFinder(gomock.NewController(t)),
-		LeaderElector:               mocks.NewMockLeaderElector(gomock.NewController(t)),
+		SDCFinder:                   metricsmocks.NewMockSDCFinder(gomock.NewController(t)),
+		NodeFinder:                  metricsmocks.NewMockNodeFinder(gomock.NewController(t)),
+		LeaderElector:               metricsmocks.NewMockLeaderElector(gomock.NewController(t)),
 		SDCMetricsEnabled:           true,
 	}
 
 	err = entrypoint.ValidateConfig(tooLarge)
 	if err == nil {
 		t.Fatalf("expected error for topology tick interval too large, got nil")
+	}
+}
+
+func Test_ValidateConfig_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	config := &entrypoint.Config{
+		SDCTickInterval:             entrypoint.MinimumSDCTickInterval,
+		VolumeTickInterval:          entrypoint.MinimumVolTickInterval,
+		TopologyMetricsTickInterval: entrypoint.MinimumTickInterval,
+		PowerFlexClient:             map[string]pflexServices.PowerFlexClient{"k": nil},
+		SDCFinder:                   metricsmocks.NewMockSDCFinder(ctrl),
+		NodeFinder:                  metricsmocks.NewMockNodeFinder(ctrl),
+	}
+
+	err := entrypoint.ValidateConfig(config)
+	if err != nil {
+		t.Fatalf("expected no error for valid config, got %v", err)
+	}
+}
+
+func Test_Run_TopologyDisabledWhenLeader(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
+	leaderElector.EXPECT().InitLeaderElection(gomock.Any(), gomock.Any()).Return(nil)
+	leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
+
+	svc := metricsmocks.NewMockService(ctrl)
+
+	exporter := exportermocks.NewMockOtlexporter(ctrl)
+	exporter.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
+	exporter.EXPECT().StopExporter().Return(nil)
+
+	config := &entrypoint.Config{
+		LeaderElector:               leaderElector,
+		SDCMetricsEnabled:           false,
+		VolumeMetricsEnabled:        false,
+		StoragePoolMetricsEnabled:   false,
+		TopologyMetricsEnabled:      false,
+		SDCTickInterval:             100 * time.Millisecond,
+		VolumeTickInterval:          100 * time.Millisecond,
+		StoragePoolTickInterval:     100 * time.Millisecond,
+		TopologyMetricsTickInterval: 100 * time.Millisecond,
+		PowerFlexClient:             map[string]pflexServices.PowerFlexClient{},
+		PowerFlexConfig:             map[string]sio.ConfigConnect{},
+		SDCFinder:                   metricsmocks.NewMockSDCFinder(ctrl),
+		NodeFinder:                  metricsmocks.NewMockNodeFinder(ctrl),
+		Logger:                      logrus.New(),
+	}
+
+	prev := entrypoint.ConfigValidatorFunc
+	entrypoint.ConfigValidatorFunc = noCheckConfig
+	defer func() { entrypoint.ConfigValidatorFunc = prev }()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+
+	err := entrypoint.Run(ctx, config, exporter, svc)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+}
+
+func Test_Run_StopExporterError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
+	leaderElector.EXPECT().InitLeaderElection(gomock.Any(), gomock.Any()).Return(nil)
+	leaderElector.EXPECT().IsLeader().AnyTimes().Return(false)
+
+	svc := metricsmocks.NewMockService(ctrl)
+
+	exporter := exportermocks.NewMockOtlexporter(ctrl)
+	exporter.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
+	exporter.EXPECT().StopExporter().Return(fmt.Errorf("stop exporter error"))
+
+	config := &entrypoint.Config{
+		LeaderElector:               leaderElector,
+		SDCMetricsEnabled:           false,
+		VolumeMetricsEnabled:        false,
+		StoragePoolMetricsEnabled:   false,
+		TopologyMetricsEnabled:      false,
+		SDCTickInterval:             100 * time.Millisecond,
+		VolumeTickInterval:          100 * time.Millisecond,
+		StoragePoolTickInterval:     100 * time.Millisecond,
+		TopologyMetricsTickInterval: 100 * time.Millisecond,
+		PowerFlexClient:             map[string]pflexServices.PowerFlexClient{},
+		PowerFlexConfig:             map[string]sio.ConfigConnect{},
+		SDCFinder:                   metricsmocks.NewMockSDCFinder(ctrl),
+		NodeFinder:                  metricsmocks.NewMockNodeFinder(ctrl),
+		Logger:                      logrus.New(),
+	}
+
+	prev := entrypoint.ConfigValidatorFunc
+	entrypoint.ConfigValidatorFunc = noCheckConfig
+	defer func() { entrypoint.ConfigValidatorFunc = prev }()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+
+	err := entrypoint.Run(ctx, config, exporter, svc)
+	if err != nil {
+		t.Fatalf("expected no error from Run, got %v", err)
+	}
+}
+
+func Test_Run_TickIntervalChange(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
+	leaderElector.EXPECT().InitLeaderElection(gomock.Any(), gomock.Any()).Return(nil)
+	leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
+
+	config := &entrypoint.Config{
+		LeaderElector:               leaderElector,
+		SDCMetricsEnabled:           false,
+		VolumeMetricsEnabled:        false,
+		StoragePoolMetricsEnabled:   false,
+		TopologyMetricsEnabled:      true,
+		SDCTickInterval:             100 * time.Millisecond,
+		VolumeTickInterval:          100 * time.Millisecond,
+		StoragePoolTickInterval:     100 * time.Millisecond,
+		TopologyMetricsTickInterval: 100 * time.Millisecond,
+		PowerFlexClient:             map[string]pflexServices.PowerFlexClient{},
+		PowerFlexConfig:             map[string]sio.ConfigConnect{},
+		SDCFinder:                   metricsmocks.NewMockSDCFinder(ctrl),
+		NodeFinder:                  metricsmocks.NewMockNodeFinder(ctrl),
+		Logger:                      logrus.New(),
+	}
+
+	// Change tick intervals inside the mock callback so the mutation
+	// happens in the same goroutine as Run(), avoiding a data race.
+	callCount := 0
+	svc := metricsmocks.NewMockService(ctrl)
+	svc.EXPECT().ExportTopologyMetrics(gomock.Any()).AnyTimes().Do(func(_ context.Context) {
+		callCount++
+		if callCount == 1 {
+			config.SDCTickInterval = 150 * time.Millisecond
+			config.VolumeTickInterval = 150 * time.Millisecond
+			config.StoragePoolTickInterval = 150 * time.Millisecond
+			config.TopologyMetricsTickInterval = 150 * time.Millisecond
+		}
+	})
+
+	exporter := exportermocks.NewMockOtlexporter(ctrl)
+	exporter.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
+	exporter.EXPECT().StopExporter().Return(nil)
+
+	prev := entrypoint.ConfigValidatorFunc
+	entrypoint.ConfigValidatorFunc = noCheckConfig
+	defer func() { entrypoint.ConfigValidatorFunc = prev }()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 400*time.Millisecond)
+	defer cancel()
+
+	err := entrypoint.Run(ctx, config, exporter, svc)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+}
+
+func Test_Run_EnvVarOverrides(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	leaderElector := metricsmocks.NewMockLeaderElector(ctrl)
+	leaderElector.EXPECT().InitLeaderElection("custom-endpoint", "custom-namespace").Return(nil)
+	leaderElector.EXPECT().IsLeader().AnyTimes().Return(false)
+
+	svc := metricsmocks.NewMockService(ctrl)
+
+	exporter := exportermocks.NewMockOtlexporter(ctrl)
+	exporter.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
+	exporter.EXPECT().StopExporter().Return(nil)
+
+	config := &entrypoint.Config{
+		LeaderElector:               leaderElector,
+		SDCMetricsEnabled:           false,
+		VolumeMetricsEnabled:        false,
+		StoragePoolMetricsEnabled:   false,
+		TopologyMetricsEnabled:      false,
+		SDCTickInterval:             100 * time.Millisecond,
+		VolumeTickInterval:          100 * time.Millisecond,
+		StoragePoolTickInterval:     100 * time.Millisecond,
+		TopologyMetricsTickInterval: 100 * time.Millisecond,
+		PowerFlexClient:             map[string]pflexServices.PowerFlexClient{},
+		PowerFlexConfig:             map[string]sio.ConfigConnect{},
+		SDCFinder:                   metricsmocks.NewMockSDCFinder(ctrl),
+		NodeFinder:                  metricsmocks.NewMockNodeFinder(ctrl),
+		Logger:                      logrus.New(),
+	}
+
+	prev := entrypoint.ConfigValidatorFunc
+	entrypoint.ConfigValidatorFunc = noCheckConfig
+	defer func() { entrypoint.ConfigValidatorFunc = prev }()
+
+	t.Setenv("POWERFLEX_METRICS_ENDPOINT", "custom-endpoint")
+	t.Setenv("POWERFLEX_METRICS_NAMESPACE", "custom-namespace")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+
+	err := entrypoint.Run(ctx, config, exporter, svc)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
 	}
 }

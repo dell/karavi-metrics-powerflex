@@ -7,6 +7,8 @@ You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
 -->
+
+
 # Dell Container Storage Modules (CSM) for Observability - Metrics for PowerFlex
 
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](https://github.com/dell/csm/blob/main/docs/CODE_OF_CONDUCT.md)
@@ -42,8 +44,8 @@ If you wish to clone and build the Metrics for PowerFlex service, a Linux host i
 | --------------- | --------- | ---------------------- |
 | Podman          | v5.x.x    | [Podman installation](https://podman.io/docs/installation) |
 | Docker Registry |           | Access to a local/corporate [Docker registry](https://docs.docker.com/registry/) |
-| Golang          | latest    | [Golang installation](https://github.com/travis-ci/gimme) |
-| gomock          | latest    | [Go Mock](go.uber.org/mock) |
+| Golang          | latest    | [Golang installation](https://go.dev/doc/install) |
+| gomock          | latest    | [Go Mock](https://pkg.go.dev/go.uber.org/mock) |
 | gosec           |           | [gosec](https://github.com/securego/gosec) |
 | git             | latest    | [Git installation](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) |
 | gcc             |           | Run `sudo apt install build-essential` |
@@ -78,4 +80,3 @@ This project is adhering to [Semantic Versioning](https://semver.org/).
 Dell Container Storage Modules (CSM) is 100% open source and community-driven. All components are available
 under [Apache 2 License](https://www.apache.org/licenses/LICENSE-2.0.html) on
 GitHub.
-

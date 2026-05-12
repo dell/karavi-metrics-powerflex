@@ -224,3 +224,124 @@ func TestMetricsWrapper_RecordTopologyMetrics(t *testing.T) {
 		})
 	}
 }
+
+func TestMetricsWrapper_Record_AdditionalPaths(t *testing.T) {
+	exporter := &otlexporters.OtlCollectorExporter{}
+	if err := exporter.InitExporter(); err != nil {
+		t.Fatal(err)
+	}
+
+	tt := []struct {
+		name    string
+		calls   func(mw *service.MetricsWrapper) error
+		wantErr bool
+	}{
+		{
+			name: "SDCMeta record",
+			calls: func(mw *service.MetricsWrapper) error {
+				return mw.Record(context.Background(), &service.SDCMeta{
+					ID: "sdc-123", Name: "sdc-node-1", IP: "10.0.0.1", SdcGUID: "guid-abc",
+				}, 1, 2, 3, 4, 5, 6)
+			},
+		},
+		{
+			name: "existing metrics no label change",
+			calls: func(mw *service.MetricsWrapper) error {
+				meta := &service.VolumeMeta{ID: "vol-existing", Name: "vol-name"}
+				if err := mw.Record(context.Background(), meta, 1, 2, 3, 4, 5, 6); err != nil {
+					return err
+				}
+				return mw.Record(context.Background(), meta, 7, 8, 9, 10, 11, 12)
+			},
+		},
+		{
+			name: "existing metrics with label change",
+			calls: func(mw *service.MetricsWrapper) error {
+				meta1 := &service.VolumeMeta{ID: "vol-lc", Name: "vol-name-original"}
+				if err := mw.Record(context.Background(), meta1, 1, 2, 3, 4, 5, 6); err != nil {
+					return err
+				}
+				meta2 := &service.VolumeMeta{ID: "vol-lc", Name: "vol-name-changed"}
+				return mw.Record(context.Background(), meta2, 7, 8, 9, 10, 11, 12)
+			},
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			mw := &service.MetricsWrapper{Meter: otel.Meter("powerflex-test-" + tc.name)}
+			if err := tc.calls(mw); (err != nil) != tc.wantErr {
+				t.Errorf("Record() error = %v, wantErr %v", err, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestMetricsWrapper_RecordTopologyMetrics_AdditionalPaths(t *testing.T) {
+	tt := []struct {
+		name    string
+		calls   func(mw *service.MetricsWrapper) error
+		wantErr bool
+	}{
+		{
+			name: "existing metrics no label change",
+			calls: func(mw *service.MetricsWrapper) error {
+				meta := &service.TopologyMeta{PersistentVolume: "test-pv-existing", Namespace: "ns1"}
+				metric := &service.TopologyMetricsRecord{}
+				if err := mw.RecordTopologyMetrics(context.Background(), meta, metric); err != nil {
+					return err
+				}
+				return mw.RecordTopologyMetrics(context.Background(), meta, metric)
+			},
+		},
+		{
+			name: "existing metrics with label change",
+			calls: func(mw *service.MetricsWrapper) error {
+				meta1 := &service.TopologyMeta{PersistentVolume: "test-pv-lc", Namespace: "ns-original"}
+				metric := &service.TopologyMetricsRecord{}
+				if err := mw.RecordTopologyMetrics(context.Background(), meta1, metric); err != nil {
+					return err
+				}
+				meta2 := &service.TopologyMeta{PersistentVolume: "test-pv-lc", Namespace: "ns-changed"}
+				return mw.RecordTopologyMetrics(context.Background(), meta2, metric)
+			},
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			mw := &service.MetricsWrapper{Meter: otel.Meter("powerflex-topo-" + tc.name)}
+			if err := tc.calls(mw); (err != nil) != tc.wantErr {
+				t.Errorf("RecordTopologyMetrics() error = %v, wantErr %v", err, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestMetricsWrapper_RecordCapacity_ExistingMetrics(t *testing.T) {
+	exporter := &otlexporters.OtlCollectorExporter{}
+	if err := exporter.InitExporter(); err != nil {
+		t.Fatal(err)
+	}
+
+	mw := &service.MetricsWrapper{Meter: otel.Meter("powerflex-test-cap-existing")}
+	retriever := newRetriever(t, "v1")
+	meta := service.StorageClassMeta{
+		ID: "test-existing", Name: "test-name", Driver: "csi-vxflexos.dellemc.com", StorageSystemID: "test-system-id",
+		StoragePools: map[string]service.StoragePoolMetricsRetriever{"pool1": retriever},
+	}
+
+	tt := []struct {
+		name                                      string
+		totalCap, availCap, inUseCap, provisioned float64
+		wantErr                                   bool
+	}{
+		{name: "first call creates metrics", totalCap: 100, availCap: 50, inUseCap: 30, provisioned: 20},
+		{name: "second call hits existing path", totalCap: 200, availCap: 100, inUseCap: 60, provisioned: 40},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			if err := mw.RecordCapacity(context.Background(), meta, tc.totalCap, tc.availCap, tc.inUseCap, tc.provisioned); (err != nil) != tc.wantErr {
+				t.Errorf("RecordCapacity() error = %v, wantErr %v", err, tc.wantErr)
+			}
+		})
+	}
+}

@@ -23,7 +23,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/dell/karavi-metrics-powerflex/internal/service"
 	pflexServices "github.com/dell/karavi-metrics-powerflex/internal/service"
 	otlexporters "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters"
 	"github.com/sirupsen/logrus"
@@ -63,11 +62,11 @@ type Config struct {
 	TopologyMetricsTickInterval time.Duration
 	PowerFlexClient             map[string]pflexServices.PowerFlexClient
 	PowerFlexConfig             map[string]sio.ConfigConnect
-	SDCFinder                   service.SDCFinder
-	StorageClassFinder          service.StorageClassFinder
-	LeaderElector               service.LeaderElector
-	VolumeFinder                service.VolumeFinder
-	NodeFinder                  service.NodeFinder
+	SDCFinder                   pflexServices.SDCFinder
+	StorageClassFinder          pflexServices.StorageClassFinder
+	LeaderElector               pflexServices.LeaderElector
+	VolumeFinder                pflexServices.VolumeFinder
+	NodeFinder                  pflexServices.NodeFinder
 	SDCMetricsEnabled           bool
 	VolumeMetricsEnabled        bool
 	StoragePoolMetricsEnabled   bool
@@ -116,7 +115,11 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 		errCh <- exporter.InitExporter(options...)
 	}()
 
-	defer exporter.StopExporter()
+	defer func() {
+		if err := exporter.StopExporter(); err != nil {
+			logger.WithError(err).Error("failed to stop exporter")
+		}
+	}()
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
@@ -293,7 +296,7 @@ func ValidateConfig(config *Config) error {
 	}
 
 	if config.VolumeTickInterval > MaximumVolTickInterval || config.VolumeTickInterval < MinimumVolTickInterval {
-		return fmt.Errorf("Volume polling frequency not within allowed range of %v and %v", MinimumVolTickInterval.String(), MaximumVolTickInterval.String())
+		return fmt.Errorf("volume polling frequency not within allowed range of %v and %v", MinimumVolTickInterval.String(), MaximumVolTickInterval.String())
 	}
 
 	if config.TopologyMetricsTickInterval > MaximumTickInterval || config.TopologyMetricsTickInterval < MinimumTickInterval {

@@ -232,7 +232,7 @@ func updatePowerFlexConnection(
 
 		// backwards compatible with previous 'Insecure' flag
 		insecure := storageSystem.Insecure || storageSystem.SkipCertificateValidation
-		client, err := goscaleioClient(powerFlexEndpoint, "", math.MaxInt64, insecure, true)
+		client, err := goscaleioClient(powerFlexEndpoint, "", math.MaxInt64, insecure, true, "")
 		if err != nil {
 			logger.WithError(err).Fatal("creating powerflex client")
 		}

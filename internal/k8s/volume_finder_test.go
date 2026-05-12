@@ -26,7 +26,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -73,7 +72,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 						},
 						Spec: corev1.PersistentVolumeSpec{
 							Capacity: map[corev1.ResourceName]resource.Quantity{
-								v1.ResourceStorage: resource.MustParse("16Gi"),
+								corev1.ResourceStorage: resource.MustParse("16Gi"),
 							},
 							PersistentVolumeSource: corev1.PersistentVolumeSource{
 								CSI: &corev1.CSIPersistentVolumeSource{
@@ -103,7 +102,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 						},
 						Spec: corev1.PersistentVolumeSpec{
 							Capacity: map[corev1.ResourceName]resource.Quantity{
-								v1.ResourceStorage: resource.MustParse("16Gi"),
+								corev1.ResourceStorage: resource.MustParse("16Gi"),
 							},
 							PersistentVolumeSource: corev1.PersistentVolumeSource{
 								CSI: &corev1.CSIPersistentVolumeSource{
@@ -168,7 +167,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 						},
 						Spec: corev1.PersistentVolumeSpec{
 							Capacity: map[corev1.ResourceName]resource.Quantity{
-								v1.ResourceStorage: resource.MustParse("16Gi"),
+								corev1.ResourceStorage: resource.MustParse("16Gi"),
 							},
 							PersistentVolumeSource: corev1.PersistentVolumeSource{
 								CSI: &corev1.CSIPersistentVolumeSource{
@@ -198,7 +197,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 						},
 						Spec: corev1.PersistentVolumeSpec{
 							Capacity: map[corev1.ResourceName]resource.Quantity{
-								v1.ResourceStorage: resource.MustParse("8Gi"),
+								corev1.ResourceStorage: resource.MustParse("8Gi"),
 							},
 							PersistentVolumeSource: corev1.PersistentVolumeSource{
 								CSI: &corev1.CSIPersistentVolumeSource{
@@ -286,7 +285,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 						},
 						Spec: corev1.PersistentVolumeSpec{
 							Capacity: map[corev1.ResourceName]resource.Quantity{
-								v1.ResourceStorage: resource.MustParse("16Gi"),
+								corev1.ResourceStorage: resource.MustParse("16Gi"),
 							},
 							PersistentVolumeSource: corev1.PersistentVolumeSource{
 								CSI: &corev1.CSIPersistentVolumeSource{
@@ -316,7 +315,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 						},
 						Spec: corev1.PersistentVolumeSpec{
 							Capacity: map[corev1.ResourceName]resource.Quantity{
-								v1.ResourceStorage: resource.MustParse("16Gi"),
+								corev1.ResourceStorage: resource.MustParse("16Gi"),
 							},
 							PersistentVolumeSource: corev1.PersistentVolumeSource{
 								CSI: &corev1.CSIPersistentVolumeSource{
@@ -346,7 +345,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 						},
 						Spec: corev1.PersistentVolumeSpec{
 							Capacity: map[corev1.ResourceName]resource.Quantity{
-								v1.ResourceStorage: resource.MustParse("16Gi"),
+								corev1.ResourceStorage: resource.MustParse("16Gi"),
 							},
 							PersistentVolumeSource: corev1.PersistentVolumeSource{
 								Local: &corev1.LocalVolumeSource{
@@ -407,7 +406,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 						},
 						Spec: corev1.PersistentVolumeSpec{
 							Capacity: map[corev1.ResourceName]resource.Quantity{
-								v1.ResourceStorage: resource.MustParse("16Gi"),
+								corev1.ResourceStorage: resource.MustParse("16Gi"),
 							},
 							PersistentVolumeSource: corev1.PersistentVolumeSource{
 								CSI: &corev1.CSIPersistentVolumeSource{
@@ -437,7 +436,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 						},
 						Spec: corev1.PersistentVolumeSpec{
 							Capacity: map[corev1.ResourceName]resource.Quantity{
-								v1.ResourceStorage: resource.MustParse("8Gi"),
+								corev1.ResourceStorage: resource.MustParse("8Gi"),
 							},
 							PersistentVolumeSource: corev1.PersistentVolumeSource{
 								CSI: &corev1.CSIPersistentVolumeSource{

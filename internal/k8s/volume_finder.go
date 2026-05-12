@@ -22,7 +22,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 )
 
 // VolumeGetter is an interface for getting a list of persistent volume information
@@ -69,7 +68,7 @@ func (f VolumeFinder) GetPersistentVolumes() ([]VolumeInfo, error) {
 
 	for _, volume := range volumes.Items {
 		if f.isMatch(volume) {
-			capacity := volume.Spec.Capacity[v1.ResourceStorage]
+			capacity := volume.Spec.Capacity[corev1.ResourceStorage]
 			claim := volume.Spec.ClaimRef
 			status := volume.Status
 			storageystemid, err := f.getStorageID(volume)
@@ -107,7 +106,7 @@ func (f VolumeFinder) GetPersistentVolumes() ([]VolumeInfo, error) {
 	return volumeInfo, nil
 }
 
-func (f *VolumeFinder) isMatch(volume v1.PersistentVolume) bool {
+func (f *VolumeFinder) isMatch(volume corev1.PersistentVolume) bool {
 	if volume.Spec.CSI == nil {
 		return false
 	}
@@ -125,7 +124,7 @@ func (f *VolumeFinder) isMatch(volume v1.PersistentVolume) bool {
 	return false
 }
 
-func (f *VolumeFinder) getStorageID(volume v1.PersistentVolume) (string, error) {
+func (f *VolumeFinder) getStorageID(volume corev1.PersistentVolume) (string, error) {
 	if volume.Spec.CSI == nil {
 		return "", errors.New("storage system id not found")
 	}

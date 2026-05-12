@@ -17,10 +17,15 @@
 package main
 
 import (
+	"fmt"
+	"math"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/dell/goscaleio"
 	"github.com/dell/karavi-metrics-powerflex/internal/entrypoint"
 	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 	"github.com/dell/karavi-metrics-powerflex/internal/service"
@@ -136,28 +141,28 @@ func TestSetupConfigFileListener(t *testing.T) {
 
 func TestGetCollectorCertPath(t *testing.T) {
 	t.Run("Valid Cert Path", func(t *testing.T) {
-		os.Setenv("TLS_ENABLED", "true")
-		os.Setenv("COLLECTOR_CERT_PATH", "/path/to/cert")
+		_ = os.Setenv("TLS_ENABLED", "true")
+		_ = os.Setenv("COLLECTOR_CERT_PATH", "/path/to/cert")
 		path := getCollectorCertPath()
 		assert.Equal(t, "/path/to/cert", path)
 	})
 
 	t.Run("TLS Enabled But No Cert Path", func(t *testing.T) {
-		os.Setenv("TLS_ENABLED", "true")
-		os.Setenv("COLLECTOR_CERT_PATH", "") // Explicitly setting it to empty
+		_ = os.Setenv("TLS_ENABLED", "true")
+		_ = os.Setenv("COLLECTOR_CERT_PATH", "") // Explicitly setting it to empty
 		path := getCollectorCertPath()
 		assert.Equal(t, otlexporters.DefaultCollectorCertPath, path)
 	})
 
 	t.Run("TLS Disabled", func(t *testing.T) {
-		os.Setenv("TLS_ENABLED", "false")
+		_ = os.Setenv("TLS_ENABLED", "false")
 		path := getCollectorCertPath()
 		assert.Equal(t, otlexporters.DefaultCollectorCertPath, path)
 	})
 
 	t.Run("TLS Not Set", func(t *testing.T) {
-		os.Unsetenv("TLS_ENABLED")
-		os.Unsetenv("COLLECTOR_CERT_PATH")
+		_ = os.Unsetenv("TLS_ENABLED")
+		_ = os.Unsetenv("COLLECTOR_CERT_PATH")
 		path := getCollectorCertPath()
 		assert.Equal(t, otlexporters.DefaultCollectorCertPath, path)
 	})
@@ -375,6 +380,18 @@ func TestUpdateMetricsEnabled(t *testing.T) {
 			expectedStoragePoolMetricsEnabled:       true,
 			expectPanic:                             true,
 		},
+		{
+			name:                                    "Topology metrics disabled",
+			sdcMetricsEnabled:                       "true",
+			volumeMetricsEnabled:                    "true",
+			storagePoolMetricsEnabled:               "true",
+			powerflexTopologyMetricsEnabled:         "false",
+			expectedSdcMetricsEnabled:               true,
+			expectedVolumeMetricsEnabled:            true,
+			expectedStoragePoolMetricsEnabled:       true,
+			expectedPowerflexTopologyMetricsEnabled: false,
+			expectPanic:                             false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -392,6 +409,7 @@ func TestUpdateMetricsEnabled(t *testing.T) {
 				assert.Equal(t, tt.expectedSdcMetricsEnabled, config.SDCMetricsEnabled, "SDC metrics enabled should be set correctly")
 				assert.Equal(t, tt.expectedVolumeMetricsEnabled, config.VolumeMetricsEnabled, "Volume metrics enabled should be set correctly")
 				assert.Equal(t, tt.expectedStoragePoolMetricsEnabled, config.SDCMetricsEnabled, "Storage metrics enabled should be set correctly")
+				assert.Equal(t, tt.expectedPowerflexTopologyMetricsEnabled, config.TopologyMetricsEnabled, "Topology metrics enabled should be set correctly")
 			}
 		})
 	}
@@ -492,6 +510,17 @@ func TestUpdateTickIntervals(t *testing.T) {
 			expectedSdcIO:       30 * time.Second,
 			expectedVolumeIO:    25 * time.Second,
 			expectedStoragePool: 15 * time.Second,
+			expectPanic:         false,
+		},
+		{
+			name:                "Default Values When Empty",
+			sdcIOFreq:           "",
+			volumeIOFreq:        "",
+			storagePoolFreq:     "",
+			topologyMetricFreq:  "",
+			expectedSdcIO:       defaultTickInterval,
+			expectedVolumeIO:    defaultTickInterval,
+			expectedStoragePool: defaultTickInterval,
 			expectPanic:         false,
 		},
 		{
@@ -783,4 +812,169 @@ func TestUpdatePowerFlexConnection(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUpdatePowerFlexConnectionSuccess(t *testing.T) {
+	// Create a fake PowerFlex API server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/login":
+			w.WriteHeader(http.StatusOK)
+			_, _ = fmt.Fprintf(w, `"fake-token"`)
+		case "/api/version":
+			w.WriteHeader(http.StatusOK)
+			_, _ = fmt.Fprintf(w, `"4.0"`)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+
+	// Write a temp config file pointing to the test server
+	tmpFile, err := os.CreateTemp("", "powerflex-config-*.yaml")
+	assert.NoError(t, err)
+	defer func() { _ = os.Remove(tmpFile.Name()) }()
+
+	configContent := fmt.Sprintf("- username: admin\n  password: password\n  systemID: test-system\n  endpoint: %s\n  insecure: true\n", server.URL)
+	_, err = tmpFile.WriteString(configContent)
+	assert.NoError(t, err)
+	_ = tmpFile.Close()
+
+	// Override goscaleioClient to use the real function
+	origClient := goscaleioClient
+	goscaleioClient = func(endpoint string, version string, timeout int64, insecure, useCerts bool, caFilePath string) (*goscaleio.Client, error) {
+		return goscaleio.NewClientWithArgs(endpoint, version, timeout, insecure, useCerts, caFilePath)
+	}
+	defer func() { goscaleioClient = origClient }()
+
+	viper.Reset()
+	viper.Set("provisioner_names", "csi-vxflexos.dellemc.com")
+
+	config := &entrypoint.Config{}
+	sdcFinder := &k8s.SDCFinder{}
+	storageClassFinder := &k8s.StorageClassFinder{}
+	volumeFinder := &k8s.VolumeFinder{}
+	lgr := logrus.New()
+	lgr.ExitFunc = func(int) { panic("fatal") }
+
+	assert.NotPanics(t, func() {
+		updatePowerFlexConnection(
+			tmpFile.Name(),
+			config,
+			sdcFinder,
+			storageClassFinder,
+			volumeFinder,
+			lgr,
+		)
+	})
+
+	assert.Contains(t, config.PowerFlexClient, "test-system")
+	assert.Contains(t, config.PowerFlexConfig, "test-system")
+	assert.Equal(t, 1, len(sdcFinder.StorageSystemID))
+	assert.Equal(t, "test-system", sdcFinder.StorageSystemID[0].ID)
+}
+
+func TestUpdatePowerFlexConnectionClientError(t *testing.T) {
+	// Write a temp config file with valid data
+	tmpFile, err := os.CreateTemp("", "powerflex-config-*.yaml")
+	assert.NoError(t, err)
+	defer func() { _ = os.Remove(tmpFile.Name()) }()
+
+	configContent := "- username: admin\n  password: password\n  systemID: test-system\n  endpoint: http://127.0.0.1\n"
+	_, err = tmpFile.WriteString(configContent)
+	assert.NoError(t, err)
+	_ = tmpFile.Close()
+
+	// Override goscaleioClient to return an error
+	origClient := goscaleioClient
+	goscaleioClient = func(string, string, int64, bool, bool, string) (*goscaleio.Client, error) {
+		return nil, fmt.Errorf("mock client creation error")
+	}
+	defer func() { goscaleioClient = origClient }()
+
+	viper.Reset()
+	viper.Set("provisioner_names", "csi-vxflexos.dellemc.com")
+
+	config := &entrypoint.Config{}
+	sdcFinder := &k8s.SDCFinder{}
+	storageClassFinder := &k8s.StorageClassFinder{}
+	volumeFinder := &k8s.VolumeFinder{}
+	lgr := logrus.New()
+	lgr.ExitFunc = func(int) { panic("fatal") }
+
+	assert.Panics(t, func() {
+		updatePowerFlexConnection(
+			tmpFile.Name(),
+			config,
+			sdcFinder,
+			storageClassFinder,
+			volumeFinder,
+			lgr,
+		)
+	})
+}
+
+func TestUpdateServiceDefault(t *testing.T) {
+	viper.Reset()
+	// Don't set POWERFLEX_MAX_CONCURRENT_QUERIES so the default is used
+	svc := &service.PowerFlexService{}
+	lgr := logrus.New()
+
+	assert.NotPanics(t, func() { updateService(svc, lgr) })
+	assert.Equal(t, service.DefaultMaxPowerFlexConnections, svc.MaxPowerFlexConnections)
+}
+
+func TestUpdatePowerFlexConnectionInsecureFlags(t *testing.T) {
+	// Test the SkipCertificateValidation flag path
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/login":
+			w.WriteHeader(http.StatusOK)
+			_, _ = fmt.Fprintf(w, `"fake-token"`)
+		case "/api/version":
+			w.WriteHeader(http.StatusOK)
+			_, _ = fmt.Fprintf(w, `"4.0"`)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+
+	tmpFile, err := os.CreateTemp("", "powerflex-config-*.yaml")
+	assert.NoError(t, err)
+	defer func() { _ = os.Remove(tmpFile.Name()) }()
+
+	configContent := fmt.Sprintf("- username: admin\n  password: password\n  systemID: test-system\n  endpoint: %s\n  skipCertificateValidation: true\n", server.URL)
+	_, err = tmpFile.WriteString(configContent)
+	assert.NoError(t, err)
+	_ = tmpFile.Close()
+
+	origClient := goscaleioClient
+	goscaleioClient = func(endpoint string, version string, _ int64, insecure, useCerts bool, caFilePath string) (*goscaleio.Client, error) {
+		return goscaleio.NewClientWithArgs(endpoint, version, math.MaxInt64, insecure, useCerts, caFilePath)
+	}
+	defer func() { goscaleioClient = origClient }()
+
+	viper.Reset()
+	viper.Set("provisioner_names", "csi-vxflexos.dellemc.com")
+
+	config := &entrypoint.Config{}
+	sdcFinder := &k8s.SDCFinder{}
+	storageClassFinder := &k8s.StorageClassFinder{}
+	volumeFinder := &k8s.VolumeFinder{}
+	lgr := logrus.New()
+	lgr.ExitFunc = func(int) { panic("fatal") }
+
+	assert.NotPanics(t, func() {
+		updatePowerFlexConnection(
+			tmpFile.Name(),
+			config,
+			sdcFinder,
+			storageClassFinder,
+			volumeFinder,
+			lgr,
+		)
+	})
+
+	assert.Contains(t, config.PowerFlexClient, "test-system")
 }
