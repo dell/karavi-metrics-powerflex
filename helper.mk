@@ -8,7 +8,7 @@ generate:
 	go generate ./...
 
 download-csm-common:
-	git clone --depth 1 git@github.com:CSM/csm.git csm-temp-repo
+	git clone --depth 1 git@github.com:dell/csm.git csm-temp-repo
 	cp csm-temp-repo/config/csm-common.mk .
 	rm -rf csm-temp-repo
 

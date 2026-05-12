@@ -77,11 +77,32 @@ func Test_GetCSINodes(t *testing.T) {
 				},
 			}
 
+			expectedNodes := &v1.CSINodeList{
+				ListMeta: metav1.ListMeta{
+					ResourceVersion: "2",
+				},
+				Items: []v1.CSINode{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "csi-node-1",
+						},
+						Spec: v1.CSINodeSpec{
+							Drivers: []v1.CSINodeDriver{
+								{
+									Name:   "csi-vxflexos.dellemc.com",
+									NodeID: "node-1",
+								},
+							},
+						},
+					},
+				},
+			}
+
 			connect := func(api *k8s.API) error {
-				api.Client = fake.NewSimpleClientset(nodes)
+				api.Client = fake.NewClientset(nodes)
 				return nil
 			}
-			return connect, nil, check(hasNoError, checkExpectedOutput(nodes))
+			return connect, nil, check(hasNoError, checkExpectedOutput(expectedNodes))
 		},
 		"error connecting": func(*testing.T) (connectFn, configFn, []checkFn) {
 			connect := func(_ *k8s.API) error {
@@ -154,11 +175,25 @@ func Test_GetPersistentVolumes(t *testing.T) {
 					},
 				},
 			}
+
+			expectedVolumes := &corev1.PersistentVolumeList{
+				ListMeta: metav1.ListMeta{
+					ResourceVersion: "2",
+				},
+				Items: []corev1.PersistentVolume{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "persistent-volume-name",
+						},
+					},
+				},
+			}
+
 			connect := func(api *k8s.API) error {
-				api.Client = fake.NewSimpleClientset(volumes)
+				api.Client = fake.NewClientset(volumes)
 				return nil
 			}
-			return connect, nil, check(hasNoError, checkExpectedOutput(volumes))
+			return connect, nil, check(hasNoError, checkExpectedOutput(expectedVolumes))
 		},
 		"error connecting": func(*testing.T) (connectFn, configFn, []checkFn) {
 			connect := func(_ *k8s.API) error {
@@ -235,11 +270,28 @@ func Test_GetStorageClasses(t *testing.T) {
 				},
 			}
 
+			expectedStorageClasses := &v1.StorageClassList{
+				ListMeta: metav1.ListMeta{
+					ResourceVersion: "2",
+				},
+				Items: []v1.StorageClass{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "vxflexos",
+						},
+						Provisioner: "csi-vxflexos.dellemc.com",
+						Parameters: map[string]string{
+							"storagepool": "mypool",
+						},
+					},
+				},
+			}
+
 			connect := func(api *k8s.API) error {
-				api.Client = fake.NewSimpleClientset(storageClasses)
+				api.Client = fake.NewClientset(storageClasses)
 				return nil
 			}
-			return connect, nil, check(hasNoError, checkExpectedOutput(storageClasses))
+			return connect, nil, check(hasNoError, checkExpectedOutput(expectedStorageClasses))
 		},
 		"error connecting": func(*testing.T) (connectFn, configFn, []checkFn) {
 			connect := func(_ *k8s.API) error {
@@ -312,11 +364,24 @@ func Test_GetNodes(t *testing.T) {
 				},
 			}
 
+			expectedNodes := &corev1.NodeList{
+				ListMeta: metav1.ListMeta{
+					ResourceVersion: "2",
+				},
+				Items: []corev1.Node{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "node1",
+						},
+					},
+				},
+			}
+
 			connect := func(api *k8s.API) error {
-				api.Client = fake.NewSimpleClientset(nodes)
+				api.Client = fake.NewClientset(nodes)
 				return nil
 			}
-			return connect, nil, check(hasNoError, checkExpectedOutput(nodes))
+			return connect, nil, check(hasNoError, checkExpectedOutput(expectedNodes))
 		},
 		"error connecting": func(*testing.T) (connectFn, configFn, []checkFn) {
 			connect := func(_ *k8s.API) error {

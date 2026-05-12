@@ -177,19 +177,78 @@ func Test_GetSDCStatistics(t *testing.T) {
 				Service: &service,
 			}, nil, ctrl
 		},
-		"error with 1 sdc": func(*testing.T) (setup, []service.SdcMetricsRetriever, *gomock.Controller) {
+		"error with 1 sdc (both APIs fail)": func(*testing.T) (setup, []service.SdcMetricsRetriever, *gomock.Controller) {
 			ctrl := gomock.NewController(t)
 			metrics := mocks.NewMockMetricsRecorder(ctrl)
+			client := mocks.NewMockPowerFlexClient(ctrl)
 
 			sdc1 := mocks.NewMockStatisticsGetter(ctrl)
-			sdc1.EXPECT().GetStatistics().Return(nil, errors.New("error getting statistics")).Times(1)
+			sdc1.EXPECT().GetStatistics().Return(nil, errors.New("Error: problem finding link")).Times(1)
+			client.EXPECT().
+				GetMetrics("sdc", []string{"sdc-id-124"}).
+				Return(nil, errors.New("metrics API error")).
+				Times(1)
 			retrievers := []service.SdcMetricsRetriever{
-				newSdcRetriever(t, ctrl, sdc1, "v1", &sio.Sdc{Sdc: &types.Sdc{
-					SdcIP:   "1.2.3.4",
-					ID:      "sdc-id-124",
-					SdcGUID: "guid-xyz-789",
-				}}),
+				ecRetriever{
+					sdc: &sio.Sdc{Sdc: &types.Sdc{
+						SdcIP:   "1.2.3.4",
+						ID:      "sdc-id-124",
+						SdcGUID: "guid-xyz-789",
+					}},
+					client: client,
+					stats:  sdc1,
+					gen:    "v1",
+				},
 			}
+			svc := service.PowerFlexService{MetricsWrapper: metrics}
+			return setup{Service: &svc}, retrievers, ctrl
+		},
+		"fallback to metrics API (PowerFlex 5.1+)": func(*testing.T) (setup, []service.SdcMetricsRetriever, *gomock.Controller) {
+			ctrl := gomock.NewController(t)
+			metrics := mocks.NewMockMetricsRecorder(ctrl)
+			client := mocks.NewMockPowerFlexClient(ctrl)
+
+			sdcID := "sdc-pflex51-001"
+			sg := mocks.NewMockStatisticsGetter(ctrl)
+			sg.EXPECT().GetStatistics().Return(nil, errors.New("Error: problem finding link")).Times(1)
+
+			client.EXPECT().
+				GetMetrics("sdc", []string{sdcID}).
+				Return(&types.MetricsResponse{
+					Resources: []types.Resource{
+						{
+							ID: sdcID,
+							Metrics: []types.Metric{
+								{Name: "host_read_bandwidth", Values: []float64{1048576}},
+								{Name: "host_write_bandwidth", Values: []float64{2097152}},
+								{Name: "host_read_iops", Values: []float64{123}},
+								{Name: "host_write_iops", Values: []float64{456}},
+								{Name: "avg_host_read_latency", Values: []float64{5000}},
+								{Name: "avg_host_write_latency", Values: []float64{7000}},
+							},
+						},
+					},
+				}, nil).
+				Times(1)
+
+			retrievers := []service.SdcMetricsRetriever{
+				ecRetriever{
+					sdc: &sio.Sdc{Sdc: &types.Sdc{
+						SdcIP:   "10.0.0.1",
+						ID:      sdcID,
+						SdcGUID: "guid-pflex51-001",
+					}},
+					client: client,
+					stats:  sg,
+					gen:    "v1",
+				},
+			}
+
+			metrics.EXPECT().
+				Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Times(1)
+
 			svc := service.PowerFlexService{MetricsWrapper: metrics}
 			return setup{Service: &svc}, retrievers, ctrl
 		},
@@ -2092,4 +2151,306 @@ func Test_GetGenType(t *testing.T) {
 			_, _ = service.GetGenType(nil)
 		})
 	})
+}
+
+func TestMetricsHandlerGetters(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	pfClient := mocks.NewMockPowerFlexClient(ctrl)
+	poolSG := mocks.NewMockStoragePoolStatisticsGetter(ctrl)
+	sdcSG := mocks.NewMockStatisticsGetter(ctrl)
+	sdcObj := &sio.Sdc{Sdc: &types.Sdc{ID: "sdc-001"}}
+
+	tt := []struct {
+		name   string
+		verify func(t *testing.T)
+	}{
+		{
+			name: "StoragePoolMetricsHandler returns correct client",
+			verify: func(t *testing.T) {
+				h := service.StoragePoolMetricsHandler{Client: pfClient, StoragePoolStatisticsGetter: poolSG, GenType: "v2"}
+				assert.Equal(t, pfClient, h.GetClient())
+			},
+		},
+		{
+			name: "StoragePoolMetricsHandler returns correct statistics getter",
+			verify: func(t *testing.T) {
+				h := service.StoragePoolMetricsHandler{Client: pfClient, StoragePoolStatisticsGetter: poolSG, GenType: "v2"}
+				assert.Equal(t, poolSG, h.GetStatisticsGetter())
+			},
+		},
+		{
+			name: "StoragePoolMetricsHandler returns correct gen type",
+			verify: func(t *testing.T) {
+				h := service.StoragePoolMetricsHandler{Client: pfClient, StoragePoolStatisticsGetter: poolSG, GenType: "v2"}
+				assert.Equal(t, "v2", h.GetGen())
+			},
+		},
+		{
+			name: "SdcMetricsHandler returns correct client",
+			verify: func(t *testing.T) {
+				h := service.SdcMetricsHandler{Sdc: sdcObj, StatisticsGetter: sdcSG, GenType: "v1", Client: pfClient}
+				assert.Equal(t, pfClient, h.GetClient())
+			},
+		},
+		{
+			name: "SdcMetricsHandler returns correct sdc",
+			verify: func(t *testing.T) {
+				h := service.SdcMetricsHandler{Sdc: sdcObj, StatisticsGetter: sdcSG, GenType: "v1", Client: pfClient}
+				assert.Equal(t, sdcObj, h.GetSdc())
+			},
+		},
+		{
+			name: "SdcMetricsHandler returns correct statistics getter",
+			verify: func(t *testing.T) {
+				h := service.SdcMetricsHandler{Sdc: sdcObj, StatisticsGetter: sdcSG, GenType: "v1", Client: pfClient}
+				assert.Equal(t, sdcSG, h.GetStatisticsGetter())
+			},
+		},
+		{
+			name: "SdcMetricsHandler returns correct gen type",
+			verify: func(t *testing.T) {
+				h := service.SdcMetricsHandler{Sdc: sdcObj, StatisticsGetter: sdcSG, GenType: "v1", Client: pfClient}
+				assert.Equal(t, "v1", h.GetGen())
+			},
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) { tc.verify(t) })
+	}
+}
+
+func TestNilMetricsWrapper(t *testing.T) {
+	tt := []struct {
+		name string
+		call func(svc *service.PowerFlexService)
+	}{
+		{
+			name: "GetSDCStatistics",
+			call: func(svc *service.PowerFlexService) {
+				svc.GetSDCStatistics(context.Background(), nil, nil)
+			},
+		},
+		{
+			name: "ExportVolumeStatistics",
+			call: func(svc *service.PowerFlexService) {
+				svc.ExportVolumeStatistics(context.Background(), nil, nil)
+			},
+		},
+		{
+			name: "GetStoragePoolStatistics",
+			call: func(svc *service.PowerFlexService) {
+				svc.GetStoragePoolStatistics(context.Background(), nil)
+			},
+		},
+		{
+			name: "ExportTopologyMetrics",
+			call: func(svc *service.PowerFlexService) {
+				svc.ExportTopologyMetrics(context.Background())
+			},
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			svc := &service.PowerFlexService{Logger: logrus.New()}
+			assert.NotPanics(t, func() { tc.call(svc) })
+		})
+	}
+}
+
+func TestExportTopologyMetrics_EdgeCases(t *testing.T) {
+	tt := []struct {
+		name  string
+		setup func(t *testing.T, ctrl *gomock.Controller) *service.PowerFlexService
+	}{
+		{
+			name: "GetPersistentVolumes error",
+			setup: func(_ *testing.T, ctrl *gomock.Controller) *service.PowerFlexService {
+				vf := mocks.NewMockVolumeFinder(ctrl)
+				mr := mocks.NewMockMetricsRecorder(ctrl)
+				vf.EXPECT().GetPersistentVolumes().Return(nil, errors.New("pv error"))
+				return &service.PowerFlexService{VolumeFinder: vf, MetricsWrapper: mr, Logger: logrus.New()}
+			},
+		},
+		{
+			name: "invalid volume handle (single part)",
+			setup: func(_ *testing.T, ctrl *gomock.Controller) *service.PowerFlexService {
+				vf := mocks.NewMockVolumeFinder(ctrl)
+				mr := mocks.NewMockMetricsRecorder(ctrl)
+				vf.EXPECT().GetPersistentVolumes().Return([]k8s.VolumeInfo{
+					{VolumeHandle: "only-one-part"},
+				}, nil)
+				return &service.PowerFlexService{VolumeFinder: vf, MetricsWrapper: mr, Logger: logrus.New()}
+			},
+		},
+		{
+			name: "RecordTopologyMetrics returns error",
+			setup: func(_ *testing.T, ctrl *gomock.Controller) *service.PowerFlexService {
+				vf := mocks.NewMockVolumeFinder(ctrl)
+				mr := mocks.NewMockMetricsRecorder(ctrl)
+				vf.EXPECT().GetPersistentVolumes().Return([]k8s.VolumeInfo{
+					{VolumeHandle: "vol1-sys1", VolumeClaimName: "pvc1", PersistentVolume: "pv1"},
+				}, nil)
+				mr.EXPECT().RecordTopologyMetrics(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("record error"))
+				return &service.PowerFlexService{VolumeFinder: vf, MetricsWrapper: mr, Logger: logrus.New()}
+			},
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			svc := tc.setup(t, ctrl)
+			assert.NotPanics(t, func() { svc.ExportTopologyMetrics(context.Background()) })
+		})
+	}
+}
+
+func TestExportVolumeStatistics_EdgeCases(t *testing.T) {
+	tt := []struct {
+		name  string
+		setup func(t *testing.T, ctrl *gomock.Controller) (*service.PowerFlexService, []*service.VolumeMetaMetrics, service.VolumeFinder)
+	}{
+		{
+			name: "volume not matching any PV",
+			setup: func(_ *testing.T, ctrl *gomock.Controller) (*service.PowerFlexService, []*service.VolumeMetaMetrics, service.VolumeFinder) {
+				mr := mocks.NewMockMetricsRecorder(ctrl)
+				vf := mocks.NewMockVolumeFinder(ctrl)
+				vf.EXPECT().GetPersistentVolumes().Return([]k8s.VolumeInfo{}, nil)
+				mr.EXPECT().Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				svc := &service.PowerFlexService{MetricsWrapper: mr, Logger: logrus.New()}
+				return svc, []*service.VolumeMetaMetrics{{ID: "vol1", Name: "no-match"}}, vf
+			},
+		},
+		{
+			name: "EC volume metrics",
+			setup: func(_ *testing.T, ctrl *gomock.Controller) (*service.PowerFlexService, []*service.VolumeMetaMetrics, service.VolumeFinder) {
+				mr := mocks.NewMockMetricsRecorder(ctrl)
+				vf := mocks.NewMockVolumeFinder(ctrl)
+				vf.EXPECT().GetPersistentVolumes().Return([]k8s.VolumeInfo{
+					{StorageSystemVolumeName: "vol-ec", PersistentVolume: "pv-ec", VolumeClaimName: "pvc-ec"},
+				}, nil)
+				mr.EXPECT().Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				svc := &service.PowerFlexService{MetricsWrapper: mr, Logger: logrus.New()}
+				return svc, []*service.VolumeMetaMetrics{{
+					ID: "vol-ec", Name: "vol-ec", GenType: types.GenTypeEC,
+					HostWriteBandwith: 100, HostReadBandwith: 200,
+					HostReadIOPS: 10, HostWriteIOPS: 20,
+					AvgHostReadLatency: 5, AvgHostWriteLatency: 3,
+				}}, vf
+			},
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			svc, vols, vf := tc.setup(t, ctrl)
+			assert.NotPanics(t, func() { svc.ExportVolumeStatistics(context.Background(), vols, vf) })
+		})
+	}
+}
+
+func TestGetSDCStatistics_EdgeCases(t *testing.T) {
+	tt := []struct {
+		name  string
+		setup func(t *testing.T, ctrl *gomock.Controller) (*service.PowerFlexService, []service.SdcMetricsRetriever)
+	}{
+		{
+			name: "Record returns error",
+			setup: func(t *testing.T, ctrl *gomock.Controller) (*service.PowerFlexService, []service.SdcMetricsRetriever) {
+				mr := mocks.NewMockMetricsRecorder(ctrl)
+				sg := mocks.NewMockStatisticsGetter(ctrl)
+				sg.EXPECT().GetStatistics().Return(&types.SdcStatistics{}, nil).Times(1)
+				mr.EXPECT().Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("record error"))
+				svc := &service.PowerFlexService{MetricsWrapper: mr, Logger: logrus.New()}
+				return svc, []service.SdcMetricsRetriever{
+					newSdcRetriever(t, ctrl, sg, "v1", &sio.Sdc{Sdc: &types.Sdc{SdcIP: "1.2.3.4", ID: "sdc-id-124", SdcGUID: "guid-xyz-789"}}),
+				}
+			},
+		},
+		{
+			name: "EC path empty resources",
+			setup: func(_ *testing.T, ctrl *gomock.Controller) (*service.PowerFlexService, []service.SdcMetricsRetriever) {
+				mr := mocks.NewMockMetricsRecorder(ctrl)
+				pf := mocks.NewMockPowerFlexClient(ctrl)
+				sg := mocks.NewMockStatisticsGetter(ctrl)
+				sdcID := "sdc-ec-empty"
+				pf.EXPECT().GetMetrics("sdc", []string{sdcID}).Return(&types.MetricsResponse{Resources: []types.Resource{}}, nil).Times(1)
+				svc := &service.PowerFlexService{MetricsWrapper: mr, Logger: logrus.New()}
+				return svc, []service.SdcMetricsRetriever{
+					ecRetriever{sdc: &sio.Sdc{Sdc: &types.Sdc{SdcIP: "9.9.9.9", ID: sdcID, SdcGUID: "guid-ec-empty"}}, client: pf, stats: sg, gen: types.GenTypeEC},
+				}
+			},
+		},
+		{
+			name: "fallback path empty resources",
+			setup: func(_ *testing.T, ctrl *gomock.Controller) (*service.PowerFlexService, []service.SdcMetricsRetriever) {
+				mr := mocks.NewMockMetricsRecorder(ctrl)
+				pf := mocks.NewMockPowerFlexClient(ctrl)
+				sg := mocks.NewMockStatisticsGetter(ctrl)
+				sdcID := "sdc-fallback-empty"
+				sg.EXPECT().GetStatistics().Return(nil, errors.New("legacy API removed")).Times(1)
+				pf.EXPECT().GetMetrics("sdc", []string{sdcID}).Return(&types.MetricsResponse{Resources: []types.Resource{}}, nil).Times(1)
+				svc := &service.PowerFlexService{MetricsWrapper: mr, Logger: logrus.New()}
+				return svc, []service.SdcMetricsRetriever{
+					ecRetriever{sdc: &sio.Sdc{Sdc: &types.Sdc{SdcIP: "10.0.0.1", ID: sdcID, SdcGUID: "guid-fallback-empty"}}, client: pf, stats: sg, gen: "v1"},
+				}
+			},
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			svc, retrievers := tc.setup(t, ctrl)
+			assert.NotPanics(t, func() { svc.GetSDCStatistics(context.Background(), nil, retrievers) })
+		})
+	}
+}
+
+func TestGetStoragePoolStatistics_ECEdgeCases(t *testing.T) {
+	tt := []struct {
+		name     string
+		response *types.MetricsResponse
+		respErr  error
+	}{
+		{
+			name:    "GetMetrics returns error",
+			respErr: errors.New("metrics error"),
+		},
+		{
+			name:     "empty resources",
+			response: &types.MetricsResponse{Resources: []types.Resource{}},
+		},
+		{
+			name: "nil metrics slice in resource",
+			response: &types.MetricsResponse{
+				Resources: []types.Resource{{ID: "poolID-ec", Metrics: nil}},
+			},
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mr := mocks.NewMockMetricsRecorder(ctrl)
+			pf := mocks.NewMockPowerFlexClient(ctrl)
+			sp := mocks.NewMockStoragePoolStatisticsGetter(ctrl)
+
+			pf.EXPECT().GetMetrics("storage_pool", []string{"poolID-ec"}).Return(tc.response, tc.respErr).Times(1)
+
+			scMetas := []service.StorageClassMeta{{
+				ID: "123", Name: "class-ec", Driver: "driver", StorageSystemID: "system-ec",
+				StoragePools: map[string]service.StoragePoolMetricsRetriever{
+					"poolID-ec": ecPoolRetriever{client: pf, stats: sp, gen: types.GenTypeEC},
+				},
+			}}
+
+			svc := &service.PowerFlexService{MetricsWrapper: mr, Logger: logrus.New()}
+			assert.NotPanics(t, func() { svc.GetStoragePoolStatistics(context.Background(), scMetas) })
+		})
+	}
 }
