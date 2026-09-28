@@ -23,8 +23,6 @@ import (
 
 	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 	"github.com/dell/karavi-metrics-powerflex/internal/k8s/mocks"
-	"github.com/sirupsen/logrus"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -463,7 +461,7 @@ func Test_K8sPersistentVolumeFinder(t *testing.T) {
 			ids := make([]k8s.StorageSystemID, 1)
 			ids[0] = k8s.StorageSystemID{ID: "storagesystemid1", DriverNames: []string{"csi-vxflexos.dellemc.com"}}
 
-			finder := k8s.VolumeFinder{API: api, StorageSystemID: ids, Logger: logrus.New()}
+			finder := k8s.VolumeFinder{API: api, StorageSystemID: ids}
 			return finder, check(hasNoError, checkExpectedOutput([]k8s.VolumeInfo{
 				{
 					Namespace:               "namespace-1",

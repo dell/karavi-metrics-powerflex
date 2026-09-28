@@ -18,14 +18,15 @@ package entrypoint
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"runtime"
 	"time"
 
+	"github.com/dell/csmlog"
 	pflexServices "github.com/dell/karavi-metrics-powerflex/internal/service"
 	otlexporters "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters"
-	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"google.golang.org/grpc/credentials"
 
@@ -72,8 +73,17 @@ type Config struct {
 	StoragePoolMetricsEnabled   bool
 	CollectorAddress            string
 	CollectorCertPath           string
-	Logger                      *logrus.Logger
 	TopologyMetricsEnabled      bool
+}
+
+var errOTELExportFailed = errors.New("OTEL export failed")
+
+func snapshotPowerFlexSystemIDs(config map[string]sio.ConfigConnect) []string {
+	systemIDs := make([]string, 0, len(config))
+	for systemID := range config {
+		systemIDs = append(systemIDs, systemID)
+	}
+	return systemIDs
 }
 
 // Run is the entry point for starting the service
@@ -82,8 +92,6 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 	if err != nil {
 		return err
 	}
-	logger := config.Logger
-
 	errCh := make(chan error, 1)
 	go func() {
 		powerflexEndpoint := os.Getenv("POWERFLEX_METRICS_ENDPOINT")
@@ -112,12 +120,23 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 			options = append(options, otlpmetricgrpc.WithInsecure())
 		}
 
+		// Set up export failure callback to track OTEL export failures
+		if otlExporter, ok := exporter.(*otlexporters.OtlCollectorExporter); ok {
+			systemIDs := snapshotPowerFlexSystemIDs(config.PowerFlexConfig)
+			otlExporter.SetExportFailureRecorder(func() {
+				// Record export failure in observability metrics
+				for _, systemID := range systemIDs {
+					pflexSvc.RecordObsMetrics(systemID, 0, true, errOTELExportFailed)
+				}
+			})
+		}
+
 		errCh <- exporter.InitExporter(options...)
 	}()
 
 	defer func() {
 		if err := exporter.StopExporter(); err != nil {
-			logger.WithError(err).Error("failed to stop exporter")
+			csmlog.WithContext(ctx).Errorf("Failed to stop exporter: %v", err)
 		}
 	}()
 
@@ -136,113 +155,131 @@ func Run(ctx context.Context, config *Config, exporter otlexporters.Otlexporter,
 		select {
 		case <-sdcTicker.C:
 			if !config.LeaderElector.IsLeader() {
-				logger.Info("not leader pod to collect metrics")
+				csmlog.WithContext(ctx).Info("Not a leader. Only the leader pod can collect metrics")
 				continue
 			}
 			if !config.SDCMetricsEnabled {
-				logger.Info("powerflex SDC metrics collection is disabled")
+				csmlog.WithContext(ctx).Info("PowerFlex SDC metrics collection is disabled")
 				continue
 			}
 
-			logger.WithField("number of PowerFlexClient", len(config.PowerFlexClient)).Debug("PowerFlexClient")
+			csmlog.WithContext(ctx).WithFields(csmlog.Fields{"powerflex_client_count": len(config.PowerFlexClient)}).Debug("Starting PowerFlex SDC metrics collection")
 
 			for key, client := range config.PowerFlexClient {
-				logger.WithField("storage system id", key).Debug("storage system id")
+				start := time.Now()
+				csmlog.WithContext(ctx).WithFields(csmlog.Fields{"storage_system_id": key}).Debug("Collecting SDC metrics for storage system")
 				sioConfig, ok := config.PowerFlexConfig[key]
 				if !ok {
-					logger.WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
+					csmlog.WithContext(ctx).WithFields(csmlog.Fields{"storage_system_id": key}).Error("No configuration found for storage system")
+					pflexSvc.RecordObsMetrics(key, time.Since(start), false, nil)
 					continue
 				}
 
 				sdcs, err := pflexSvc.GetSDCs(ctx, client, config.SDCFinder)
 				if err != nil {
-					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("getting SDCs")
+					csmlog.WithContext(ctx).WithFields(csmlog.Fields{"error": err, "endpoint": sioConfig.Endpoint}).Error("Failed to get SDCs")
+					pflexSvc.RecordObsMetrics(key, time.Since(start), false, nil)
 					continue
 				}
 
 				nodes, err := config.NodeFinder.GetNodes()
 				if err != nil {
-					logger.WithError(err).Error("getting kubernetes nodes")
+					csmlog.WithContext(ctx).WithFields(csmlog.Fields{"error": err}).Error("Failed to get Kubernetes nodes")
+					pflexSvc.RecordObsMetrics(key, time.Since(start), false, nil)
 					continue
 				}
 
 				pflexSvc.GetSDCStatistics(ctx, nodes, sdcs)
+				pflexSvc.RecordObsMetrics(key, time.Since(start), true, nil)
 			}
 
 		case <-volumeTicker.C:
 			if !config.LeaderElector.IsLeader() {
-				logger.Info("not leader pod to collect metrics")
+				csmlog.WithContext(ctx).Info("Not a leader. Only the leader pod can collect metrics")
 				continue
 			}
 			if !config.VolumeMetricsEnabled {
-				logger.Info("powerflex volume metrics collection is disabled")
+				csmlog.WithContext(ctx).Info("PowerFlex volume metrics collection is disabled")
 				continue
 			}
 
-			logger.WithField("number of PowerFlexClient", len(config.PowerFlexClient)).Debug("PowerFlexClient")
+			csmlog.WithContext(ctx).WithFields(csmlog.Fields{"powerflex_client_count": len(config.PowerFlexClient)}).Debug("Starting PowerFlex volume metrics collection")
 
 			for key, client := range config.PowerFlexClient {
-				logger.WithField("storage system id", key).Debug("storage system id")
+				start := time.Now()
+				csmlog.WithContext(ctx).WithFields(csmlog.Fields{"storage_system_id": key}).Debug("Collecting volume metrics for storage system")
 				sioConfig, ok := config.PowerFlexConfig[key]
 				if !ok {
-					logger.WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
+					csmlog.WithContext(ctx).WithFields(csmlog.Fields{"storage_system_id": key}).Error("No configuration found for storage system")
+					pflexSvc.RecordObsMetrics(key, time.Since(start), false, nil)
 					continue
 				}
 				sdcs, err := pflexSvc.GetSDCs(ctx, client, config.SDCFinder)
 				if err != nil {
-					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("getting SDCs")
+					csmlog.WithContext(ctx).WithFields(csmlog.Fields{"error": err, "endpoint": sioConfig.Endpoint}).Error("Failed to get SDCs")
+					pflexSvc.RecordObsMetrics(key, time.Since(start), false, nil)
 					continue
 				}
 
 				volumes, err := pflexSvc.GetVolumes(ctx, client, sdcs)
 				if err != nil {
-					logger.WithError(err).Error("getting volumes")
+					csmlog.WithContext(ctx).WithFields(csmlog.Fields{"error": err}).Error("Failed to get volumes")
+					pflexSvc.RecordObsMetrics(key, time.Since(start), false, nil)
 					continue
 				}
-				pflexSvc.ExportVolumeStatistics(ctx, volumes, config.VolumeFinder)
+				exportErr := pflexSvc.ExportVolumeStatistics(ctx, volumes, config.VolumeFinder)
+				pflexSvc.RecordObsMetrics(key, time.Since(start), true, exportErr)
 			}
 
 		case <-storagePoolTicker.C:
 			if !config.LeaderElector.IsLeader() {
-				logger.Info("not leader pod to collect metrics")
+				csmlog.WithContext(ctx).Info("Not a leader. Only the leader pod can collect metrics")
 				continue
 			}
 			if !config.StoragePoolMetricsEnabled {
-				logger.Info("powerflex storage pool metrics collection is disabled")
+				csmlog.WithContext(ctx).Info("PowerFlex storage pool metrics collection is disabled")
 				continue
 			}
 
-			logger.WithField("number of PowerFlexClient", len(config.PowerFlexClient)).Debug("PowerFlexClient")
+			csmlog.WithContext(ctx).WithFields(csmlog.Fields{"powerflex_client_count": len(config.PowerFlexClient)}).Debug("Starting PowerFlex storage pool metrics collection")
 
 			for key, client := range config.PowerFlexClient {
-				logger.WithField("storage system id", key).Debug("storage system id")
+				start := time.Now()
+				csmlog.WithContext(ctx).WithFields(csmlog.Fields{"storage_system_id": key}).Debug("Collecting storage pool metrics for storage system")
 
 				sioConfig, ok := config.PowerFlexConfig[key]
 				if !ok {
-					logger.WithField("storage_system_id", key).Error("no configuration found for storage_system_id")
+					csmlog.WithContext(ctx).WithFields(csmlog.Fields{"storage_system_id": key}).Error("No configuration found for storage system")
+					pflexSvc.RecordObsMetrics(key, time.Since(start), false, nil)
 					continue
 				}
 
 				storageClassMetas, err := pflexSvc.GetStorageClasses(ctx, client, config.StorageClassFinder)
 				if err != nil {
-					logger.WithError(err).WithField("endpoint", sioConfig.Endpoint).Error("getting storage class and storage pool information")
+					csmlog.WithContext(ctx).WithFields(csmlog.Fields{"error": err, "endpoint": sioConfig.Endpoint}).Error("Failed to get storage class and storage pool information")
+					pflexSvc.RecordObsMetrics(key, time.Since(start), false, nil)
 					continue
 				}
 
-				logger.WithField("storageClassMetas", storageClassMetas).Debug("storageClassMetas")
+				csmlog.WithContext(ctx).WithFields(csmlog.Fields{"storage_class_meta_count": len(storageClassMetas)}).Debug("Resolved storage classes for storage pool metrics collection")
 				pflexSvc.GetStoragePoolStatistics(ctx, storageClassMetas)
+				pflexSvc.RecordObsMetrics(key, time.Since(start), true, nil)
 			}
 
 		case <-topologyMetricsTicker.C:
 			if !config.LeaderElector.IsLeader() {
-				logger.Info("not leader pod to collect metrics")
+				csmlog.WithContext(ctx).Info("Not a leader. Only the leader pod can collect metrics")
 				continue
 			}
 			if !config.TopologyMetricsEnabled {
-				logger.Info("powerflex topology metrics collection is disabled")
+				csmlog.WithContext(ctx).Info("PowerFlex topology metrics collection is disabled")
 				continue
 			}
+			start := time.Now()
 			pflexSvc.ExportTopologyMetrics(ctx)
+			for key := range config.PowerFlexClient {
+				pflexSvc.RecordObsMetrics(key, time.Since(start), true, nil)
+			}
 
 		case err := <-errCh:
 			if err == nil {

@@ -115,3 +115,18 @@ func (mr *MockPowerFlexClientMockRecorder) GetStoragePool(href any) *gomock.Call
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStoragePool", reflect.TypeOf((*MockPowerFlexClient)(nil).GetStoragePool), href)
 }
+
+// QuerySelectedVolumeStatistics mocks base method.
+func (m *MockPowerFlexClient) QuerySelectedVolumeStatistics(ids []string, properties []string) (map[string]v1.VolumeStatistics, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QuerySelectedVolumeStatistics", ids, properties)
+	ret0, _ := ret[0].(map[string]v1.VolumeStatistics)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QuerySelectedVolumeStatistics indicates an expected call of QuerySelectedVolumeStatistics.
+func (mr *MockPowerFlexClientMockRecorder) QuerySelectedVolumeStatistics(ids, properties any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QuerySelectedVolumeStatistics", reflect.TypeOf((*MockPowerFlexClient)(nil).QuerySelectedVolumeStatistics), ids, properties)
+}

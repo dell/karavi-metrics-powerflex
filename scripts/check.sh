@@ -33,7 +33,7 @@ fmt_count() {
 }
 
 fmt() {
-    gofmt -d ${CHECK_DIRS//...} | tee $FMT_TMPFILE
+    gofumpt -d ${CHECK_DIRS//...} | tee $FMT_TMPFILE
     cat $FMT_TMPFILE | wc -l > $FMT_COUNT_TMPFILE
     if [ ! `cat $FMT_COUNT_TMPFILE` -eq "0" ]; then
         echo Found `cat $FMT_COUNT_TMPFILE` formatting issue\(s\).

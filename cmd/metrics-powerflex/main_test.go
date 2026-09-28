@@ -22,18 +22,172 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/dell/csmlog"
 	"github.com/dell/goscaleio"
 	"github.com/dell/karavi-metrics-powerflex/internal/entrypoint"
 	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 	"github.com/dell/karavi-metrics-powerflex/internal/service"
 	otlexporters "github.com/dell/karavi-metrics-powerflex/opentelemetry/exporters"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
+
+func assertFatalPath(t *testing.T, scenario, want string) {
+	t.Helper()
+	cmd := exec.Command("/proc/self/exe", "-test.run=TestFatalPathHelper")
+	cmd.Env = append(os.Environ(), "TEST_FATAL_PATH=1", "TEST_FATAL_CASE="+scenario)
+	output, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Fatalf("expected fatal exit for %s", scenario)
+	}
+	if !strings.Contains(string(output), want) {
+		t.Fatalf("expected output for %s to contain %q, got %s", scenario, want, string(output))
+	}
+}
+
+func TestFatalPathHelper(t *testing.T) {
+	if os.Getenv("TEST_FATAL_PATH") != "1" {
+		return
+	}
+	scenario := os.Getenv("TEST_FATAL_CASE")
+	switch scenario {
+	case "onChangeUpdate/Empty Address":
+		viper.Reset()
+		svc := &service.PowerFlexService{}
+		sdcFinder := &k8s.SDCFinder{API: &k8s.API{}}
+		storageClassFinder := &k8s.StorageClassFinder{API: &k8s.API{}}
+		volumeFinder := &k8s.VolumeFinder{API: &k8s.API{}}
+		config := &entrypoint.Config{}
+		exporter := &otlexporters.OtlCollectorExporter{}
+		onChangeUpdate(svc, config, sdcFinder, exporter, storageClassFinder, volumeFinder)
+	case "updateCollectorAddress/Empty Address":
+		viper.Reset()
+		viper.Set("COLLECTOR_ADDR", "")
+		updateCollectorAddress(&entrypoint.Config{}, &otlexporters.OtlCollectorExporter{})
+	case "updateMetricsEnabled/sdcMetricsEnabled error":
+		viper.Reset()
+		viper.Set("POWERFLEX_SDC_METRICS_ENABLED", "test")
+		viper.Set("POWERFLEX_VOLUME_METRICS_ENABLED", "true")
+		viper.Set("POWERFLEX_STORAGE_POOL_METRICS_ENABLED", "true")
+		viper.Set("POWERFLEX_TOPOLOGY_METRICS_ENABLED", "true")
+		updateMetricsEnabled(&entrypoint.Config{})
+	case "updateMetricsEnabled/volumeMetricsEnabled error":
+		viper.Reset()
+		viper.Set("POWERFLEX_SDC_METRICS_ENABLED", "true")
+		viper.Set("POWERFLEX_VOLUME_METRICS_ENABLED", "test")
+		viper.Set("POWERFLEX_STORAGE_POOL_METRICS_ENABLED", "true")
+		viper.Set("POWERFLEX_TOPOLOGY_METRICS_ENABLED", "true")
+		updateMetricsEnabled(&entrypoint.Config{})
+	case "updateMetricsEnabled/storagePoolMetricsEnabled error":
+		viper.Reset()
+		viper.Set("POWERFLEX_SDC_METRICS_ENABLED", "true")
+		viper.Set("POWERFLEX_VOLUME_METRICS_ENABLED", "true")
+		viper.Set("POWERFLEX_STORAGE_POOL_METRICS_ENABLED", "test")
+		viper.Set("POWERFLEX_TOPOLOGY_METRICS_ENABLED", "true")
+		updateMetricsEnabled(&entrypoint.Config{})
+	case "updateProvisionerNames/Empty Provisioners":
+		viper.Reset()
+		viper.Set("provisioner_names", "")
+		sdcFinder := &k8s.SDCFinder{StorageSystemID: []k8s.StorageSystemID{{ID: "system-id"}}}
+		storageClassFinder := &k8s.StorageClassFinder{StorageSystemID: []k8s.StorageSystemID{{ID: "system-id"}}}
+		volumeFinder := &k8s.VolumeFinder{StorageSystemID: []k8s.StorageSystemID{{ID: "system-id"}}}
+		updateProvisionerNames(sdcFinder, storageClassFinder, volumeFinder)
+	case "updateTickIntervals/Invalid SDC IO":
+		viper.Reset()
+		viper.Set("POWERFLEX_SDC_IO_POLL_FREQUENCY", "invalid")
+		viper.Set("POWERFLEX_VOLUME_IO_POLL_FREQUENCY", "25")
+		viper.Set("POWERFLEX_STORAGE_POOL_POLL_FREQUENCY", "15")
+		viper.Set("POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY", "invalid")
+		updateTickIntervals(&entrypoint.Config{})
+	case "updateTickIntervals/Invalid Volume IO":
+		viper.Reset()
+		viper.Set("POWERFLEX_SDC_IO_POLL_FREQUENCY", "30")
+		viper.Set("POWERFLEX_VOLUME_IO_POLL_FREQUENCY", "invalid")
+		viper.Set("POWERFLEX_STORAGE_POOL_POLL_FREQUENCY", "15")
+		viper.Set("POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY", "invalid")
+		updateTickIntervals(&entrypoint.Config{})
+	case "updateTickIntervals/Invalid Storage Pool":
+		viper.Reset()
+		viper.Set("POWERFLEX_SDC_IO_POLL_FREQUENCY", "30")
+		viper.Set("POWERFLEX_VOLUME_IO_POLL_FREQUENCY", "10")
+		viper.Set("POWERFLEX_STORAGE_POOL_POLL_FREQUENCY", "invalid")
+		viper.Set("POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY", "invalid")
+		updateTickIntervals(&entrypoint.Config{})
+	case "updateTickIntervals/Negative SDC IO":
+		viper.Reset()
+		viper.Set("POWERFLEX_SDC_IO_POLL_FREQUENCY", "-1")
+		viper.Set("POWERFLEX_VOLUME_IO_POLL_FREQUENCY", "25")
+		viper.Set("POWERFLEX_STORAGE_POOL_POLL_FREQUENCY", "15")
+		viper.Set("POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY", "invalid")
+		updateTickIntervals(&entrypoint.Config{})
+	case "updateTickIntervals/Negative Volume IO":
+		viper.Reset()
+		viper.Set("POWERFLEX_SDC_IO_POLL_FREQUENCY", "30")
+		viper.Set("POWERFLEX_VOLUME_IO_POLL_FREQUENCY", "-1")
+		viper.Set("POWERFLEX_STORAGE_POOL_POLL_FREQUENCY", "15")
+		updateTickIntervals(&entrypoint.Config{})
+	case "updateTickIntervals/Negative Storage Pool":
+		viper.Reset()
+		viper.Set("POWERFLEX_SDC_IO_POLL_FREQUENCY", "30")
+		viper.Set("POWERFLEX_VOLUME_IO_POLL_FREQUENCY", "25")
+		viper.Set("POWERFLEX_STORAGE_POOL_POLL_FREQUENCY", "-1")
+		updateTickIntervals(&entrypoint.Config{})
+	case "updateService/Invalid Value":
+		viper.Reset()
+		viper.Set("POWERFLEX_MAX_CONCURRENT_QUERIES", "invalid")
+		updateService(&service.PowerFlexService{})
+	case "updateService/Null Value":
+		viper.Reset()
+		viper.Set("POWERFLEX_MAX_CONCURRENT_QUERIES", "0")
+		updateService(&service.PowerFlexService{})
+	case "updatePowerFlexConnection/Config Reader Error":
+		viper.Reset()
+		updatePowerFlexConnection("testdata/not-exist.yaml", &entrypoint.Config{}, &k8s.SDCFinder{}, &k8s.StorageClassFinder{}, &k8s.VolumeFinder{})
+	case "updatePowerFlexConnection/Empty Endpoint Error":
+		viper.Reset()
+		updatePowerFlexConnection("testdata/invalid-endpoint-config.yaml", &entrypoint.Config{}, &k8s.SDCFinder{}, &k8s.StorageClassFinder{}, &k8s.VolumeFinder{})
+	case "updatePowerFlexConnection/Empty Password Error":
+		viper.Reset()
+		updatePowerFlexConnection("testdata/invalid-password-config.yaml", &entrypoint.Config{}, &k8s.SDCFinder{}, &k8s.StorageClassFinder{}, &k8s.VolumeFinder{})
+	case "updatePowerFlexConnection/Empty System ID Error":
+		viper.Reset()
+		updatePowerFlexConnection("testdata/invalid-systemid-config.yaml", &entrypoint.Config{}, &k8s.SDCFinder{}, &k8s.StorageClassFinder{}, &k8s.VolumeFinder{})
+	case "updatePowerFlexConnection/Empty Username Error":
+		viper.Reset()
+		updatePowerFlexConnection("testdata/invalid-username-config.yaml", &entrypoint.Config{}, &k8s.SDCFinder{}, &k8s.StorageClassFinder{}, &k8s.VolumeFinder{})
+	case "updatePowerFlexConnection/Authentication Error":
+		viper.Reset()
+		viper.Set("provisioner_names", "csi-vxflexos.dellemc.com")
+		updatePowerFlexConnection("testdata/config.yaml", &entrypoint.Config{}, &k8s.SDCFinder{}, &k8s.StorageClassFinder{}, &k8s.VolumeFinder{})
+	case "updatePowerFlexConnection/Client Error":
+		tmpFile, err := os.CreateTemp("", "powerflex-config-*.yaml")
+		if err != nil {
+			t.Fatalf("failed to create temp file: %v", err)
+		}
+		defer func() { _ = os.Remove(tmpFile.Name()) }()
+		_, err = tmpFile.WriteString("- username: admin\n  password: password\n  systemID: test-system\n  endpoint: http://127.0.0.1\n")
+		if err != nil {
+			t.Fatalf("failed to write temp file: %v", err)
+		}
+		_ = tmpFile.Close()
+		origClient := goscaleioClient
+		goscaleioClient = func(string, string, int64, bool, bool, string) (*goscaleio.Client, error) {
+			return nil, fmt.Errorf("mock client creation error")
+		}
+		defer func() { goscaleioClient = origClient }()
+		viper.Reset()
+		viper.Set("provisioner_names", "csi-vxflexos.dellemc.com")
+		updatePowerFlexConnection(tmpFile.Name(), &entrypoint.Config{}, &k8s.SDCFinder{}, &k8s.StorageClassFinder{}, &k8s.VolumeFinder{})
+	default:
+		t.Fatalf("unknown fatal scenario %q", scenario)
+	}
+	t.Fatalf("scenario %q did not exit fatally", scenario)
+}
 
 func TestInitializeComponents(t *testing.T) {
 	tests := []struct {
@@ -56,9 +210,7 @@ func TestInitializeComponents(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			viper.Reset()
 			viper.Set("provisioner_names", tt.provisioners)
-			logger := logrus.New()
-			sdcFinder, storageClassFinder, _, volumeFinder, _, _ := initializeComponents(logger)
-			// assert.NotPanics(t, func() { updateProvisionerNames(sdcFinder, storageClassFinder, volumeFinder, logger) })
+			sdcFinder, storageClassFinder, _, volumeFinder, _, _ := initializeComponents()
 			for _, StorageSystemID := range sdcFinder.StorageSystemID {
 				assert.Equal(t, tt.expected, StorageSystemID.DriverNames)
 			}
@@ -86,14 +238,10 @@ func TestSetupLogger(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			viper.Set("LOG_LEVEL", tt.logLevel)
 
-			logger := setupLogger()
-
-			// Test if logger is setup correctly and if any error occurs.
-			if tt.wantErr {
-				assert.Equal(t, logrus.InfoLevel, logger.Level)
-			} else {
-				assert.NotNil(t, logger)
-			}
+			assert.NotPanics(t, func() {
+				loadConfig()
+				setLoggingSettings()
+			})
 		})
 	}
 }
@@ -117,8 +265,7 @@ func TestLoadConfig(t *testing.T) {
 			}
 
 			// Call loadConfig
-			logger := logrus.New()
-			loadConfig(logger) // This will just load the config
+			loadConfig() // This will just load the config
 			// No error handling needed because loadConfig doesn't return error; it just prints it
 		})
 	}
@@ -170,7 +317,6 @@ func TestGetCollectorCertPath(t *testing.T) {
 
 func TestSetupPowerFlexService(t *testing.T) {
 	// Setup
-	logger := logrus.New()
 	sdcFinder := &k8s.SDCFinder{
 		API: &k8s.API{},
 	}
@@ -181,17 +327,16 @@ func TestSetupPowerFlexService(t *testing.T) {
 		API: &k8s.LeaderElector{},
 	}
 	volumeFinder := &k8s.VolumeFinder{
-		API:    &k8s.API{},
-		Logger: logger,
+		API: &k8s.API{},
 	}
 	nodeFinder := &k8s.NodeFinder{
 		API: &k8s.API{},
 	}
 
 	// Run
-	config := setupConfig(sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder, logger)
+	config := setupConfig(sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder)
 	exporter := &otlexporters.OtlCollectorExporter{}
-	powerflexSvc := setupPowerFlexService(logger, volumeFinder)
+	powerflexSvc := setupPowerFlexService(volumeFinder)
 
 	// Verify
 	assert.NotNil(t, config, "Expected valid config")
@@ -213,8 +358,6 @@ func TestOnChangeUpdate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			viper.Reset()
-			logger := logrus.New()
-			logger.ExitFunc = func(int) { panic("fatal") }
 			svc := &service.PowerFlexService{}
 			sdcFinder := &k8s.SDCFinder{
 				API: &k8s.API{},
@@ -223,13 +366,18 @@ func TestOnChangeUpdate(t *testing.T) {
 				API: &k8s.API{},
 			}
 			volumeFinder := &k8s.VolumeFinder{
-				API:    &k8s.API{},
-				Logger: logger,
+				API: &k8s.API{},
 			}
-			config := &entrypoint.Config{Logger: logger}
+			config := &entrypoint.Config{}
 			exporter := &otlexporters.OtlCollectorExporter{}
+			_ = svc
+			_ = sdcFinder
+			_ = storageClassFinder
+			_ = volumeFinder
+			_ = config
+			_ = exporter
 			if tt.expectPanic {
-				assert.Panics(t, func() { onChangeUpdate(svc, config, sdcFinder, exporter, storageClassFinder, volumeFinder, logger) })
+				assertFatalPath(t, "onChangeUpdate/"+tt.name, "COLLECTOR_ADDR is required")
 			}
 		})
 	}
@@ -245,7 +393,6 @@ func TestSetupConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			logger := logrus.New()
 			sdcFinder := &k8s.SDCFinder{
 				API: &k8s.API{},
 			}
@@ -256,13 +403,12 @@ func TestSetupConfig(t *testing.T) {
 				API: &k8s.LeaderElector{},
 			}
 			volumeFinder := &k8s.VolumeFinder{
-				API:    &k8s.API{},
-				Logger: logger,
+				API: &k8s.API{},
 			}
 			nodeFinder := &k8s.NodeFinder{
 				API: &k8s.API{},
 			}
-			config := setupConfig(sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder, logger)
+			config := setupConfig(sdcFinder, storageClassFinder, leaderElectorGetter, volumeFinder, nodeFinder)
 			assert.NotNil(t, config, "Expected valid config")
 		})
 	}
@@ -291,15 +437,13 @@ func TestUpdateCollectorAddress(t *testing.T) {
 			viper.Reset()
 			viper.Set("COLLECTOR_ADDR", tt.addr)
 
-			logger := logrus.New()
-			logger.ExitFunc = func(int) { panic("fatal") }
-			config := &entrypoint.Config{Logger: logger}
+			config := &entrypoint.Config{}
 			exporter := &otlexporters.OtlCollectorExporter{}
 
 			if tt.expectPanic {
-				assert.Panics(t, func() { updateCollectorAddress(config, exporter, logger) })
+				assertFatalPath(t, "updateCollectorAddress/"+tt.name, "COLLECTOR_ADDR is required")
 			} else {
-				assert.NotPanics(t, func() { updateCollectorAddress(config, exporter, logger) })
+				assert.NotPanics(t, func() { updateCollectorAddress(config, exporter) })
 				assert.Equal(t, tt.addr, config.CollectorAddress)
 				assert.Equal(t, tt.addr, exporter.CollectorAddr)
 			}
@@ -400,10 +544,16 @@ func TestUpdateMetricsEnabled(t *testing.T) {
 			viper.Set("POWERFLEX_VOLUME_METRICS_ENABLED", tt.volumeMetricsEnabled)
 			viper.Set("POWERFLEX_STORAGE_POOL_METRICS_ENABLED", tt.storagePoolMetricsEnabled)
 			viper.Set("POWERFLEX_TOPOLOGY_METRICS_ENABLED", tt.powerflexTopologyMetricsEnabled)
-			logger := logrus.New()
-			config := &entrypoint.Config{Logger: logger}
+			config := &entrypoint.Config{}
 			if tt.expectPanic {
-				assert.Panics(t, func() { updateMetricsEnabled(config) })
+				want := "Invalid POWERFLEX_SDC_METRICS_ENABLED value. Valid values are true or false"
+				if tt.name == "volumeMetricsEnabled error" {
+					want = "Invalid POWERFLEX_VOLUME_METRICS_ENABLED value. Valid values are true or false"
+				}
+				if tt.name == "storagePoolMetricsEnabled error" {
+					want = "Invalid POWERFLEX_STORAGE_POOL_METRICS_ENABLED value. Valid values are true or false"
+				}
+				assertFatalPath(t, "updateMetricsEnabled/"+tt.name, want)
 			} else {
 				assert.NotPanics(t, func() { updateMetricsEnabled(config) })
 				assert.Equal(t, tt.expectedSdcMetricsEnabled, config.SDCMetricsEnabled, "SDC metrics enabled should be set correctly")
@@ -468,13 +618,11 @@ func TestUpdateProvisionerNames(t *testing.T) {
 					},
 				},
 			}
-			logger := logrus.New()
-			logger.ExitFunc = func(int) { panic("fatal") }
 
 			if tt.expectPanic {
-				assert.Panics(t, func() { updateProvisionerNames(sdcFinder, storageClassFinder, volumeFinder, logger) })
+				assertFatalPath(t, "updateProvisionerNames/"+tt.name, "PROVISIONER_NAMES is required")
 			} else {
-				assert.NotPanics(t, func() { updateProvisionerNames(sdcFinder, storageClassFinder, volumeFinder, logger) })
+				assert.NotPanics(t, func() { updateProvisionerNames(sdcFinder, storageClassFinder, volumeFinder) })
 				for _, StorageSystemID := range sdcFinder.StorageSystemID {
 					assert.Equal(t, tt.expected, StorageSystemID.DriverNames)
 				}
@@ -598,13 +746,27 @@ func TestUpdateTickIntervals(t *testing.T) {
 			viper.Set("POWERFLEX_TOPOLOGY_METRICS_POLL_FREQUENCY", tt.topologyMetricFreq)
 
 			config := &entrypoint.Config{}
-			logger := logrus.New()
-			logger.ExitFunc = func(int) { panic("fatal") }
 
 			if tt.expectPanic {
-				assert.Panics(t, func() { updateTickIntervals(config, logger) })
+				want := "Invalid POWERFLEX_SDC_IO_POLL_FREQUENCY. Specify a valid number"
+				if tt.name == "Invalid Volume IO" {
+					want = "Invalid POWERFLEX_VOLUME_IO_POLL_FREQUENCY. Specify a valid number"
+				}
+				if tt.name == "Invalid Storage Pool" {
+					want = "Invalid POWERFLEX_STORAGE_POOL_POLL_FREQUENCY. Specify a valid number"
+				}
+				if tt.name == "Negative SDC IO" {
+					want = "Invalid POWERFLEX_SDC_IO_POLL_FREQUENCY value. Must be greater than 0"
+				}
+				if tt.name == "Negative Volume IO" {
+					want = "Invalid POWERFLEX_VOLUME_IO_POLL_FREQUENCY value. Must be greater than 0"
+				}
+				if tt.name == "Negative Storage Pool" {
+					want = "Invalid POWERFLEX_STORAGE_POOL_POLL_FREQUENCY value. Must be greater than 0"
+				}
+				assertFatalPath(t, "updateTickIntervals/"+tt.name, want)
 			} else {
-				assert.NotPanics(t, func() { updateTickIntervals(config, logger) })
+				assert.NotPanics(t, func() { updateTickIntervals(config) })
 				assert.Equal(t, tt.expectedSdcIO, config.SDCTickInterval)
 				assert.Equal(t, tt.expectedVolumeIO, config.VolumeTickInterval)
 				assert.Equal(t, tt.expectedStoragePool, config.StoragePoolTickInterval)
@@ -646,12 +808,14 @@ func TestUpdateService(t *testing.T) {
 			viper.Set("POWERFLEX_MAX_CONCURRENT_QUERIES", tt.maxConcurrent)
 
 			svc := &service.PowerFlexService{}
-			logger := logrus.New()
-			logger.ExitFunc = func(int) { panic("fatal") }
 			if tt.expectPanic {
-				assert.Panics(t, func() { updateService(svc, logger) })
+				want := "POWERFLEX_MAX_CONCURRENT_QUERIES was not set to a valid number"
+				if tt.name == "Null Value" {
+					want = "POWERFLEX_MAX_CONCURRENT_QUERIES value was invalid (<= 0)"
+				}
+				assertFatalPath(t, "updateService/"+tt.name, want)
 			} else {
-				assert.NotPanics(t, func() { updateService(svc, logger) })
+				assert.NotPanics(t, func() { updateService(svc) })
 				assert.Equal(t, tt.expected, svc.MaxPowerFlexConnections)
 			}
 		})
@@ -663,25 +827,25 @@ func Test_updateLoggingSettings(t *testing.T) {
 		name          string
 		logFormat     string
 		logLevel      string
-		expectedLevel logrus.Level
+		expectedLevel csmlog.Level
 	}{
 		{
 			name:          "Valid Setting",
 			logFormat:     "json",
 			logLevel:      "INFO",
-			expectedLevel: 4,
+			expectedLevel: csmlog.InfoLevel,
 		},
 		{
 			name:          "Invalid Setting",
 			logFormat:     "json",
 			logLevel:      "TEST",
-			expectedLevel: 4,
+			expectedLevel: csmlog.InfoLevel,
 		},
 		{
 			name:          "text log format",
 			logFormat:     "text",
 			logLevel:      "INFO",
-			expectedLevel: 4,
+			expectedLevel: csmlog.InfoLevel,
 		},
 	}
 
@@ -690,15 +854,13 @@ func Test_updateLoggingSettings(t *testing.T) {
 			viper.Reset()
 			viper.Set("LOG_FORMAT", tt.logFormat)
 			viper.Set("LOG_LEVEL", tt.logLevel)
-			logger := logrus.New()
-			updateLoggingSettings(logger)
-			assert.Equal(t, tt.expectedLevel, logrus.GetLevel())
+			setLoggingSettings()
+			assert.Equal(t, tt.expectedLevel, csmlog.GetLevel())
 		})
 	}
 }
 
 func TestSetupConfigWatchers(t *testing.T) {
-	logger := logrus.New()
 	config := &entrypoint.Config{}
 	exporter := &otlexporters.OtlCollectorExporter{}
 	powerflexSvc := &service.PowerFlexService{}
@@ -710,8 +872,7 @@ func TestSetupConfigWatchers(t *testing.T) {
 		API: &k8s.API{},
 	}
 	volumeFinder := &k8s.VolumeFinder{
-		API:    &k8s.API{},
-		Logger: logger,
+		API: &k8s.API{},
 	}
 	tests := []struct {
 		name          string
@@ -723,7 +884,7 @@ func TestSetupConfigWatchers(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.NotPanics(t, func() {
-				setupConfigWatchers(configFileListener, powerflexSvc, config, sdcFinder, storageClassFinder, volumeFinder, exporter, logger)
+				setupConfigWatchers(configFileListener, powerflexSvc, config, sdcFinder, storageClassFinder, volumeFinder, exporter)
 			}, "Expected setupConfigWatchers to not panic")
 		})
 	}
@@ -792,23 +953,12 @@ func TestUpdatePowerFlexConnection(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			viper.Reset()
-			config := &entrypoint.Config{}
-			sdcFinder := &k8s.SDCFinder{}
-			storageClassFinder := &k8s.StorageClassFinder{}
-			volumeFinder := &k8s.VolumeFinder{}
-			logger := logrus.New()
-			logger.ExitFunc = func(int) { panic("fatal") }
 			if tt.expectPanic {
-				assert.Panics(t, func() {
-					updatePowerFlexConnection(
-						tt.configContentFile,
-						config,
-						sdcFinder,
-						storageClassFinder,
-						volumeFinder,
-						logger,
-					)
-				})
+				want := "Failed to get storage system configuration"
+				if tt.name == "Authentication Error" {
+					want = "Failed to authenticate with PowerFlex"
+				}
+				assertFatalPath(t, "updatePowerFlexConnection/"+tt.name, want)
 			}
 		})
 	}
@@ -854,8 +1004,6 @@ func TestUpdatePowerFlexConnectionSuccess(t *testing.T) {
 	sdcFinder := &k8s.SDCFinder{}
 	storageClassFinder := &k8s.StorageClassFinder{}
 	volumeFinder := &k8s.VolumeFinder{}
-	lgr := logrus.New()
-	lgr.ExitFunc = func(int) { panic("fatal") }
 
 	assert.NotPanics(t, func() {
 		updatePowerFlexConnection(
@@ -864,7 +1012,6 @@ func TestUpdatePowerFlexConnectionSuccess(t *testing.T) {
 			sdcFinder,
 			storageClassFinder,
 			volumeFinder,
-			lgr,
 		)
 	})
 
@@ -899,28 +1046,20 @@ func TestUpdatePowerFlexConnectionClientError(t *testing.T) {
 	sdcFinder := &k8s.SDCFinder{}
 	storageClassFinder := &k8s.StorageClassFinder{}
 	volumeFinder := &k8s.VolumeFinder{}
-	lgr := logrus.New()
-	lgr.ExitFunc = func(int) { panic("fatal") }
+	_ = config
+	_ = sdcFinder
+	_ = storageClassFinder
+	_ = volumeFinder
 
-	assert.Panics(t, func() {
-		updatePowerFlexConnection(
-			tmpFile.Name(),
-			config,
-			sdcFinder,
-			storageClassFinder,
-			volumeFinder,
-			lgr,
-		)
-	})
+	assertFatalPath(t, "updatePowerFlexConnection/Client Error", "Failed to create PowerFlex client")
 }
 
 func TestUpdateServiceDefault(t *testing.T) {
 	viper.Reset()
 	// Don't set POWERFLEX_MAX_CONCURRENT_QUERIES so the default is used
 	svc := &service.PowerFlexService{}
-	lgr := logrus.New()
 
-	assert.NotPanics(t, func() { updateService(svc, lgr) })
+	assert.NotPanics(t, func() { updateService(svc) })
 	assert.Equal(t, service.DefaultMaxPowerFlexConnections, svc.MaxPowerFlexConnections)
 }
 
@@ -962,8 +1101,6 @@ func TestUpdatePowerFlexConnectionInsecureFlags(t *testing.T) {
 	sdcFinder := &k8s.SDCFinder{}
 	storageClassFinder := &k8s.StorageClassFinder{}
 	volumeFinder := &k8s.VolumeFinder{}
-	lgr := logrus.New()
-	lgr.ExitFunc = func(int) { panic("fatal") }
 
 	assert.NotPanics(t, func() {
 		updatePowerFlexConnection(
@@ -972,9 +1109,89 @@ func TestUpdatePowerFlexConnectionInsecureFlags(t *testing.T) {
 			sdcFinder,
 			storageClassFinder,
 			volumeFinder,
-			lgr,
 		)
 	})
 
 	assert.Contains(t, config.PowerFlexClient, "test-system")
+}
+
+func TestShouldStartObservabilityMetricsServer(t *testing.T) {
+	viper.Reset()
+	t.Setenv("X_CSI_METRICS_ENABLED", "true")
+	assert.True(t, shouldStartObservabilityMetricsServer())
+}
+
+func TestStartMetricsServer(t *testing.T) {
+	t.Run("HTTP mode", func(t *testing.T) {
+		viper.Reset()
+		viper.Set("X_CSI_METRICS_PORT", "0")
+
+		svc := &service.PowerFlexService{}
+		assert.Nil(t, svc.ObsInstrumenter)
+
+		startMetricsServer(svc)
+
+		assert.NotNil(t, svc.ObsInstrumenter, "ObsInstrumenter must be wired after startMetricsServer")
+	})
+
+	t.Run("HTTPS mode with valid TLS files", func(t *testing.T) {
+		certFile, err := os.CreateTemp("", "cert-*.pem")
+		assert.NoError(t, err)
+		defer func() { _ = os.Remove(certFile.Name()) }()
+		_ = certFile.Close()
+
+		keyFile, err := os.CreateTemp("", "key-*.pem")
+		assert.NoError(t, err)
+		defer func() { _ = os.Remove(keyFile.Name()) }()
+		_ = keyFile.Close()
+
+		viper.Reset()
+		viper.Set("X_CSI_METRICS_PORT", "0")
+		viper.Set("X_CSI_METRICS_TLS_CERT_FILE", certFile.Name())
+		viper.Set("X_CSI_METRICS_TLS_KEY_FILE", keyFile.Name())
+
+		svc := &service.PowerFlexService{}
+		startMetricsServer(svc)
+
+		assert.NotNil(t, svc.ObsInstrumenter, "ObsInstrumenter must be wired for HTTPS mode")
+	})
+}
+
+func TestValidateTLSFiles(t *testing.T) {
+	t.Run("valid files", func(t *testing.T) {
+		certFile, err := os.CreateTemp("", "cert-*.pem")
+		assert.NoError(t, err)
+		defer func() { _ = os.Remove(certFile.Name()) }()
+		_ = certFile.Close()
+
+		keyFile, err := os.CreateTemp("", "key-*.pem")
+		assert.NoError(t, err)
+		defer func() { _ = os.Remove(keyFile.Name()) }()
+		_ = keyFile.Close()
+
+		err = validateTLSFiles(certFile.Name(), keyFile.Name())
+		assert.NoError(t, err)
+	})
+
+	t.Run("missing cert file", func(t *testing.T) {
+		keyFile, err := os.CreateTemp("", "key-*.pem")
+		assert.NoError(t, err)
+		defer func() { _ = os.Remove(keyFile.Name()) }()
+		_ = keyFile.Close()
+
+		err = validateTLSFiles("/nonexistent/cert.pem", keyFile.Name())
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot open TLS file")
+	})
+
+	t.Run("missing key file", func(t *testing.T) {
+		certFile, err := os.CreateTemp("", "cert-*.pem")
+		assert.NoError(t, err)
+		defer func() { _ = os.Remove(certFile.Name()) }()
+		_ = certFile.Close()
+
+		err = validateTLSFiles(certFile.Name(), "/nonexistent/key.pem")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot open TLS file")
+	})
 }
