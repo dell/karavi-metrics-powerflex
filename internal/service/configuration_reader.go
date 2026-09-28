@@ -32,12 +32,12 @@ type ConfigurationReader struct{}
 // If no default system is supplied, the first system in the list is returned
 func (c *ConfigurationReader) GetStorageSystemConfiguration(file string) ([]domain.ArrayConnectionData, error) {
 	if _, err := os.Stat(file); os.IsNotExist(err) {
-		return nil, fmt.Errorf("%s", fmt.Sprintf("File %s does not exist", file))
+		return nil, fmt.Errorf("configuration file %s does not exist", file)
 	}
 
 	config, err := os.ReadFile(filepath.Clean(file))
 	if err != nil {
-		return nil, fmt.Errorf("%s", fmt.Sprintf("File %s errors: %v", file, err))
+		return nil, fmt.Errorf("failed to read configuration file %s: %v", file, err)
 	}
 
 	if string(config) == "" {
@@ -48,12 +48,12 @@ func (c *ConfigurationReader) GetStorageSystemConfiguration(file string) ([]doma
 	// support backward compatibility
 	config, err = yaml.JSONToYAML(config)
 	if err != nil {
-		return nil, fmt.Errorf("%s", fmt.Sprintf("converting json to yaml: %v", err))
+		return nil, fmt.Errorf("failed to convert configuration to YAML: %v", err)
 	}
 
 	err = yaml.Unmarshal(config, &connectionData)
 	if err != nil {
-		return nil, fmt.Errorf("%s", fmt.Sprintf("Unable to parse the credentials: %v", err))
+		return nil, fmt.Errorf("failed to parse credentials: %v", err)
 	}
 
 	if len(connectionData) == 0 {
@@ -72,16 +72,16 @@ func (c *ConfigurationReader) GetStorageSystemConfiguration(file string) ([]doma
 
 func validateStorageSystem(system domain.ArrayConnectionData, i int) error {
 	if system.SystemID == "" {
-		return fmt.Errorf("%s", fmt.Sprintf("invalid value for system name at index %d", i))
+		return fmt.Errorf("invalid value for system name at index %d", i)
 	}
 	if system.Username == "" {
-		return fmt.Errorf("%s", fmt.Sprintf("invalid value for Username at index %d", i))
+		return fmt.Errorf("invalid value for Username at index %d", i)
 	}
 	if system.Password == "" {
-		return fmt.Errorf("%s", fmt.Sprintf("invalid value for Password at index %d", i))
+		return fmt.Errorf("invalid value for Password at index %d", i)
 	}
 	if system.Endpoint == "" {
-		return fmt.Errorf("%s", fmt.Sprintf("invalid value for Endpoint at index %d", i))
+		return fmt.Errorf("invalid value for Endpoint at index %d", i)
 	}
 	return nil
 }

@@ -20,7 +20,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/dell/csmlog"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -35,7 +35,6 @@ type VolumeGetter interface {
 type VolumeFinder struct {
 	API             VolumeGetter
 	StorageSystemID []StorageSystemID
-	Logger          *logrus.Logger
 }
 
 // VolumeInfo contains information about mapping a Persistent Volume to the volume created on a storage system
@@ -73,13 +72,13 @@ func (f VolumeFinder) GetPersistentVolumes() ([]VolumeInfo, error) {
 			status := volume.Status
 			storageystemid, err := f.getStorageID(volume)
 			if err != nil {
-				f.Logger.WithField("volume name", volume.Name).Warn("no storage system id found")
+				csmlog.WithFields(csmlog.Fields{"volume name": volume.Name}).Warn("no storage system id found")
 				continue
 			}
 
 			// Check added to skip PV s which do not have any PVC s
 			if volume.Spec.ClaimRef == nil {
-				f.Logger.Debugf("The PV, %s , do not have a claim \n", volume.Name)
+				csmlog.Debugf("The PV, %s , do not have a claim \n", volume.Name)
 				continue
 			}
 
@@ -113,7 +112,7 @@ func (f *VolumeFinder) isMatch(volume corev1.PersistentVolume) bool {
 	// volumeHandle is storageSystemID-volumeID
 	volstorageid, err := f.getStorageID(volume)
 	if err != nil {
-		f.Logger.WithField("volume name", volume.Name).Warn("no storage system id found")
+		csmlog.WithFields(csmlog.Fields{"volume name": volume.Name}).Warn("no storage system id found")
 		return false
 	}
 	for _, storageSystemID := range f.StorageSystemID {

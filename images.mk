@@ -7,7 +7,7 @@
 include helper.mk
 include overrides.mk
 
-images: download-csm-common vendor
+images: copy-csm-common vendor
 	$(eval include csm-common.mk)
 	$(BUILDER) build --pull $(NOCACHE) -t "$(IMAGE_REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG)" -f Dockerfile --build-arg BASEIMAGE=$(CSM_BASEIMAGE) --build-arg GOIMAGE=$(DEFAULT_GOIMAGE) .
 

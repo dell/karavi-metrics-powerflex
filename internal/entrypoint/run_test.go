@@ -23,8 +23,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/dell/karavi-metrics-powerflex/internal/entrypoint"
 	"github.com/dell/karavi-metrics-powerflex/internal/k8s"
 	pflexServices "github.com/dell/karavi-metrics-powerflex/internal/service"
@@ -90,6 +88,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
 				[]pflexServices.SdcMetricsRetriever{},
 				nil,
@@ -146,6 +145,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
 				nil,
 				errors.New("error"),
@@ -187,6 +187,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
 				[]pflexServices.SdcMetricsRetriever{},
 				nil,
@@ -242,6 +243,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 			// GetSDCs should not be called because SDC metrics collection is disabled
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).Times(0).Return(
 				nil,
@@ -259,6 +261,7 @@ func Test_Run(t *testing.T) {
 
 			// Service should not receive ExportTopologyMetrics call
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 			// no EXPECT() on ExportTopologyMetrics means if it's called test will fail
 
 			exporter := exportermocks.NewMockOtlexporter(ctrl)
@@ -309,6 +312,7 @@ func Test_Run(t *testing.T) {
 			e := exportermocks.NewMockOtlexporter(ctrl)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, true
 		},
@@ -344,6 +348,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 			return false, config, e, svc, prevConfigValidationFunc, ctrl, false
 		},
@@ -369,6 +374,7 @@ func Test_Run(t *testing.T) {
 			e := exportermocks.NewMockOtlexporter(ctrl)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, true
 		},
@@ -396,6 +402,7 @@ func Test_Run(t *testing.T) {
 			e := exportermocks.NewMockOtlexporter(ctrl)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, true
 		},
@@ -424,6 +431,7 @@ func Test_Run(t *testing.T) {
 			e := exportermocks.NewMockOtlexporter(ctrl)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, true
 		},
@@ -450,6 +458,7 @@ func Test_Run(t *testing.T) {
 			e := exportermocks.NewMockOtlexporter(ctrl)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, true
 		},
@@ -478,6 +487,7 @@ func Test_Run(t *testing.T) {
 			e := exportermocks.NewMockOtlexporter(ctrl)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, true
 		},
@@ -487,6 +497,7 @@ func Test_Run(t *testing.T) {
 
 			prevConfigValidationFunc := entrypoint.ConfigValidatorFunc
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 			return true, nil, e, svc, prevConfigValidationFunc, ctrl, true
 		},
@@ -516,6 +527,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, false
 		},
@@ -547,6 +559,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
 				[]pflexServices.SdcMetricsRetriever{},
 				nil,
@@ -587,6 +600,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
 				[]pflexServices.SdcMetricsRetriever{},
 				nil,
@@ -626,6 +640,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(
 				nil,
 				errors.New("error"),
@@ -681,6 +696,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 			svc.EXPECT().GetStorageClasses(gomock.Any(), gomock.Any(), gomock.Any()).
 				Return([]pflexServices.StorageClassMeta{
 					{
@@ -717,6 +733,7 @@ func Test_Run(t *testing.T) {
 			e := exportermocks.NewMockOtlexporter(ctrl)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, false
 		},
@@ -749,6 +766,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 			// GetSDCs should not be called because SDC metrics collection is disabled
 			svc.EXPECT().GetSDCs(gomock.Any(), gomock.Any(), gomock.Any()).Times(0).Return(
 				nil,
@@ -801,6 +819,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 			svc.EXPECT().GetStorageClasses(gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(nil, fmt.Errorf("there was error getting the StorageClass")).AnyTimes()
 
@@ -829,6 +848,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 			return false, config, e, svc, prevConfigValidationFunc, ctrl, false
 		},
@@ -853,6 +873,7 @@ func Test_Run(t *testing.T) {
 			e.EXPECT().StopExporter().Return(nil)
 
 			svc := metricsmocks.NewMockService(ctrl)
+			svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 			return true, config, e, svc, prevConfigValidationFunc, ctrl, false
 		},
@@ -864,7 +885,6 @@ func Test_Run(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
 			defer cancel()
 			if config != nil {
-				config.Logger = logrus.New()
 				if !validateConfig {
 					// The configuration is not nil and the test is not attempting to validate the configuration.
 					// In this case, we can use smaller intervals for testing purposes.
@@ -950,6 +970,7 @@ func Test_Run_TopologyDisabledWhenLeader(t *testing.T) {
 	leaderElector.EXPECT().IsLeader().AnyTimes().Return(true)
 
 	svc := metricsmocks.NewMockService(ctrl)
+	svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	exporter := exportermocks.NewMockOtlexporter(ctrl)
 	exporter.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
@@ -969,7 +990,6 @@ func Test_Run_TopologyDisabledWhenLeader(t *testing.T) {
 		PowerFlexConfig:             map[string]sio.ConfigConnect{},
 		SDCFinder:                   metricsmocks.NewMockSDCFinder(ctrl),
 		NodeFinder:                  metricsmocks.NewMockNodeFinder(ctrl),
-		Logger:                      logrus.New(),
 	}
 
 	prev := entrypoint.ConfigValidatorFunc
@@ -994,6 +1014,7 @@ func Test_Run_StopExporterError(t *testing.T) {
 	leaderElector.EXPECT().IsLeader().AnyTimes().Return(false)
 
 	svc := metricsmocks.NewMockService(ctrl)
+	svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	exporter := exportermocks.NewMockOtlexporter(ctrl)
 	exporter.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
@@ -1013,7 +1034,6 @@ func Test_Run_StopExporterError(t *testing.T) {
 		PowerFlexConfig:             map[string]sio.ConfigConnect{},
 		SDCFinder:                   metricsmocks.NewMockSDCFinder(ctrl),
 		NodeFinder:                  metricsmocks.NewMockNodeFinder(ctrl),
-		Logger:                      logrus.New(),
 	}
 
 	prev := entrypoint.ConfigValidatorFunc
@@ -1051,13 +1071,13 @@ func Test_Run_TickIntervalChange(t *testing.T) {
 		PowerFlexConfig:             map[string]sio.ConfigConnect{},
 		SDCFinder:                   metricsmocks.NewMockSDCFinder(ctrl),
 		NodeFinder:                  metricsmocks.NewMockNodeFinder(ctrl),
-		Logger:                      logrus.New(),
 	}
 
 	// Change tick intervals inside the mock callback so the mutation
 	// happens in the same goroutine as Run(), avoiding a data race.
 	callCount := 0
 	svc := metricsmocks.NewMockService(ctrl)
+	svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	svc.EXPECT().ExportTopologyMetrics(gomock.Any()).AnyTimes().Do(func(_ context.Context) {
 		callCount++
 		if callCount == 1 {
@@ -1094,6 +1114,7 @@ func Test_Run_EnvVarOverrides(t *testing.T) {
 	leaderElector.EXPECT().IsLeader().AnyTimes().Return(false)
 
 	svc := metricsmocks.NewMockService(ctrl)
+	svc.EXPECT().RecordObsMetrics(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	exporter := exportermocks.NewMockOtlexporter(ctrl)
 	exporter.EXPECT().InitExporter(gomock.Any(), gomock.Any()).Return(nil)
@@ -1113,7 +1134,6 @@ func Test_Run_EnvVarOverrides(t *testing.T) {
 		PowerFlexConfig:             map[string]sio.ConfigConnect{},
 		SDCFinder:                   metricsmocks.NewMockSDCFinder(ctrl),
 		NodeFinder:                  metricsmocks.NewMockNodeFinder(ctrl),
-		Logger:                      logrus.New(),
 	}
 
 	prev := entrypoint.ConfigValidatorFunc

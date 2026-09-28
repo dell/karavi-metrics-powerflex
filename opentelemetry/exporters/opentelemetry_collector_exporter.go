@@ -23,19 +23,26 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 )
 
 // OtlCollectorExporter is the exporter for the OpenTelemetry Collector
 type OtlCollectorExporter struct {
-	CollectorAddr string
-	exporter      *otlpmetricgrpc.Exporter
-	controller    *metric.MeterProvider
+	CollectorAddr       string
+	exporter            *otlpmetricgrpc.Exporter
+	controller          *metric.MeterProvider
+	recordExportFailure func()
 }
 
 const (
 	// DefaultCollectorCertPath is the default location to look for the Collector certificate
 	DefaultCollectorCertPath = "/etc/ssl/certs/cert.crt"
 )
+
+// SetExportFailureRecorder configures a callback that is invoked whenever an OTLP export fails.
+func (c *OtlCollectorExporter) SetExportFailureRecorder(recordExportFailure func()) {
+	c.recordExportFailure = recordExportFailure
+}
 
 // InitExporter is the initialization method for the OpenTelemetry Collector exporter
 func (c *OtlCollectorExporter) InitExporter(opts ...otlpmetricgrpc.Option) error {
@@ -70,9 +77,27 @@ func (c *OtlCollectorExporter) initOTLPExporter(opts ...otlpmetricgrpc.Option) (
 		return nil, nil, err
 	}
 
-	meterProvider := metric.NewMeterProvider(metric.WithReader(metric.NewPeriodicReader(exporter, metric.WithInterval(5*time.Second))))
+	recordingExporter := newRecordingExporter(exporter, c)
+	meterProvider := metric.NewMeterProvider(metric.WithReader(metric.NewPeriodicReader(recordingExporter, metric.WithInterval(5*time.Second))))
 
 	otel.SetMeterProvider(meterProvider)
 
 	return exporter, meterProvider, nil
+}
+
+type recordingExporter struct {
+	*otlpmetricgrpc.Exporter
+	owner *OtlCollectorExporter
+}
+
+func newRecordingExporter(base *otlpmetricgrpc.Exporter, owner *OtlCollectorExporter) metric.Exporter {
+	return &recordingExporter{Exporter: base, owner: owner}
+}
+
+func (r *recordingExporter) Export(ctx context.Context, metrics *metricdata.ResourceMetrics) error {
+	err := r.Exporter.Export(ctx, metrics)
+	if err != nil && r.owner != nil && r.owner.recordExportFailure != nil {
+		r.owner.recordExportFailure()
+	}
+	return err
 }

@@ -1,18 +1,16 @@
-/*
- Copyright (c) 2025 Dell Inc. or its subsidiaries. All Rights Reserved.
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
+// Copyright (c) Dell Inc. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package service_test
 
@@ -29,7 +27,6 @@ import (
 
 	"github.com/dell/karavi-metrics-powerflex/internal/service"
 	"github.com/dell/karavi-metrics-powerflex/internal/service/mocks"
-	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 
 	"github.com/stretchr/testify/assert"
@@ -64,7 +61,8 @@ type ecPoolRetriever struct {
 	gen    string
 }
 
-func (e ecPoolRetriever) GetClient() service.PowerFlexClient                       { return e.client }
+func (e ecPoolRetriever) GetClient() service.PowerFlexClient { return e.client }
+
 func (e ecPoolRetriever) GetStatisticsGetter() service.StoragePoolStatisticsGetter { return e.stats }
 func (e ecPoolRetriever) GetGen() string                                           { return e.gen }
 
@@ -177,7 +175,7 @@ func Test_GetSDCStatistics(t *testing.T) {
 				Service: &service,
 			}, nil, ctrl
 		},
-		"error with 1 sdc (both APIs fail)": func(*testing.T) (setup, []service.SdcMetricsRetriever, *gomock.Controller) {
+		"error with 1 sdc (all APIs fail)": func(*testing.T) (setup, []service.SdcMetricsRetriever, *gomock.Controller) {
 			ctrl := gomock.NewController(t)
 			metrics := mocks.NewMockMetricsRecorder(ctrl)
 			client := mocks.NewMockPowerFlexClient(ctrl)
@@ -188,6 +186,7 @@ func Test_GetSDCStatistics(t *testing.T) {
 				GetMetrics("sdc", []string{"sdc-id-124"}).
 				Return(nil, errors.New("metrics API error")).
 				Times(1)
+			sdc1.EXPECT().GetVolumeMetrics().Return(nil, errors.New("volume metrics API error")).Times(1)
 			retrievers := []service.SdcMetricsRetriever{
 				ecRetriever{
 					sdc: &sio.Sdc{Sdc: &types.Sdc{
@@ -200,6 +199,58 @@ func Test_GetSDCStatistics(t *testing.T) {
 					gen:    "v1",
 				},
 			}
+			svc := service.PowerFlexService{MetricsWrapper: metrics}
+			return setup{Service: &svc}, retrievers, ctrl
+		},
+		"fallback to volume metrics API (PowerFlex 5.x no protection domains)": func(*testing.T) (setup, []service.SdcMetricsRetriever, *gomock.Controller) {
+			ctrl := gomock.NewController(t)
+			metrics := mocks.NewMockMetricsRecorder(ctrl)
+			client := mocks.NewMockPowerFlexClient(ctrl)
+
+			sdcID := "sdc-5x-nopd-001"
+			sg := mocks.NewMockStatisticsGetter(ctrl)
+			sg.EXPECT().GetStatistics().Return(nil, errors.New("Error: problem finding link")).Times(1)
+			client.EXPECT().
+				GetMetrics("sdc", []string{sdcID}).
+				Return(nil, errors.New("this API is not supported since there are no protection domains in the system")).
+				Times(1)
+			sg.EXPECT().GetVolumeMetrics().Return([]*types.SdcVolumeMetrics{
+				{
+					VolumeID:        "vol-001",
+					SdcID:           sdcID,
+					ReadBwc:         types.BWC{TotalWeightInKb: 2048, NumOccured: 10, NumSeconds: 5},
+					WriteBwc:        types.BWC{TotalWeightInKb: 4096, NumOccured: 20, NumSeconds: 5},
+					ReadLatencyBwc:  types.BWC{TotalWeightInKb: 5120, NumOccured: 10},
+					WriteLatencyBwc: types.BWC{TotalWeightInKb: 10240, NumOccured: 20},
+				},
+				{
+					VolumeID:        "vol-002",
+					SdcID:           sdcID,
+					ReadBwc:         types.BWC{TotalWeightInKb: 1024, NumOccured: 5, NumSeconds: 5},
+					WriteBwc:        types.BWC{TotalWeightInKb: 2048, NumOccured: 10, NumSeconds: 5},
+					ReadLatencyBwc:  types.BWC{TotalWeightInKb: 2560, NumOccured: 5},
+					WriteLatencyBwc: types.BWC{TotalWeightInKb: 5120, NumOccured: 10},
+				},
+			}, nil).Times(1)
+
+			retrievers := []service.SdcMetricsRetriever{
+				ecRetriever{
+					sdc: &sio.Sdc{Sdc: &types.Sdc{
+						SdcIP:   "10.0.0.2",
+						ID:      sdcID,
+						SdcGUID: "guid-5x-nopd-001",
+					}},
+					client: client,
+					stats:  sg,
+					gen:    "v1",
+				},
+			}
+
+			metrics.EXPECT().
+				Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Times(1)
+
 			svc := service.PowerFlexService{MetricsWrapper: metrics}
 			return setup{Service: &svc}, retrievers, ctrl
 		},
@@ -302,7 +353,6 @@ func Test_GetSDCStatistics(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			setup, sdcs, ctrl := tc(t)
-			setup.Service.Logger = logrus.New()
 			setup.Service.GetSDCStatistics(context.Background(), nil, sdcs)
 			ctrl.Finish()
 		})
@@ -503,7 +553,7 @@ func Test_GetSDCs(t *testing.T) {
 
 			finder.EXPECT().GetSDCGuids().Return(nil, errors.New("boom")).Times(1)
 
-			svc := &service.PowerFlexService{Logger: logrus.New()}
+			svc := &service.PowerFlexService{}
 			return svc, client, finder, check(hasError), ctrl
 		},
 
@@ -514,7 +564,7 @@ func Test_GetSDCs(t *testing.T) {
 
 			finder.EXPECT().GetSDCGuids().Return([]string{}, nil).Times(1)
 
-			svc := &service.PowerFlexService{Logger: logrus.New()}
+			svc := &service.PowerFlexService{}
 			return svc, client, finder, check(noErrorAndLen(0)), ctrl
 		},
 
@@ -526,7 +576,7 @@ func Test_GetSDCs(t *testing.T) {
 			finder.EXPECT().GetSDCGuids().Return([]string{"g1"}, nil).Times(1)
 			client.EXPECT().GetInstance("").Return(nil, errors.New("instances down")).Times(1)
 
-			svc := &service.PowerFlexService{Logger: logrus.New()}
+			svc := &service.PowerFlexService{}
 			return svc, client, finder, check(hasError), ctrl
 		},
 
@@ -545,7 +595,7 @@ func Test_GetSDCs(t *testing.T) {
 			})
 			t.Cleanup(patches.Reset)
 
-			svc := &service.PowerFlexService{Logger: logrus.New()}
+			svc := &service.PowerFlexService{}
 			return svc, client, finder, check(hasError), ctrl
 		},
 		"error from service.GetGenType": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, service.SDCFinder, []checkFn, *gomock.Controller) {
@@ -571,7 +621,7 @@ func Test_GetSDCs(t *testing.T) {
 			})
 			t.Cleanup(patches.Reset)
 
-			svc := &service.PowerFlexService{Logger: logrus.New()}
+			svc := &service.PowerFlexService{}
 			return svc, client, finder, check(hasError), ctrl
 		},
 
@@ -602,7 +652,7 @@ func Test_GetSDCs(t *testing.T) {
 			})
 			t.Cleanup(patches.Reset)
 
-			svc := &service.PowerFlexService{Logger: logrus.New()}
+			svc := &service.PowerFlexService{}
 			return svc, client, finder, check(noErrorAndLen(1)), ctrl
 		},
 
@@ -639,7 +689,7 @@ func Test_GetSDCs(t *testing.T) {
 			})
 			t.Cleanup(patches.Reset)
 
-			svc := &service.PowerFlexService{Logger: logrus.New()}
+			svc := &service.PowerFlexService{}
 			// 2 systems × 2 GUIDs → 4 retrievers
 			return svc, client, finder, check(noErrorAndLen(4)), ctrl
 		},
@@ -1068,7 +1118,6 @@ func Test_GetStorageClasses(t *testing.T) {
 				MetricsWrapper: &service.MetricsWrapper{
 					Meter: otel.Meter("powerflex/sdc"),
 				},
-				Logger: logrus.New(),
 			}
 			classToPools, err := svc.GetStorageClasses(context.Background(), powerflexClient, storageClassFinder)
 			for _, checkFn := range checkFns {
@@ -1245,7 +1294,6 @@ func Test_GetStoragePoolStatistics(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			setup, storageClassMetas, ctrl := tc(t)
-			setup.Service.Logger = logrus.New()
 			setup.Service.GetStoragePoolStatistics(context.Background(), storageClassMetas)
 			ctrl.Finish()
 		})
@@ -1357,24 +1405,6 @@ func Test_GetVolumes(t *testing.T) {
 	ecVol2 := &sio.Volume{Volume: &types.Volume{ID: "ec2", Name: "ec-2", GenType: types.GenTypeEC}}
 
 	bwc := types.BWC{NumOccured: 100, NumSeconds: 10, TotalWeightInKb: 2048}
-	vm1 := &types.SdcVolumeMetrics{
-		VolumeID:        "1",
-		ReadBwc:         bwc,
-		WriteBwc:        bwc,
-		ReadLatencyBwc:  bwc,
-		WriteLatencyBwc: bwc,
-		TrimBwc:         bwc,
-		TrimLatencyBwc:  bwc,
-	}
-	vm2 := &types.SdcVolumeMetrics{
-		VolumeID:        "2",
-		ReadBwc:         bwc,
-		WriteBwc:        bwc,
-		ReadLatencyBwc:  bwc,
-		WriteLatencyBwc: bwc,
-		TrimBwc:         bwc,
-		TrimLatencyBwc:  bwc,
-	}
 
 	tests := map[string]func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, []service.SdcMetricsRetriever, []checkFn, *gomock.Controller, *gomonkey.Patches){
 		"error from FindVolumes": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, []service.SdcMetricsRetriever, []checkFn, *gomock.Controller, *gomonkey.Patches) {
@@ -1391,7 +1421,7 @@ func Test_GetVolumes(t *testing.T) {
 			})
 			t.Cleanup(patches.Reset)
 
-			svc := &service.PowerFlexService{Logger: logrus.New()}
+			svc := &service.PowerFlexService{}
 			return svc, client, []service.SdcMetricsRetriever{retr}, check(hasError), ctrl, patches
 		},
 
@@ -1405,8 +1435,17 @@ func Test_GetVolumes(t *testing.T) {
 			sdc1 := &sio.Sdc{Sdc: &types.Sdc{ID: "sdc-1", SdcIP: "1.1.1.1"}}
 			sdc2 := &sio.Sdc{Sdc: &types.Sdc{ID: "sdc-2", SdcIP: "1.1.1.2"}}
 
-			stats1.EXPECT().GetVolumeMetrics().Return([]*types.SdcVolumeMetrics{vm1, vm2}, nil).Times(1)
-			stats2.EXPECT().GetVolumeMetrics().Return([]*types.SdcVolumeMetrics{vm1, vm2}, nil).Times(1)
+			volStats := map[string]types.VolumeStatistics{
+				"1": {
+					UserDataReadBwc: bwc, UserDataWriteBwc: bwc, UserDataTrimBwc: bwc,
+					UserDataSdcReadLatency: bwc, UserDataSdcWriteLatency: bwc, UserDataSdcTrimLatency: bwc,
+				},
+				"2": {
+					UserDataReadBwc: bwc, UserDataWriteBwc: bwc, UserDataTrimBwc: bwc,
+					UserDataSdcReadLatency: bwc, UserDataSdcWriteLatency: bwc, UserDataSdcTrimLatency: bwc,
+				},
+			}
+			client.EXPECT().QuerySelectedVolumeStatistics(gomock.Any(), gomock.Any()).Return(volStats, nil).Times(1)
 
 			r1 := newSdcRetriever(t, ctrl, stats1, "v1", sdc1)
 			r2 := newSdcRetriever(t, ctrl, stats2, "v1", sdc2)
@@ -1421,11 +1460,11 @@ func Test_GetVolumes(t *testing.T) {
 			})
 			t.Cleanup(patches.Reset)
 
-			svc := &service.PowerFlexService{Logger: logrus.New()}
+			svc := &service.PowerFlexService{}
 			return svc, client, []service.SdcMetricsRetriever{r1, r2}, check(noErrorAndLen(2)), ctrl, patches
 		},
 
-		"non-EC: GetVolumeMetrics error": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, []service.SdcMetricsRetriever, []checkFn, *gomock.Controller, *gomonkey.Patches) {
+		"non-EC: QuerySelectedVolumeStatistics error": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, []service.SdcMetricsRetriever, []checkFn, *gomock.Controller, *gomonkey.Patches) {
 			ctrl := gomock.NewController(t)
 			client := mocks.NewMockPowerFlexClient(ctrl)
 
@@ -1439,9 +1478,9 @@ func Test_GetVolumes(t *testing.T) {
 			})
 			t.Cleanup(patches.Reset)
 
-			stats.EXPECT().GetVolumeMetrics().Return(nil, errors.New("metrics-fail")).Times(1)
+			client.EXPECT().QuerySelectedVolumeStatistics(gomock.Any(), gomock.Any()).Return(nil, errors.New("metrics-fail")).Times(1)
 
-			svc := &service.PowerFlexService{Logger: logrus.New()}
+			svc := &service.PowerFlexService{}
 			return svc, client, []service.SdcMetricsRetriever{r}, check(hasError), ctrl, patches
 		},
 
@@ -1459,7 +1498,7 @@ func Test_GetVolumes(t *testing.T) {
 			})
 			t.Cleanup(patches.Reset)
 
-			svc := &service.PowerFlexService{Logger: logrus.New()}
+			svc := &service.PowerFlexService{}
 			return svc, client, []service.SdcMetricsRetriever{r}, check(noErrorAndLen(0)), ctrl, patches
 		},
 
@@ -1482,7 +1521,7 @@ func Test_GetVolumes(t *testing.T) {
 				Return((*types.MetricsResponse)(nil), fmt.Errorf("metrics failed")).
 				Times(1)
 
-			svc := &service.PowerFlexService{Logger: logrus.New()}
+			svc := &service.PowerFlexService{}
 			return svc, client, []service.SdcMetricsRetriever{r}, check(hasError), ctrl, patches
 		},
 
@@ -1505,8 +1544,72 @@ func Test_GetVolumes(t *testing.T) {
 				Return(&types.MetricsResponse{Resources: []types.Resource{}}, nil).
 				Times(1)
 
-			svc := &service.PowerFlexService{Logger: logrus.New()}
+			svc := &service.PowerFlexService{}
 			return svc, client, []service.SdcMetricsRetriever{r}, check(hasError), ctrl, patches
+		},
+
+		"EC: multi-SDC batching — single GetMetrics call across SDCs": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, []service.SdcMetricsRetriever, []checkFn, *gomock.Controller, *gomonkey.Patches) {
+			ctrl := gomock.NewController(t)
+			client := mocks.NewMockPowerFlexClient(ctrl)
+
+			ecVol3 := &sio.Volume{Volume: &types.Volume{ID: "ec3", Name: "ec-3", GenType: types.GenTypeEC}}
+
+			stats1 := mocks.NewMockStatisticsGetter(ctrl)
+			stats2 := mocks.NewMockStatisticsGetter(ctrl)
+			sdc1 := &sio.Sdc{Sdc: &types.Sdc{ID: "sdc-ec-1", SdcIP: "1.1.1.1"}}
+			sdc2 := &sio.Sdc{Sdc: &types.Sdc{ID: "sdc-ec-2", SdcIP: "1.1.1.2"}}
+			r1 := ecRetriever{sdc: sdc1, client: client, stats: stats1, gen: types.GenTypeEC}
+			r2 := ecRetriever{sdc: sdc2, client: client, stats: stats2, gen: types.GenTypeEC}
+
+			mapping := sdcToVolumes{
+				sdc1: []*sio.Volume{ecVol1, ecVol2},
+				sdc2: []*sio.Volume{ecVol2, ecVol3},
+			}
+			patches := gomonkey.NewPatches()
+			patches.ApplyMethod(reflect.TypeOf(&sio.Sdc{}), "FindVolumes", func(s *sio.Sdc) ([]*sio.Volume, error) {
+				return mapping[s], nil
+			})
+			t.Cleanup(patches.Reset)
+
+			client.EXPECT().
+				GetMetrics("volume", []string{"ec1", "ec2", "ec3"}).
+				Return(&types.MetricsResponse{
+					Resources: []types.Resource{
+						{ID: "ec1", Metrics: []types.Metric{
+							{Name: "host_read_bandwidth", Values: []float64{1048576}},
+							{Name: "host_write_bandwidth", Values: []float64{2097152}},
+							{Name: "host_read_iops", Values: []float64{100}},
+							{Name: "host_write_iops", Values: []float64{200}},
+							{Name: "avg_host_read_latency", Values: []float64{1000}},
+							{Name: "avg_host_write_latency", Values: []float64{2000}},
+						}},
+						{ID: "ec2", Metrics: []types.Metric{
+							{Name: "host_read_bandwidth", Values: []float64{3145728}},
+							{Name: "host_write_bandwidth", Values: []float64{4194304}},
+							{Name: "host_read_iops", Values: []float64{300}},
+							{Name: "host_write_iops", Values: []float64{400}},
+							{Name: "avg_host_read_latency", Values: []float64{3000}},
+							{Name: "avg_host_write_latency", Values: []float64{4000}},
+						}},
+						{ID: "ec3", Metrics: []types.Metric{
+							{Name: "host_read_bandwidth", Values: []float64{5242880}},
+							{Name: "host_write_bandwidth", Values: []float64{6291456}},
+							{Name: "host_read_iops", Values: []float64{500}},
+							{Name: "host_write_iops", Values: []float64{600}},
+							{Name: "avg_host_read_latency", Values: []float64{5000}},
+							{Name: "avg_host_write_latency", Values: []float64{6000}},
+						}},
+					},
+				}, nil).
+				Times(1)
+
+			svc := &service.PowerFlexService{}
+			expect := map[string]ecVals{
+				"ec1": {readBW: 1.0, writeBW: 2.0, readIOPS: 100, writeIOPS: 200, readLat: 1.0, writeLat: 2.0},
+				"ec2": {readBW: 3.0, writeBW: 4.0, readIOPS: 300, writeIOPS: 400, readLat: 3.0, writeLat: 4.0},
+				"ec3": {readBW: 5.0, writeBW: 6.0, readIOPS: 500, writeIOPS: 600, readLat: 5.0, writeLat: 6.0},
+			}
+			return svc, client, []service.SdcMetricsRetriever{r1, r2}, check(noErrorAndLen(3), checkECValues(expect)), ctrl, patches
 		},
 
 		"EC: metrics success -> populates & normalizes values": func(t *testing.T) (*service.PowerFlexService, service.PowerFlexClient, []service.SdcMetricsRetriever, []checkFn, *gomock.Controller, *gomonkey.Patches) {
@@ -1553,7 +1656,7 @@ func Test_GetVolumes(t *testing.T) {
 				}, nil).
 				Times(1)
 
-			svc := &service.PowerFlexService{Logger: logrus.New()}
+			svc := &service.PowerFlexService{}
 			expect := map[string]ecVals{
 				"ec1": {readBW: 1.0, writeBW: 2.0, readIOPS: 111, writeIOPS: 222, readLat: 5.0, writeLat: 7.0},
 				"ec2": {readBW: 3.0, writeBW: 4.0, readIOPS: 333, writeIOPS: 444, readLat: 9.0, writeLat: 11.0},
@@ -1663,7 +1766,6 @@ func Test_ExportVolumeStatistics(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			setup, vols, volFinder, ctrl := tc(t)
-			setup.Service.Logger = logrus.New()
 			setup.Service.ExportVolumeStatistics(context.Background(), vols, volFinder)
 			ctrl.Finish()
 		})
@@ -1681,7 +1783,6 @@ func Benchmark_GetVolumes(b *testing.B) {
 	client := mocks.NewMockPowerFlexClient(ctrl)
 
 	svc := &service.PowerFlexService{
-		Logger:         logrus.New(),
 		MetricsWrapper: mocks.NewMockMetricsRecorder(ctrl),
 	}
 
@@ -1695,17 +1796,20 @@ func Benchmark_GetVolumes(b *testing.B) {
 	})
 	b.Cleanup(patches.Reset)
 
+	client.EXPECT().QuerySelectedVolumeStatistics(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ids []string, _ []string) (map[string]types.VolumeStatistics, error) {
+			dur, _ := time.ParseDuration(sdcQueryTime)
+			time.Sleep(dur)
+			result := make(map[string]types.VolumeStatistics, len(ids))
+			for _, id := range ids {
+				result[id] = types.VolumeStatistics{}
+			}
+			return result, nil
+		}).AnyTimes()
+
 	retrievers := make([]service.SdcMetricsRetriever, 0, numOfSDCs)
 	for i := 0; i < numOfSDCs; i++ {
 		sdcStats := mocks.NewMockStatisticsGetter(gomock.NewController(b))
-		sdcStats.EXPECT().GetVolumeMetrics().DoAndReturn(func() ([]*types.SdcVolumeMetrics, error) {
-			dur, _ := time.ParseDuration(sdcQueryTime)
-			time.Sleep(dur)
-			return []*types.SdcVolumeMetrics{
-				{VolumeID: "vol1"},
-				{VolumeID: "vol2"},
-			}, nil
-		}).AnyTimes()
 
 		sdcObj := &sio.Sdc{Sdc: &types.Sdc{ID: fmt.Sprintf("sdc-%d", i), SdcIP: "1.2.3.4"}}
 
@@ -2066,7 +2170,6 @@ func TestExportTopologyMetrics(t *testing.T) {
 	s := &service.PowerFlexService{
 		VolumeFinder:   mockVolumeFinder,
 		MetricsWrapper: mockMetricsWrapper,
-		Logger:         logrus.New(),
 	}
 
 	ctx := context.Background()
@@ -2253,7 +2356,7 @@ func TestNilMetricsWrapper(t *testing.T) {
 	}
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			svc := &service.PowerFlexService{Logger: logrus.New()}
+			svc := &service.PowerFlexService{}
 			assert.NotPanics(t, func() { tc.call(svc) })
 		})
 	}
@@ -2270,7 +2373,7 @@ func TestExportTopologyMetrics_EdgeCases(t *testing.T) {
 				vf := mocks.NewMockVolumeFinder(ctrl)
 				mr := mocks.NewMockMetricsRecorder(ctrl)
 				vf.EXPECT().GetPersistentVolumes().Return(nil, errors.New("pv error"))
-				return &service.PowerFlexService{VolumeFinder: vf, MetricsWrapper: mr, Logger: logrus.New()}
+				return &service.PowerFlexService{VolumeFinder: vf, MetricsWrapper: mr}
 			},
 		},
 		{
@@ -2281,7 +2384,7 @@ func TestExportTopologyMetrics_EdgeCases(t *testing.T) {
 				vf.EXPECT().GetPersistentVolumes().Return([]k8s.VolumeInfo{
 					{VolumeHandle: "only-one-part"},
 				}, nil)
-				return &service.PowerFlexService{VolumeFinder: vf, MetricsWrapper: mr, Logger: logrus.New()}
+				return &service.PowerFlexService{VolumeFinder: vf, MetricsWrapper: mr}
 			},
 		},
 		{
@@ -2293,7 +2396,7 @@ func TestExportTopologyMetrics_EdgeCases(t *testing.T) {
 					{VolumeHandle: "vol1-sys1", VolumeClaimName: "pvc1", PersistentVolume: "pv1"},
 				}, nil)
 				mr.EXPECT().RecordTopologyMetrics(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("record error"))
-				return &service.PowerFlexService{VolumeFinder: vf, MetricsWrapper: mr, Logger: logrus.New()}
+				return &service.PowerFlexService{VolumeFinder: vf, MetricsWrapper: mr}
 			},
 		},
 	}
@@ -2319,7 +2422,7 @@ func TestExportVolumeStatistics_EdgeCases(t *testing.T) {
 				vf := mocks.NewMockVolumeFinder(ctrl)
 				vf.EXPECT().GetPersistentVolumes().Return([]k8s.VolumeInfo{}, nil)
 				mr.EXPECT().Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-				svc := &service.PowerFlexService{MetricsWrapper: mr, Logger: logrus.New()}
+				svc := &service.PowerFlexService{MetricsWrapper: mr}
 				return svc, []*service.VolumeMetaMetrics{{ID: "vol1", Name: "no-match"}}, vf
 			},
 		},
@@ -2332,7 +2435,7 @@ func TestExportVolumeStatistics_EdgeCases(t *testing.T) {
 					{StorageSystemVolumeName: "vol-ec", PersistentVolume: "pv-ec", VolumeClaimName: "pvc-ec"},
 				}, nil)
 				mr.EXPECT().Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-				svc := &service.PowerFlexService{MetricsWrapper: mr, Logger: logrus.New()}
+				svc := &service.PowerFlexService{MetricsWrapper: mr}
 				return svc, []*service.VolumeMetaMetrics{{
 					ID: "vol-ec", Name: "vol-ec", GenType: types.GenTypeEC,
 					HostWriteBandwith: 100, HostReadBandwith: 200,
@@ -2364,7 +2467,7 @@ func TestGetSDCStatistics_EdgeCases(t *testing.T) {
 				sg := mocks.NewMockStatisticsGetter(ctrl)
 				sg.EXPECT().GetStatistics().Return(&types.SdcStatistics{}, nil).Times(1)
 				mr.EXPECT().Record(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("record error"))
-				svc := &service.PowerFlexService{MetricsWrapper: mr, Logger: logrus.New()}
+				svc := &service.PowerFlexService{MetricsWrapper: mr}
 				return svc, []service.SdcMetricsRetriever{
 					newSdcRetriever(t, ctrl, sg, "v1", &sio.Sdc{Sdc: &types.Sdc{SdcIP: "1.2.3.4", ID: "sdc-id-124", SdcGUID: "guid-xyz-789"}}),
 				}
@@ -2378,7 +2481,7 @@ func TestGetSDCStatistics_EdgeCases(t *testing.T) {
 				sg := mocks.NewMockStatisticsGetter(ctrl)
 				sdcID := "sdc-ec-empty"
 				pf.EXPECT().GetMetrics("sdc", []string{sdcID}).Return(&types.MetricsResponse{Resources: []types.Resource{}}, nil).Times(1)
-				svc := &service.PowerFlexService{MetricsWrapper: mr, Logger: logrus.New()}
+				svc := &service.PowerFlexService{MetricsWrapper: mr}
 				return svc, []service.SdcMetricsRetriever{
 					ecRetriever{sdc: &sio.Sdc{Sdc: &types.Sdc{SdcIP: "9.9.9.9", ID: sdcID, SdcGUID: "guid-ec-empty"}}, client: pf, stats: sg, gen: types.GenTypeEC},
 				}
@@ -2393,9 +2496,51 @@ func TestGetSDCStatistics_EdgeCases(t *testing.T) {
 				sdcID := "sdc-fallback-empty"
 				sg.EXPECT().GetStatistics().Return(nil, errors.New("legacy API removed")).Times(1)
 				pf.EXPECT().GetMetrics("sdc", []string{sdcID}).Return(&types.MetricsResponse{Resources: []types.Resource{}}, nil).Times(1)
-				svc := &service.PowerFlexService{MetricsWrapper: mr, Logger: logrus.New()}
+				svc := &service.PowerFlexService{MetricsWrapper: mr}
 				return svc, []service.SdcMetricsRetriever{
 					ecRetriever{sdc: &sio.Sdc{Sdc: &types.Sdc{SdcIP: "10.0.0.1", ID: sdcID, SdcGUID: "guid-fallback-empty"}}, client: pf, stats: sg, gen: "v1"},
+				}
+			},
+		},
+		{
+			name: "volume metrics API returns empty list",
+			setup: func(_ *testing.T, ctrl *gomock.Controller) (*service.PowerFlexService, []service.SdcMetricsRetriever) {
+				mr := mocks.NewMockMetricsRecorder(ctrl)
+				pf := mocks.NewMockPowerFlexClient(ctrl)
+				sg := mocks.NewMockStatisticsGetter(ctrl)
+				sdcID := "sdc-volmetrics-empty"
+				sg.EXPECT().GetStatistics().Return(nil, errors.New("legacy API removed")).Times(1)
+				pf.EXPECT().GetMetrics("sdc", []string{sdcID}).Return(nil, errors.New("no protection domains")).Times(1)
+				sg.EXPECT().GetVolumeMetrics().Return([]*types.SdcVolumeMetrics{}, nil).Times(1)
+				svc := &service.PowerFlexService{MetricsWrapper: mr}
+				return svc, []service.SdcMetricsRetriever{
+					ecRetriever{sdc: &sio.Sdc{Sdc: &types.Sdc{SdcIP: "10.0.0.3", ID: sdcID, SdcGUID: "guid-volmetrics-empty"}}, client: pf, stats: sg, gen: "v1"},
+				}
+			},
+		},
+		{
+			name: "volume metrics API zero numSeconds does not divide by zero",
+			setup: func(_ *testing.T, ctrl *gomock.Controller) (*service.PowerFlexService, []service.SdcMetricsRetriever) {
+				mr := mocks.NewMockMetricsRecorder(ctrl)
+				pf := mocks.NewMockPowerFlexClient(ctrl)
+				sg := mocks.NewMockStatisticsGetter(ctrl)
+				sdcID := "sdc-volmetrics-zerosecs"
+				sg.EXPECT().GetStatistics().Return(nil, errors.New("legacy API removed")).Times(1)
+				pf.EXPECT().GetMetrics("sdc", []string{sdcID}).Return(nil, errors.New("no protection domains")).Times(1)
+				sg.EXPECT().GetVolumeMetrics().Return([]*types.SdcVolumeMetrics{
+					{
+						VolumeID:        "vol-z",
+						SdcID:           sdcID,
+						ReadBwc:         types.BWC{TotalWeightInKb: 1024, NumOccured: 10, NumSeconds: 0},
+						WriteBwc:        types.BWC{TotalWeightInKb: 2048, NumOccured: 20, NumSeconds: 0},
+						ReadLatencyBwc:  types.BWC{TotalWeightInKb: 0, NumOccured: 0},
+						WriteLatencyBwc: types.BWC{TotalWeightInKb: 0, NumOccured: 0},
+					},
+				}, nil).Times(1)
+				mr.EXPECT().Record(gomock.Any(), gomock.Any(), float64(0), float64(0), float64(0), float64(0), float64(0), float64(0)).Times(1)
+				svc := &service.PowerFlexService{MetricsWrapper: mr}
+				return svc, []service.SdcMetricsRetriever{
+					ecRetriever{sdc: &sio.Sdc{Sdc: &types.Sdc{SdcIP: "10.0.0.4", ID: sdcID, SdcGUID: "guid-volmetrics-zerosecs"}}, client: pf, stats: sg, gen: "v1"},
 				}
 			},
 		},
@@ -2449,7 +2594,7 @@ func TestGetStoragePoolStatistics_ECEdgeCases(t *testing.T) {
 				},
 			}}
 
-			svc := &service.PowerFlexService{MetricsWrapper: mr, Logger: logrus.New()}
+			svc := &service.PowerFlexService{MetricsWrapper: mr}
 			assert.NotPanics(t, func() { svc.GetStoragePoolStatistics(context.Background(), scMetas) })
 		})
 	}
